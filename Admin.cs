@@ -53,7 +53,37 @@ namespace JTI_Payroll_System
 
         private void delete_Click(object sender, EventArgs e)
         {
+            try
+            {
+                string usernameToDelete = username.Text;
 
+                if (string.IsNullOrEmpty(usernameToDelete))
+                {
+                    MessageBox.Show("Please enter the username to delete.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                DialogResult result = MessageBox.Show("Are you sure you want to delete this user?", "Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                if (result == DialogResult.Yes)
+                {
+                    using (SqlConnection connection = new SqlConnection(_connectionString))
+                    {
+                        connection.Open();
+                        string deleteQuery = "DELETE FROM Users WHERE Username = @UsernameToDelete";
+                        using (SqlCommand deleteCommand = new SqlCommand(deleteQuery, connection))
+                        {
+                            deleteCommand.Parameters.AddWithValue("@UsernameToDelete", usernameToDelete);
+                            deleteCommand.ExecuteNonQuery();
+
+                            MessageBox.Show("User deleted successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void update_Click(object sender, EventArgs e)
