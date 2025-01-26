@@ -17,7 +17,22 @@ namespace JTI_Payroll_System
             InitializeComponent();
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void add_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void search_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void delete_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void update_Click(object sender, EventArgs e)
         {
 
         }

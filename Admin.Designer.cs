@@ -28,70 +28,70 @@
         /// </summary>
         private void InitializeComponent()
         {
-            label1 = new Label();
-            button1 = new Button();
-            button2 = new Button();
-            button3 = new Button();
+            add = new Button();
+            search = new Button();
+            delete = new Button();
+            update = new Button();
             SuspendLayout();
             // 
-            // label1
+            // add
             // 
-            label1.AutoSize = true;
-            label1.Font = new Font("Segoe UI", 72F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label1.Location = new Point(183, 18);
-            label1.Name = "label1";
-            label1.Size = new Size(415, 159);
-            label1.TabIndex = 0;
-            label1.Text = "Admin";
+            add.Location = new Point(169, 310);
+            add.Name = "add";
+            add.Size = new Size(94, 29);
+            add.TabIndex = 1;
+            add.Text = "ADD USER";
+            add.UseVisualStyleBackColor = true;
+            add.Click += add_Click;
             // 
-            // button1
+            // search
             // 
-            button1.Location = new Point(169, 310);
-            button1.Name = "button1";
-            button1.Size = new Size(94, 29);
-            button1.TabIndex = 1;
-            button1.Text = "ADD USER";
-            button1.UseVisualStyleBackColor = true;
-            button1.Click += button1_Click;
+            search.Location = new Point(269, 310);
+            search.Name = "search";
+            search.Size = new Size(94, 29);
+            search.TabIndex = 2;
+            search.Text = "SEARCH";
+            search.UseVisualStyleBackColor = true;
+            search.Click += search_Click;
             // 
-            // button2
+            // delete
             // 
-            button2.Location = new Point(269, 310);
-            button2.Name = "button2";
-            button2.Size = new Size(94, 29);
-            button2.TabIndex = 2;
-            button2.Text = "SEARCH";
-            button2.UseVisualStyleBackColor = true;
+            delete.Location = new Point(369, 310);
+            delete.Name = "delete";
+            delete.Size = new Size(94, 29);
+            delete.TabIndex = 3;
+            delete.Text = "DELETE";
+            delete.UseVisualStyleBackColor = true;
+            delete.Click += delete_Click;
             // 
-            // button3
+            // update
             // 
-            button3.Location = new Point(369, 310);
-            button3.Name = "button3";
-            button3.Size = new Size(94, 29);
-            button3.TabIndex = 3;
-            button3.Text = "DELETE";
-            button3.UseVisualStyleBackColor = true;
+            update.Location = new Point(469, 310);
+            update.Name = "update";
+            update.Size = new Size(94, 29);
+            update.TabIndex = 4;
+            update.Text = "UPDATE";
+            update.UseVisualStyleBackColor = true;
+            update.Click += update_Click;
             // 
             // Admin
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
-            Controls.Add(button3);
-            Controls.Add(button2);
-            Controls.Add(button1);
-            Controls.Add(label1);
+            Controls.Add(update);
+            Controls.Add(delete);
+            Controls.Add(search);
+            Controls.Add(add);
             Name = "Admin";
             Text = "Admin";
             ResumeLayout(false);
-            PerformLayout();
         }
 
         #endregion
-
-        private Label label1;
-        private Button button1;
-        private Button button2;
-        private Button button3;
+        private Button add;
+        private Button search;
+        private Button delete;
+        private Button update;
     }
 }
