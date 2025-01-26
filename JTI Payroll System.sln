@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.12.35707.178 d17.12
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JTI Payroll System", "JTI Payroll System.csproj", "{0A07AC51-B2B0-4B31-81CB-8E3E4CE76424}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0A07AC51-B2B0-4B31-81CB-8E3E4CE76424}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0A07AC51-B2B0-4B31-81CB-8E3E4CE76424}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0A07AC51-B2B0-4B31-81CB-8E3E4CE76424}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0A07AC51-B2B0-4B31-81CB-8E3E4CE76424}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
