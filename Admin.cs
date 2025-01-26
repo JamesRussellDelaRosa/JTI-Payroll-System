@@ -88,7 +88,31 @@ namespace JTI_Payroll_System
 
         private void update_Click(object sender, EventArgs e)
         {
+            try
+            {
 
+                string userName = username.Text;
+                string newPassword = password.Text;
+
+                using (SqlConnection connection = new SqlConnection(_connectionString))
+                {
+                    connection.Open();
+                    string query = "UPDATE Users SET Password = @NewPassword WHERE Username = @Username";
+                    using (SqlCommand command = new SqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@Username", userName);
+                        command.Parameters.AddWithValue("@NewPassword", newPassword);
+                        command.ExecuteNonQuery();
+
+                        MessageBox.Show("User updated successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        LoadUserData(); // Refresh the DataGridView
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void view_Click(object sender, EventArgs e)
