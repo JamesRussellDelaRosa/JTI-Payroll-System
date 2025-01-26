@@ -34,8 +34,8 @@
             update = new Button();
             label1 = new Label();
             label2 = new Label();
-            textBox1 = new TextBox();
-            textBox2 = new TextBox();
+            username = new TextBox();
+            password = new TextBox();
             SuspendLayout();
             // 
             // add
@@ -98,27 +98,27 @@
             label2.TabIndex = 6;
             label2.Text = "PASSWORD";
             // 
-            // textBox1
+            // username
             // 
-            textBox1.Location = new Point(322, 152);
-            textBox1.Name = "textBox1";
-            textBox1.Size = new Size(125, 27);
-            textBox1.TabIndex = 7;
+            username.Location = new Point(322, 152);
+            username.Name = "username";
+            username.Size = new Size(125, 27);
+            username.TabIndex = 7;
             // 
-            // textBox2
+            // password
             // 
-            textBox2.Location = new Point(322, 211);
-            textBox2.Name = "textBox2";
-            textBox2.Size = new Size(125, 27);
-            textBox2.TabIndex = 8;
+            password.Location = new Point(322, 211);
+            password.Name = "password";
+            password.Size = new Size(125, 27);
+            password.TabIndex = 8;
             // 
             // Admin
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
-            Controls.Add(textBox2);
-            Controls.Add(textBox1);
+            Controls.Add(password);
+            Controls.Add(username);
             Controls.Add(label2);
             Controls.Add(label1);
             Controls.Add(update);
@@ -138,7 +138,7 @@
         private Button update;
         private Label label1;
         private Label label2;
-        private TextBox textBox1;
-        private TextBox textBox2;
+        private TextBox username;
+        private TextBox password;
     }
 }
