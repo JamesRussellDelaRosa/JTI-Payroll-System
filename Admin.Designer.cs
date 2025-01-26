@@ -36,11 +36,14 @@
             label2 = new Label();
             username = new TextBox();
             password = new TextBox();
+            view = new Button();
+            dataGridView1 = new DataGridView();
+            ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             SuspendLayout();
             // 
             // add
             // 
-            add.Location = new Point(169, 310);
+            add.Location = new Point(15, 314);
             add.Name = "add";
             add.Size = new Size(94, 29);
             add.TabIndex = 1;
@@ -50,7 +53,7 @@
             // 
             // search
             // 
-            search.Location = new Point(269, 310);
+            search.Location = new Point(115, 314);
             search.Name = "search";
             search.Size = new Size(94, 29);
             search.TabIndex = 2;
@@ -60,7 +63,7 @@
             // 
             // delete
             // 
-            delete.Location = new Point(369, 310);
+            delete.Location = new Point(215, 314);
             delete.Name = "delete";
             delete.Size = new Size(94, 29);
             delete.TabIndex = 3;
@@ -70,7 +73,7 @@
             // 
             // update
             // 
-            update.Location = new Point(469, 310);
+            update.Location = new Point(315, 314);
             update.Name = "update";
             update.Size = new Size(94, 29);
             update.TabIndex = 4;
@@ -82,7 +85,7 @@
             // 
             label1.AutoSize = true;
             label1.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label1.Location = new Point(169, 151);
+            label1.Location = new Point(31, 187);
             label1.Name = "label1";
             label1.Size = new Size(115, 28);
             label1.TabIndex = 5;
@@ -92,7 +95,7 @@
             // 
             label2.AutoSize = true;
             label2.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label2.Location = new Point(172, 207);
+            label2.Location = new Point(34, 243);
             label2.Name = "label2";
             label2.Size = new Size(117, 28);
             label2.TabIndex = 6;
@@ -100,23 +103,44 @@
             // 
             // username
             // 
-            username.Location = new Point(322, 152);
+            username.Location = new Point(184, 188);
             username.Name = "username";
             username.Size = new Size(125, 27);
             username.TabIndex = 7;
             // 
             // password
             // 
-            password.Location = new Point(322, 211);
+            password.Location = new Point(184, 247);
             password.Name = "password";
             password.Size = new Size(125, 27);
             password.TabIndex = 8;
+            // 
+            // view
+            // 
+            view.Location = new Point(415, 314);
+            view.Name = "view";
+            view.Size = new Size(94, 29);
+            view.TabIndex = 9;
+            view.Text = "VIEW";
+            view.UseVisualStyleBackColor = true;
+            view.Click += view_Click;
+            // 
+            // dataGridView1
+            // 
+            dataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dataGridView1.Location = new Point(449, 99);
+            dataGridView1.Name = "dataGridView1";
+            dataGridView1.RowHeadersWidth = 51;
+            dataGridView1.Size = new Size(300, 188);
+            dataGridView1.TabIndex = 10;
             // 
             // Admin
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(dataGridView1);
+            Controls.Add(view);
             Controls.Add(password);
             Controls.Add(username);
             Controls.Add(label2);
@@ -127,6 +151,7 @@
             Controls.Add(add);
             Name = "Admin";
             Text = "Admin";
+            ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -140,5 +165,7 @@
         private Label label2;
         private TextBox username;
         private TextBox password;
+        private Button view;
+        private DataGridView dataGridView1;
     }
 }
