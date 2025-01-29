@@ -38,6 +38,7 @@
             password = new TextBox();
             view = new Button();
             dataGridView1 = new DataGridView();
+            employee = new Button();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             SuspendLayout();
             // 
@@ -134,11 +135,22 @@
             dataGridView1.Size = new Size(300, 188);
             dataGridView1.TabIndex = 10;
             // 
+            // employee
+            // 
+            employee.Location = new Point(515, 314);
+            employee.Name = "employee";
+            employee.Size = new Size(94, 29);
+            employee.TabIndex = 11;
+            employee.Text = "EMPLOYEE";
+            employee.UseVisualStyleBackColor = true;
+            employee.Click += button1_Click;
+            // 
             // Admin
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(employee);
             Controls.Add(dataGridView1);
             Controls.Add(view);
             Controls.Add(password);
@@ -167,5 +179,6 @@
         private TextBox password;
         private Button view;
         private DataGridView dataGridView1;
+        private Button employee;
     }
 }

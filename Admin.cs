@@ -14,7 +14,6 @@ namespace JTI_Payroll_System
 {
     public partial class Admin : Form
     {
-        private readonly string _connectionString = ConfigurationManager.ConnectionStrings["JTI_Payroll_System.Properties.Settings.JtiPayrollSystem"].ConnectionString;
         public Admin()
         {
             InitializeComponent();
@@ -27,7 +26,7 @@ namespace JTI_Payroll_System
                 string userName = username.Text;
                 string passWord = password.Text;
 
-                using (SqlConnection connection = new SqlConnection(_connectionString))
+                using (SqlConnection connection = DatabaseHelper.GetConnection())
                 {
                     connection.Open();
                     string query = "INSERT INTO Users (Username, Password, UserType) VALUES (@Username, @Password, 'User')";
@@ -67,7 +66,7 @@ namespace JTI_Payroll_System
                 DialogResult result = MessageBox.Show("Are you sure you want to delete this user?", "Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
                 if (result == DialogResult.Yes)
                 {
-                    using (SqlConnection connection = new SqlConnection(_connectionString))
+                    using (SqlConnection connection = DatabaseHelper.GetConnection())
                     {
                         connection.Open();
                         string deleteQuery = "DELETE FROM Users WHERE Username = @UsernameToDelete";
@@ -95,7 +94,7 @@ namespace JTI_Payroll_System
                 string userName = username.Text;
                 string newPassword = password.Text;
 
-                using (SqlConnection connection = new SqlConnection(_connectionString))
+                using (SqlConnection connection = DatabaseHelper.GetConnection())
                 {
                     connection.Open();
                     string query = "UPDATE Users SET Password = @NewPassword WHERE Username = @Username";
@@ -124,7 +123,7 @@ namespace JTI_Payroll_System
         {
             try
             {
-                using (SqlConnection connection = new SqlConnection(_connectionString))
+                using (SqlConnection connection = DatabaseHelper.GetConnection())
                 {
                     connection.Open();
                     string query = "SELECT Username, Password, UserType FROM Users";
@@ -143,6 +142,14 @@ namespace JTI_Payroll_System
             {
                 MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            // Redirect to Admin form
+            employee employeeForm = new employee();
+            employeeForm.Show();
+            this.Hide();
         }
     }
 }
