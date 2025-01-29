@@ -1,4 +1,5 @@
 using System;
+using System.Configuration;
 using System.Drawing;
 using System.Windows.Forms;
 using Microsoft.Data.SqlClient;
@@ -19,7 +20,7 @@ namespace JTI_Payroll_System
             string password = textBox2.Text;
 
             // Database connection string
-            string connectionString = @"Data Source=DELAROSA;Initial Catalog=""JTI PAYROLL SYSTEM"";Integrated Security=True;Trust Server Certificate=True;";
+            string connectionString = ConfigurationManager.ConnectionStrings["JTI_Payroll_System.Properties.Settings.JtiPayrollSystem"].ConnectionString;
 
             // SQL query to check user credentials
             string query = "SELECT UserType FROM Users WHERE Username = @Username AND Password = @Password";
