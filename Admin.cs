@@ -14,7 +14,7 @@ namespace JTI_Payroll_System
 {
     public partial class Admin : Form
     {
-        private readonly string _connectionString = ConfigurationManager.ConnectionStrings["JtiPayrollSystem"].ConnectionString;
+        private readonly string _connectionString = ConfigurationManager.ConnectionStrings["JTI_Payroll_System.Properties.Settings.JtiPayrollSystem"].ConnectionString;
         public Admin()
         {
             InitializeComponent();

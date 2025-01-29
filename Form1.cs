@@ -20,7 +20,7 @@ namespace JTI_Payroll_System
             string password = textBox2.Text;
 
             // Database connection string
-            string connectionString = ConfigurationManager.ConnectionStrings["JtiPayrollSystem"].ConnectionString;
+            string connectionString = ConfigurationManager.ConnectionStrings["JTI_Payroll_System.Properties.Settings.JtiPayrollSystem"].ConnectionString;
 
             // SQL query to check user credentials
             string query = "SELECT UserType FROM Users WHERE Username = @Username AND Password = @Password";
