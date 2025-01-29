@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Configuration;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -13,7 +14,7 @@ namespace JTI_Payroll_System
 {
     public partial class Admin : Form
     {
-        private readonly string _connectionString = @"Data Source=DELAROSA;Initial Catalog=""JTI PAYROLL SYSTEM"";Integrated Security=True;Trust Server Certificate=True;";
+        private readonly string _connectionString = ConfigurationManager.ConnectionStrings["JtiPayrollSystem"].ConnectionString;
         public Admin()
         {
             InitializeComponent();
