@@ -2,7 +2,7 @@ using System;
 using System.Configuration;
 using System.Drawing;
 using System.Windows.Forms;
-using Microsoft.Data.SqlClient;
+using MySql.Data.MySqlClient;
 
 namespace JTI_Payroll_System
 {
@@ -19,15 +19,12 @@ namespace JTI_Payroll_System
             string username = textBox1.Text;
             string password = textBox2.Text;
 
-            // Database connection string
-            string connectionString = ConfigurationManager.ConnectionStrings["JTI_Payroll_System.Properties.Settings.JtiPayrollSystem"].ConnectionString;
-
             // SQL query to check user credentials
             string query = "SELECT UserType FROM Users WHERE Username = @Username AND Password = @Password";
 
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (MySqlConnection connection = DatabaseHelper.GetConnection())
             {
-                using (SqlCommand command = new SqlCommand(query, connection))
+                using (MySqlCommand command = new MySqlCommand(query, connection))
                 {
                     command.Parameters.AddWithValue("@Username", username);
                     command.Parameters.AddWithValue("@Password", password);
@@ -37,7 +34,7 @@ namespace JTI_Payroll_System
                         connection.Open();
 
                         // Execute the query and read the result
-                        using (SqlDataReader reader = command.ExecuteReader())
+                        using (MySqlDataReader reader = command.ExecuteReader())
                         {
                             if (reader.Read())
                             {
@@ -46,7 +43,7 @@ namespace JTI_Payroll_System
 
                                 MessageBox.Show("Login successful!");
 
-                                if (userType == "Admin")
+                                if (userType == "admin")
                                 {
                                     // Redirect to Admin form
                                     Admin adminForm = new Admin();
