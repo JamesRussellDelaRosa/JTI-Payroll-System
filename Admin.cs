@@ -8,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Microsoft.Data.SqlClient;
+using MySql.Data.MySqlClient;
 
 namespace JTI_Payroll_System
 {
@@ -26,11 +26,11 @@ namespace JTI_Payroll_System
                 string userName = username.Text;
                 string passWord = password.Text;
 
-                using (SqlConnection connection = DatabaseHelper.GetConnection())
+                using (MySqlConnection connection = DatabaseHelper.GetConnection())
                 {
                     connection.Open();
                     string query = "INSERT INTO Users (Username, Password, UserType) VALUES (@Username, @Password, 'User')";
-                    using (SqlCommand command = new SqlCommand(query, connection))
+                    using (MySqlCommand command = new MySqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@Username", userName);
                         command.Parameters.AddWithValue("@Password", passWord);
@@ -66,11 +66,11 @@ namespace JTI_Payroll_System
                 DialogResult result = MessageBox.Show("Are you sure you want to delete this user?", "Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
                 if (result == DialogResult.Yes)
                 {
-                    using (SqlConnection connection = DatabaseHelper.GetConnection())
+                    using (MySqlConnection connection = DatabaseHelper.GetConnection())
                     {
                         connection.Open();
                         string deleteQuery = "DELETE FROM Users WHERE Username = @UsernameToDelete";
-                        using (SqlCommand deleteCommand = new SqlCommand(deleteQuery, connection))
+                        using (MySqlCommand deleteCommand = new MySqlCommand(deleteQuery, connection))
                         {
                             deleteCommand.Parameters.AddWithValue("@UsernameToDelete", usernameToDelete);
                             deleteCommand.ExecuteNonQuery();
@@ -94,11 +94,11 @@ namespace JTI_Payroll_System
                 string userName = username.Text;
                 string newPassword = password.Text;
 
-                using (SqlConnection connection = DatabaseHelper.GetConnection())
+                using (MySqlConnection connection = DatabaseHelper.GetConnection())
                 {
                     connection.Open();
                     string query = "UPDATE Users SET Password = @NewPassword WHERE Username = @Username";
-                    using (SqlCommand command = new SqlCommand(query, connection))
+                    using (MySqlCommand command = new MySqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@Username", userName);
                         command.Parameters.AddWithValue("@NewPassword", newPassword);
@@ -123,13 +123,13 @@ namespace JTI_Payroll_System
         {
             try
             {
-                using (SqlConnection connection = DatabaseHelper.GetConnection())
+                using (MySqlConnection connection = DatabaseHelper.GetConnection())
                 {
                     connection.Open();
                     string query = "SELECT Username, Password, UserType FROM Users";
-                    using (SqlCommand command = new SqlCommand(query, connection))
+                    using (MySqlCommand command = new MySqlCommand(query, connection))
                     {
-                        using (SqlDataReader reader = command.ExecuteReader())
+                        using (MySqlDataReader reader = command.ExecuteReader())
                         {
                             DataTable dt = new DataTable();
                             dt.Load(reader);
