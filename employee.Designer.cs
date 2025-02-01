@@ -45,6 +45,7 @@
             textSalary = new TextBox();
             label6 = new Label();
             saveEmp = new Button();
+            import = new Button();
             SuspendLayout();
             // 
             // label1
@@ -187,11 +188,22 @@
             saveEmp.UseVisualStyleBackColor = true;
             saveEmp.Click += saveEmp_Click;
             // 
+            // import
+            // 
+            import.Location = new Point(227, 315);
+            import.Name = "import";
+            import.Size = new Size(94, 29);
+            import.TabIndex = 17;
+            import.Text = "import";
+            import.UseVisualStyleBackColor = true;
+            import.Click += import_Click;
+            // 
             // employee
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(import);
             Controls.Add(saveEmp);
             Controls.Add(textSalary);
             Controls.Add(label6);
@@ -234,5 +246,6 @@
         private TextBox textSalary;
         private Label label6;
         private Button saveEmp;
+        private Button import;
     }
 }
