@@ -238,5 +238,99 @@ namespace JTI_Payroll_System
                 }
             }
         }
+
+        private void search_Click(object sender, EventArgs e)
+        {
+            string searchText = searchbar.Text.Trim();
+
+            if (string.IsNullOrEmpty(searchText))
+            {
+                MessageBox.Show("Please enter a search keyword!", "Search Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            using (MySqlConnection connection = DatabaseHelper.GetConnection())
+            {
+                connection.Open();
+
+                string query = @"
+                    SELECT id_no, fname, lname
+                    FROM employee 
+                    WHERE id_no LIKE @search OR fname LIKE @search OR lname LIKE @search";
+
+                using (MySqlCommand cmd = new MySqlCommand(query, connection))
+                {
+                    cmd.Parameters.AddWithValue("@search", "%" + searchText + "%");
+
+                    using (MySqlDataAdapter adapter = new MySqlDataAdapter(cmd))
+                    {
+                        DataTable employeeData = new DataTable();
+                        adapter.Fill(employeeData);
+
+                        if (employeeData.Rows.Count == 1)  // If only one match is found
+                        {
+                            DataRow row = employeeData.Rows[0];
+                            textEmpID.Text = row["id_no"].ToString();
+                            textFirstName.Text = row["fname"].ToString();
+                            textLastName.Text = row["lname"].ToString();
+                        }
+                        else if (employeeData.Rows.Count > 1)  // If multiple matches exist
+                        {
+                            using (SelectEmployeeForm selectForm = new SelectEmployeeForm(employeeData))
+                            {
+                                if (selectForm.ShowDialog() == DialogResult.OK)
+                                {
+                                    textEmpID.Text = selectForm.SelectedID;
+                                    textFirstName.Text = selectForm.SelectedFName;
+                                    textLastName.Text = selectForm.SelectedLName; 
+                                }
+                            }
+                        }
+                        else
+                        {
+                            MessageBox.Show("No matching records found!", "Search Result", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                    }
+                }
+            }
+        }
+
+        private void btnOpenSelectEmployeeForm_Click(object sender, EventArgs e)
+        {
+            // Fetch employee data (Replace with actual database query)
+            DataTable employeeData = GetEmployeeData();
+
+            using (SelectEmployeeForm selectForm = new SelectEmployeeForm(employeeData))
+            {
+                if (selectForm.ShowDialog() == DialogResult.OK)
+                {
+                    textEmpID.Text = selectForm.SelectedID;
+                    textFirstName.Text = selectForm.SelectedFName;
+                    textLastName.Text = selectForm.SelectedLName;
+                }
+            }
+        }
+
+        private DataTable GetEmployeeData()
+        {
+            DataTable dt = new DataTable();
+
+            // Define your SQL query
+            string query = "SELECT id_no, fname, lname FROM employee";
+
+            // Connect to the database
+            using (MySqlConnection connection = DatabaseHelper.GetConnection())
+            {
+                MySqlDataAdapter dataAdapter = new MySqlDataAdapter(query, connection);
+                dataAdapter.Fill(dt);  // Fill the DataTable with data from the database
+            }
+
+            return dt;
+        }
+
+        private void textLastName_TextChanged(object sender, EventArgs e)
+        {
+
+        }
     }
 }

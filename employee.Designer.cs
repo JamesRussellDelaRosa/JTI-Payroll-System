@@ -42,10 +42,11 @@
             label4 = new Label();
             birthday = new DateTimePicker();
             label5 = new Label();
-            textSalary = new TextBox();
-            label6 = new Label();
             saveEmp = new Button();
             import = new Button();
+            search = new Button();
+            searchbar = new TextBox();
+            sqlCommand1 = new Microsoft.Data.SqlClient.SqlCommand();
             SuspendLayout();
             // 
             // label1
@@ -162,22 +163,6 @@
             label5.TabIndex = 13;
             label5.Text = "Birthday";
             // 
-            // textSalary
-            // 
-            textSalary.Location = new Point(112, 246);
-            textSalary.Name = "textSalary";
-            textSalary.Size = new Size(125, 27);
-            textSalary.TabIndex = 15;
-            // 
-            // label6
-            // 
-            label6.AutoSize = true;
-            label6.Location = new Point(25, 249);
-            label6.Name = "label6";
-            label6.Size = new Size(49, 20);
-            label6.TabIndex = 14;
-            label6.Text = "Salary";
-            // 
             // saveEmp
             // 
             saveEmp.Location = new Point(112, 315);
@@ -198,15 +183,37 @@
             import.UseVisualStyleBackColor = true;
             import.Click += import_Click;
             // 
+            // search
+            // 
+            search.Location = new Point(694, 14);
+            search.Name = "search";
+            search.Size = new Size(94, 29);
+            search.TabIndex = 18;
+            search.Text = "search";
+            search.UseVisualStyleBackColor = true;
+            search.Click += search_Click;
+            // 
+            // searchbar
+            // 
+            searchbar.Location = new Point(492, 14);
+            searchbar.Name = "searchbar";
+            searchbar.Size = new Size(196, 27);
+            searchbar.TabIndex = 19;
+            // 
+            // sqlCommand1
+            // 
+            sqlCommand1.CommandTimeout = 30;
+            sqlCommand1.EnableOptimizedParameterBinding = false;
+            // 
             // employee
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(searchbar);
+            Controls.Add(search);
             Controls.Add(import);
             Controls.Add(saveEmp);
-            Controls.Add(textSalary);
-            Controls.Add(label6);
             Controls.Add(label5);
             Controls.Add(birthday);
             Controls.Add(textPhone);
@@ -243,9 +250,10 @@
         private Label label4;
         private DateTimePicker birthday;
         private Label label5;
-        private TextBox textSalary;
-        private Label label6;
         private Button saveEmp;
         private Button import;
+        private Button search;
+        private TextBox searchbar;
+        private Microsoft.Data.SqlClient.SqlCommand sqlCommand1;
     }
 }
