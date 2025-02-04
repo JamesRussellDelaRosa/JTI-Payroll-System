@@ -39,6 +39,8 @@
             view = new Button();
             dataGridView1 = new DataGridView();
             employee = new Button();
+            uploadattlog = new Button();
+            progressBar1 = new ProgressBar();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             SuspendLayout();
             // 
@@ -145,11 +147,30 @@
             employee.UseVisualStyleBackColor = true;
             employee.Click += button1_Click;
             // 
+            // uploadattlog
+            // 
+            uploadattlog.Location = new Point(615, 314);
+            uploadattlog.Name = "uploadattlog";
+            uploadattlog.Size = new Size(94, 29);
+            uploadattlog.TabIndex = 12;
+            uploadattlog.Text = "UploadATT";
+            uploadattlog.UseVisualStyleBackColor = true;
+            uploadattlog.Click += uploadattlog_Click;
+            // 
+            // progressBar1
+            // 
+            progressBar1.Location = new Point(234, 36);
+            progressBar1.Name = "progressBar1";
+            progressBar1.Size = new Size(307, 29);
+            progressBar1.TabIndex = 13;
+            // 
             // Admin
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(progressBar1);
+            Controls.Add(uploadattlog);
             Controls.Add(employee);
             Controls.Add(dataGridView1);
             Controls.Add(view);
@@ -180,5 +201,7 @@
         private Button view;
         private DataGridView dataGridView1;
         private Button employee;
+        private Button uploadattlog;
+        private ProgressBar progressBar1;
     }
 }
