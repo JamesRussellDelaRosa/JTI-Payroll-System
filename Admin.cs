@@ -166,23 +166,23 @@ namespace JTI_Payroll_System
             }
         }
 
-        private void UploadDatFileToDatabase(string filePath)
+        private async void UploadDatFileToDatabase(string filePath)
         {
+            ProgressForm progressForm = new ProgressForm();
+            progressForm.Show(); // Show progress window
+
+            int successfulInserts = 0;
+            int skippedLines = 0;
+            int duplicateRecords = 0;
+
             try
             {
                 string[] lines = File.ReadAllLines(filePath);
                 int totalLines = lines.Length;
 
-                progressBar1.Minimum = 0;
-                progressBar1.Maximum = totalLines;
-                progressBar1.Value = 0;
-                progressBar1.Step = 1;
-
                 using (MySqlConnection conn = DatabaseHelper.GetConnection())
                 {
                     conn.Open();
-
-                    // 🟢 Step 1: Load existing records into HashSet for fast lookup
                     HashSet<string> existingRecords = new HashSet<string>();
                     string loadExistingQuery = "SELECT CONCAT(id, '|', date, '|', time) FROM attendance";
                     using (MySqlCommand loadCmd = new MySqlCommand(loadExistingQuery, conn))
@@ -191,20 +191,16 @@ namespace JTI_Payroll_System
                         {
                             while (reader.Read())
                             {
-                                existingRecords.Add(reader.GetString(0)); // Add "id|date|time" as key
+                                existingRecords.Add(reader.GetString(0));
                             }
                         }
                     }
 
-                    int successfulInserts = 0;
-                    int skippedLines = 0;
-                    int duplicateRecords = 0;
+                    List<MySqlCommand> insertCommands = new List<MySqlCommand>();
 
-                    List<MySqlCommand> insertCommands = new List<MySqlCommand>(); // Batch insert commands
-
-                    // 🟢 Step 2: Process each line from the file
-                    foreach (string line in lines)
+                    for (int i = 0; i < lines.Length; i++)
                     {
+                        string line = lines[i];
                         if (string.IsNullOrWhiteSpace(line)) continue;
 
                         string[] values = line.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
@@ -215,16 +211,14 @@ namespace JTI_Payroll_System
                                 string id = values[0];
                                 string date = values[1];
                                 string time = values[2];
-                                string recordKey = $"{id}|{date}|{time}"; // Unique key for checking duplicates
+                                string recordKey = $"{id}|{date}|{time}";
 
-                                // Check in-memory first before inserting
                                 if (existingRecords.Contains(recordKey))
                                 {
                                     duplicateRecords++;
-                                    continue; // Skip exact duplicate records
+                                    continue;
                                 }
 
-                                // 🟢 Step 3: Add insert query to batch
                                 string insertQuery = "INSERT INTO attendance (id, date, time, col1, col2, col3, col4) " +
                                                      "VALUES (@id, @date, @time, @col1, @col2, @col3, @col4)";
                                 MySqlCommand cmd = new MySqlCommand(insertQuery, conn);
@@ -237,28 +231,24 @@ namespace JTI_Payroll_System
                                 cmd.Parameters.AddWithValue("@col4", values.Length > 6 ? values[6] : DBNull.Value);
                                 insertCommands.Add(cmd);
 
-                                // Add to existing records to prevent duplicate insertions in the same run
                                 existingRecords.Add(recordKey);
-
                                 successfulInserts++;
                             }
-                            catch (Exception sqlEx)
+                            catch
                             {
-                                Console.WriteLine($"SQL Error on line: \"{line}\" - {sqlEx.Message}");
                                 skippedLines++;
                             }
                         }
                         else
                         {
-                            Console.WriteLine($"Skipping line due to incorrect format: \"{line}\" (Found {values.Length} values)");
                             skippedLines++;
                         }
 
-                        progressBar1.PerformStep();
-                        Application.DoEvents();
+                        // 🔹 Update progress form UI
+                        progressForm.UpdateProgress(i + 1, totalLines, $"Processing {i + 1}/{totalLines}...");
+                        await Task.Delay(10); // Simulate processing delay
                     }
 
-                    // 🟢 Step 4: Execute all insert queries in a batch (faster)
                     using (MySqlTransaction transaction = conn.BeginTransaction())
                     {
                         foreach (var cmd in insertCommands)
@@ -268,17 +258,19 @@ namespace JTI_Payroll_System
                         }
                         transaction.Commit();
                     }
-
-                    MessageBox.Show($"Import Completed!\nSuccessful Inserts: {successfulInserts}\nSkipped Lines: {skippedLines}\nDuplicate Records Skipped: {duplicateRecords}",
-                        "Import Summary", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
 
-                progressBar1.Value = 0;
+                MessageBox.Show($"Import Completed!\nSuccessful Inserts: {successfulInserts}\nSkipped Lines: {skippedLines}\nDuplicate Records Skipped: {duplicateRecords}",
+                    "Import Summary", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Error: " + ex.Message, "Import Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                progressBar1.Value = 0;
+            }
+            finally
+            {
+                // 🔹 Close progress form after upload completes
+                progressForm.Close();
             }
         }
     }
