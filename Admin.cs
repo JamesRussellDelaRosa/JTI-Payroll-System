@@ -174,6 +174,7 @@ namespace JTI_Payroll_System
             int successfulInserts = 0;
             int skippedLines = 0;
             int duplicateRecords = 0;
+            int missingEmployees = 0;
 
             try
             {
@@ -183,6 +184,8 @@ namespace JTI_Payroll_System
                 using (MySqlConnection conn = DatabaseHelper.GetConnection())
                 {
                     conn.Open();
+
+                    // 🔹 Load existing attendance records to prevent duplicates
                     HashSet<string> existingRecords = new HashSet<string>();
                     string loadExistingQuery = "SELECT CONCAT(id, '|', date, '|', time) FROM attendance";
                     using (MySqlCommand loadCmd = new MySqlCommand(loadExistingQuery, conn))
@@ -192,6 +195,20 @@ namespace JTI_Payroll_System
                             while (reader.Read())
                             {
                                 existingRecords.Add(reader.GetString(0));
+                            }
+                        }
+                    }
+
+                    // 🔹 Load valid employee IDs to check before inserting attendance
+                    HashSet<string> validEmployeeIds = new HashSet<string>();
+                    string loadEmployeesQuery = "SELECT id_no FROM employee";
+                    using (MySqlCommand loadEmpCmd = new MySqlCommand(loadEmployeesQuery, conn))
+                    {
+                        using (MySqlDataReader reader = loadEmpCmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                validEmployeeIds.Add(reader.GetString(0));
                             }
                         }
                     }
@@ -213,12 +230,21 @@ namespace JTI_Payroll_System
                                 string time = values[2];
                                 string recordKey = $"{id}|{date}|{time}";
 
+                                // 🔹 Skip if the record already exists
                                 if (existingRecords.Contains(recordKey))
                                 {
                                     duplicateRecords++;
                                     continue;
                                 }
 
+                                // 🔹 Skip if the employee does not exist in the `employee` table
+                                if (!validEmployeeIds.Contains(id))
+                                {
+                                    missingEmployees++;
+                                    continue;
+                                }
+
+                                // 🔹 Insert attendance record
                                 string insertQuery = "INSERT INTO attendance (id, date, time, col1, col2, col3, col4) " +
                                                      "VALUES (@id, @date, @time, @col1, @col2, @col3, @col4)";
                                 MySqlCommand cmd = new MySqlCommand(insertQuery, conn);
@@ -249,6 +275,7 @@ namespace JTI_Payroll_System
                         await Task.Delay(10); // Simulate processing delay
                     }
 
+                    // 🔹 Execute all insert queries within a transaction
                     using (MySqlTransaction transaction = conn.BeginTransaction())
                     {
                         foreach (var cmd in insertCommands)
@@ -260,7 +287,11 @@ namespace JTI_Payroll_System
                     }
                 }
 
-                MessageBox.Show($"Import Completed!\nSuccessful Inserts: {successfulInserts}\nSkipped Lines: {skippedLines}\nDuplicate Records Skipped: {duplicateRecords}",
+                MessageBox.Show($"Import Completed!\n" +
+                                $"✅ Successful Inserts: {successfulInserts}\n" +
+                                $"❌ Skipped Lines: {skippedLines}\n" +
+                                $"⚠️ Duplicate Records Skipped: {duplicateRecords}\n" +
+                                $"🚫 Missing Employee Records Skipped: {missingEmployees}",
                     "Import Summary", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
