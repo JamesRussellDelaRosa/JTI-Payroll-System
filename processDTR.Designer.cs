@@ -36,6 +36,8 @@
             dgvDTR = new DataGridView();
             textID = new Label();
             textName = new Label();
+            btnBack = new Button();
+            btnNext = new Button();
             ((System.ComponentModel.ISupportInitialize)dgvDTR).BeginInit();
             SuspendLayout();
             // 
@@ -110,11 +112,33 @@
             textName.TabIndex = 7;
             textName.Text = "Employee Name";
             // 
+            // btnBack
+            // 
+            btnBack.Location = new Point(547, 9);
+            btnBack.Name = "btnBack";
+            btnBack.Size = new Size(94, 29);
+            btnBack.TabIndex = 8;
+            btnBack.Text = "BACK";
+            btnBack.UseVisualStyleBackColor = true;
+            btnBack.Click += btnBack_Click;
+            // 
+            // btnNext
+            // 
+            btnNext.Location = new Point(647, 9);
+            btnNext.Name = "btnNext";
+            btnNext.Size = new Size(94, 29);
+            btnNext.TabIndex = 9;
+            btnNext.Text = "NEXT";
+            btnNext.UseVisualStyleBackColor = true;
+            btnNext.Click += btnNext_Click;
+            // 
             // processDTR
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1136, 525);
+            Controls.Add(btnNext);
+            Controls.Add(btnBack);
             Controls.Add(textName);
             Controls.Add(textID);
             Controls.Add(dgvDTR);
@@ -125,7 +149,6 @@
             Controls.Add(textStartDate);
             Name = "processDTR";
             Text = "processDTR";
-            Load += processDTR_Load;
             ((System.ComponentModel.ISupportInitialize)dgvDTR).EndInit();
             ResumeLayout(false);
             PerformLayout();
@@ -141,5 +164,7 @@
         private DataGridView dgvDTR;
         private Label textID;
         private Label textName;
+        private Button btnBack;
+        private Button btnNext;
     }
 }
