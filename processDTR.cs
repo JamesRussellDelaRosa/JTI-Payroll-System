@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Windows.Forms;
+using DocumentFormat.OpenXml.Wordprocessing;
 using MySql.Data.MySqlClient;
 
 namespace JTI_Payroll_System
@@ -84,50 +85,44 @@ namespace JTI_Payroll_System
                 using (MySqlConnection conn = DatabaseHelper.GetConnection())
                 {
                     conn.Open();
-                    string query = @"
-                        SELECT e.id_no, e.fname, e.lname, a.date, 
-                               MIN(a.time) AS TimeIn, MAX(a.time) AS TimeOut
-                        FROM employee e
-                        INNER JOIN attendance a ON e.id_no = a.id
-                        WHERE e.id_no = @employeeID AND a.date BETWEEN @startDate AND @endDate
-                        GROUP BY e.id_no, a.date
-                        ORDER BY a.date ASC;";
 
-                    DataTable dt = new DataTable(); // ✅ Create DataTable to store results
+                    // 🔹 First, check for existing processedDTR data
+                    string query = @"
+                SELECT e.id_no AS EmployeeID, 
+                       CONCAT(e.fname, ' ', e.lname) AS EmployeeName, 
+                       p.date, p.time_in AS TimeIn, p.time_out AS TimeOut, p.rate
+                FROM processedDTR p
+                INNER JOIN employee e ON p.employee_id = e.id_no
+                WHERE p.employee_id = @employeeID 
+                      AND p.date BETWEEN @startDate AND @endDate
+                ORDER BY p.date ASC;";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@employeeID", employeeID);
-                        cmd.Parameters.AddWithValue("@startDate", startDate);
-                        cmd.Parameters.AddWithValue("@endDate", endDate);
+                        cmd.Parameters.AddWithValue("@startDate", startDate.ToString("yyyy-MM-dd"));
+                        cmd.Parameters.AddWithValue("@endDate", endDate.ToString("yyyy-MM-dd"));
 
-                        using (MySqlDataReader reader = cmd.ExecuteReader())
+                        using (MySqlDataAdapter adapter = new MySqlDataAdapter(cmd))
                         {
-                            if (reader.Read())
+                            DataTable dt = new DataTable();
+                            adapter.Fill(dt);
+
+                            if (dt.Rows.Count > 0)
                             {
-                                textID.Text = reader["id_no"].ToString();
-                                textName.Text = reader["fname"].ToString() + " " + reader["lname"].ToString();
+                                // ✅ Processed DTR exists, load it
+                                textID.Text = dt.Rows[0]["EmployeeID"].ToString();
+                                textName.Text = dt.Rows[0]["EmployeeName"].ToString();
+                                dgvDTR.DataSource = dt; // ✅ Load into DataGridView
+                            }
+                            else
+                            {
+                                // 🚨 No processedDTR exists, load attendance data instead
+                                LoadAttendanceData(employeeID, startDate, endDate);
                             }
                         }
-
-                        // ✅ Reset the command for the adapter
-                        cmd.CommandText = query;
-                        cmd.Parameters.Clear();
-                        cmd.Parameters.AddWithValue("@employeeID", employeeID);
-                        cmd.Parameters.AddWithValue("@startDate", startDate);
-                        cmd.Parameters.AddWithValue("@endDate", endDate);
-
-                        using (MySqlDataAdapter adapter = new MySqlDataAdapter(cmd)) // ✅ Fix: New MySqlCommand instance is used
-                        {
-                            adapter.Fill(dt);
-                        }
                     }
-
-                    dgvDTR.DataSource = dt;  // ✅ Load DataGridView
                 }
-
-                // Add dropdown column after loading data
-                AddRateDropdownToGrid();
             }
             catch (Exception ex)
             {
@@ -135,85 +130,106 @@ namespace JTI_Payroll_System
             }
         }
 
+        private void LoadAttendanceData(string employeeID, DateTime startDate, DateTime endDate)
+        {
+            try
+            {
+                using (MySqlConnection conn = DatabaseHelper.GetConnection())
+                {
+                    conn.Open();
+                    string query = @"
+            SELECT e.id_no AS EmployeeID, 
+                CONCAT(e.fname, ' ', e.lname) AS EmployeeName, 
+                a.date, 
+                MIN(a.time) AS TimeIn, 
+                MAX(a.time) AS TimeOut, 
+                NULL AS Rate
+            FROM attendance a
+            INNER JOIN employee e ON a.id = e.id_no
+            WHERE a.id = @employeeID 
+                AND a.date BETWEEN @startDate AND @endDate
+            GROUP BY a.date, e.id_no, e.fname, e.lname
+            ORDER BY a.date ASC;";
+
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@employeeID", employeeID);
+                        cmd.Parameters.AddWithValue("@startDate", startDate.ToString("yyyy-MM-dd"));
+                        cmd.Parameters.AddWithValue("@endDate", endDate.ToString("yyyy-MM-dd"));
+
+                        using (MySqlDataAdapter adapter = new MySqlDataAdapter(cmd))
+                        {
+                            DataTable dt = new DataTable();
+                            adapter.Fill(dt);
+
+                            if (dt.Rows.Count > 0)
+                            {
+                                textID.Text = dt.Rows[0]["EmployeeID"].ToString();
+                                textName.Text = dt.Rows[0]["EmployeeName"].ToString();
+                                dgvDTR.DataSource = dt; // ✅ Load attendance into DataGridView
+                            }
+                            else
+                            {
+                                MessageBox.Show("No attendance records found.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                dgvDTR.DataSource = null; // Clear DataGridView if no records found
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error: " + ex.Message, "Attendance Load Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
         private void btnNext_Click(object sender, EventArgs e)
         {
-            if (employeeIDs.Count == 0)
-            {
-                MessageBox.Show("No employees found. Click Filter first.", "Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
+            if (employeeIDs.Count == 0) return;
 
             if (currentEmployeeIndex < employeeIDs.Count - 1)
             {
                 currentEmployeeIndex++;
 
+                // ✅ Parse StartDate and EndDate before passing
                 if (!DateTime.TryParse(textStartDate.Text, out DateTime startDate) ||
                     !DateTime.TryParse(textEndDate.Text, out DateTime endDate))
                 {
-                    MessageBox.Show("Invalid date format.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Invalid date format. Please enter a valid date (YYYY-MM-DD).",
+                        "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
-                LoadEmployeeDTR(employeeIDs[currentEmployeeIndex], startDate, endDate);
+                LoadEmployeeDTR(employeeIDs[currentEmployeeIndex], startDate, endDate); // ✅ Refresh DataGridView
             }
             else
             {
-                MessageBox.Show("This is the last employee.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("No more employees.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
 
         private void btnBack_Click(object sender, EventArgs e)
         {
-            if (employeeIDs.Count == 0)
-            {
-                MessageBox.Show("No employees found. Click Filter first.", "Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
+            if (employeeIDs.Count == 0) return;
 
             if (currentEmployeeIndex > 0)
             {
                 currentEmployeeIndex--;
 
+                // ✅ Parse StartDate and EndDate before passing
                 if (!DateTime.TryParse(textStartDate.Text, out DateTime startDate) ||
                     !DateTime.TryParse(textEndDate.Text, out DateTime endDate))
                 {
-                    MessageBox.Show("Invalid date format.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Invalid date format. Please enter a valid date (YYYY-MM-DD).",
+                        "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
-                LoadEmployeeDTR(employeeIDs[currentEmployeeIndex], startDate, endDate);
+                LoadEmployeeDTR(employeeIDs[currentEmployeeIndex], startDate, endDate); // ✅ Refresh DataGridView
             }
             else
             {
                 MessageBox.Show("This is the first employee.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-        }
-
-        private void AddRateDropdownToGrid()
-        {
-            if (dgvDTR.Columns["Rate"] == null) // Avoid duplicate columns
-            {
-                DataGridViewComboBoxColumn rateColumn = new DataGridViewComboBoxColumn
-                {
-                    Name = "Rate",
-                    HeaderText = "Rate",
-                    DropDownWidth = 100,
-                    Width = 120,
-                    FlatStyle = FlatStyle.Flat
-                };
-
-                // Add predefined rates
-                rateColumn.Items.Add("780");
-                rateColumn.Items.Add("817");
-                rateColumn.Items.Add("520");
-
-                // Set a default display text
-                rateColumn.DefaultCellStyle.NullValue = "Select Rate";
-
-                // Add column to DataGridView
-                dgvDTR.Columns.Add(rateColumn);
             }
         }
 
@@ -300,4 +316,6 @@ namespace JTI_Payroll_System
             }
         }
     }
+
+
 }
