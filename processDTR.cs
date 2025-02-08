@@ -125,6 +125,9 @@ namespace JTI_Payroll_System
 
                     dgvDTR.DataSource = dt;  // ✅ Load DataGridView
                 }
+
+                // Add dropdown column after loading data
+                AddRateDropdownToGrid();
             }
             catch (Exception ex)
             {
@@ -185,6 +188,115 @@ namespace JTI_Payroll_System
             else
             {
                 MessageBox.Show("This is the first employee.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+
+        private void AddRateDropdownToGrid()
+        {
+            if (dgvDTR.Columns["Rate"] == null) // Avoid duplicate columns
+            {
+                DataGridViewComboBoxColumn rateColumn = new DataGridViewComboBoxColumn
+                {
+                    Name = "Rate",
+                    HeaderText = "Rate",
+                    DropDownWidth = 100,
+                    Width = 120,
+                    FlatStyle = FlatStyle.Flat
+                };
+
+                // Add predefined rates
+                rateColumn.Items.Add("780");
+                rateColumn.Items.Add("817");
+                rateColumn.Items.Add("520");
+
+                // Set a default display text
+                rateColumn.DefaultCellStyle.NullValue = "Select Rate";
+
+                // Add column to DataGridView
+                dgvDTR.Columns.Add(rateColumn);
+            }
+        }
+
+        private void btnSaveProcessedDTR_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (MySqlConnection conn = DatabaseHelper.GetConnection())
+                {
+                    conn.Open();
+
+                    string employeeID = textID.Text; // Get current employee ID
+
+                    // 🔹 Loop through only the current employee's rows in DataGridView
+                    foreach (DataGridViewRow row in dgvDTR.Rows)
+                    {
+                        if (row.IsNewRow) continue; // Skip empty new row
+
+                        string date = row.Cells["date"].Value?.ToString() ?? "";
+                        string timeIn = row.Cells["TimeIn"].Value?.ToString() ?? "NULL";
+                        string timeOut = row.Cells["TimeOut"].Value?.ToString() ?? "NULL";
+                        string rate = row.Cells["Rate"].Value?.ToString() ?? "0"; // Default rate if empty
+
+                        if (string.IsNullOrEmpty(date))
+                        {
+                            MessageBox.Show("Missing date. Skipping row.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            continue;
+                        }
+
+                        // ✅ Check if the record already exists for this employee & date
+                        string checkQuery = @"
+                    SELECT COUNT(*) FROM processedDTR 
+                    WHERE employee_id = @employeeID AND date = @date;";
+
+                        using (MySqlCommand checkCmd = new MySqlCommand(checkQuery, conn))
+                        {
+                            checkCmd.Parameters.AddWithValue("@employeeID", employeeID);
+                            checkCmd.Parameters.AddWithValue("@date", DateTime.Parse(date).ToString("yyyy-MM-dd"));
+
+                            int recordExists = Convert.ToInt32(checkCmd.ExecuteScalar());
+
+                            if (recordExists > 0)
+                            {
+                                // ✅ If record exists, only update the rate
+                                string updateQuery = @"
+                            UPDATE processedDTR 
+                            SET rate = @rate
+                            WHERE employee_id = @employeeID AND date = @date;";
+
+                                using (MySqlCommand updateCmd = new MySqlCommand(updateQuery, conn))
+                                {
+                                    updateCmd.Parameters.AddWithValue("@employeeID", employeeID);
+                                    updateCmd.Parameters.AddWithValue("@date", DateTime.Parse(date).ToString("yyyy-MM-dd"));
+                                    updateCmd.Parameters.AddWithValue("@rate", rate);
+                                    updateCmd.ExecuteNonQuery();
+                                }
+                            }
+                            else
+                            {
+                                // 🔹 If record does not exist, insert new attendance
+                                string insertQuery = @"
+                            INSERT INTO processedDTR (employee_id, date, time_in, time_out, rate) 
+                            VALUES (@employeeID, @date, @timeIn, @timeOut, @rate);";
+
+                                using (MySqlCommand insertCmd = new MySqlCommand(insertQuery, conn))
+                                {
+                                    insertCmd.Parameters.AddWithValue("@employeeID", employeeID);
+                                    insertCmd.Parameters.AddWithValue("@date", DateTime.Parse(date).ToString("yyyy-MM-dd"));
+                                    insertCmd.Parameters.AddWithValue("@timeIn", timeIn == "NULL" ? DBNull.Value : (object)timeIn);
+                                    insertCmd.Parameters.AddWithValue("@timeOut", timeOut == "NULL" ? DBNull.Value : (object)timeOut);
+                                    insertCmd.Parameters.AddWithValue("@rate", rate);
+                                    insertCmd.ExecuteNonQuery();
+                                }
+                            }
+                        }
+                    }
+
+                    MessageBox.Show("Data saved successfully for Employee ID: " + employeeID, "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error: " + ex.Message, "Save Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }

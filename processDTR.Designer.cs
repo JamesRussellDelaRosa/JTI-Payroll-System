@@ -38,6 +38,7 @@
             textName = new Label();
             btnBack = new Button();
             btnNext = new Button();
+            btnSaveProcessedDTR = new Button();
             ((System.ComponentModel.ISupportInitialize)dgvDTR).BeginInit();
             SuspendLayout();
             // 
@@ -91,13 +92,13 @@
             dgvDTR.Location = new Point(12, 53);
             dgvDTR.Name = "dgvDTR";
             dgvDTR.RowHeadersWidth = 51;
-            dgvDTR.Size = new Size(1112, 451);
+            dgvDTR.Size = new Size(1277, 451);
             dgvDTR.TabIndex = 5;
             // 
             // textID
             // 
             textID.AutoSize = true;
-            textID.Location = new Point(819, 15);
+            textID.Location = new Point(1084, 13);
             textID.Name = "textID";
             textID.Size = new Size(53, 20);
             textID.TabIndex = 6;
@@ -106,7 +107,7 @@
             // textName
             // 
             textName.AutoSize = true;
-            textName.Location = new Point(894, 15);
+            textName.Location = new Point(1159, 13);
             textName.Name = "textName";
             textName.Size = new Size(119, 20);
             textName.TabIndex = 7;
@@ -114,7 +115,7 @@
             // 
             // btnBack
             // 
-            btnBack.Location = new Point(547, 9);
+            btnBack.Location = new Point(630, 13);
             btnBack.Name = "btnBack";
             btnBack.Size = new Size(94, 29);
             btnBack.TabIndex = 8;
@@ -124,7 +125,7 @@
             // 
             // btnNext
             // 
-            btnNext.Location = new Point(647, 9);
+            btnNext.Location = new Point(730, 13);
             btnNext.Name = "btnNext";
             btnNext.Size = new Size(94, 29);
             btnNext.TabIndex = 9;
@@ -132,11 +133,22 @@
             btnNext.UseVisualStyleBackColor = true;
             btnNext.Click += btnNext_Click;
             // 
+            // btnSaveProcessedDTR
+            // 
+            btnSaveProcessedDTR.Location = new Point(930, 13);
+            btnSaveProcessedDTR.Name = "btnSaveProcessedDTR";
+            btnSaveProcessedDTR.Size = new Size(94, 29);
+            btnSaveProcessedDTR.TabIndex = 10;
+            btnSaveProcessedDTR.Text = "SAVE";
+            btnSaveProcessedDTR.UseVisualStyleBackColor = true;
+            btnSaveProcessedDTR.Click += btnSaveProcessedDTR_Click;
+            // 
             // processDTR
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1136, 525);
+            ClientSize = new Size(1312, 543);
+            Controls.Add(btnSaveProcessedDTR);
             Controls.Add(btnNext);
             Controls.Add(btnBack);
             Controls.Add(textName);
@@ -166,5 +178,6 @@
         private Label textName;
         private Button btnBack;
         private Button btnNext;
+        private Button btnSaveProcessedDTR;
     }
 }
