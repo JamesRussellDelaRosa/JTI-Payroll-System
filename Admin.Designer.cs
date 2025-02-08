@@ -40,6 +40,7 @@
             dataGridView1 = new DataGridView();
             employee = new Button();
             uploadattlog = new Button();
+            processDtr = new Button();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             SuspendLayout();
             // 
@@ -156,11 +157,22 @@
             uploadattlog.UseVisualStyleBackColor = true;
             uploadattlog.Click += uploadattlog_Click;
             // 
+            // processDtr
+            // 
+            processDtr.Location = new Point(15, 380);
+            processDtr.Name = "processDtr";
+            processDtr.Size = new Size(131, 29);
+            processDtr.TabIndex = 13;
+            processDtr.Text = "PROCESS DTR";
+            processDtr.UseVisualStyleBackColor = true;
+            processDtr.Click += processDtr_Click;
+            // 
             // Admin
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(processDtr);
             Controls.Add(uploadattlog);
             Controls.Add(employee);
             Controls.Add(dataGridView1);
@@ -193,5 +205,6 @@
         private DataGridView dataGridView1;
         private Button employee;
         private Button uploadattlog;
+        private Button processDtr;
     }
 }

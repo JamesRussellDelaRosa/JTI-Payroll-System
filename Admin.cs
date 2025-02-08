@@ -304,5 +304,13 @@ namespace JTI_Payroll_System
                 progressForm.Close();
             }
         }
+
+        private void processDtr_Click(object sender, EventArgs e)
+        {
+            // Redirect to ProcessDTR form
+            processDTR processDTRForm = new processDTR();
+            processDTRForm.Show();
+            this.Hide();
+        }
     }
 }
