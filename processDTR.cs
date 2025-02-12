@@ -305,68 +305,70 @@ namespace JTI_Payroll_System
                 {
                     conn.Open();
 
-                    using (MySqlTransaction transaction = conn.BeginTransaction()) // ✅ Ensures atomic updates
+                    foreach (DataGridViewRow row in dgvDTR.Rows)
                     {
-                        try
+                        if (row.IsNewRow) continue; // Skip empty rows
+
+                        string employeeID = textID.Text;
+                        DateTime date = Convert.ToDateTime(row.Cells["date"].Value);
+                        TimeSpan timeIn = TimeSpan.Parse(row.Cells["TimeIn"].Value.ToString());
+                        TimeSpan timeOut = TimeSpan.Parse(row.Cells["TimeOut"].Value.ToString());
+                        decimal rate = Convert.ToDecimal(row.Cells["Rate"].Value);
+
+                        // ✅ First, check if an entry already exists for this employee on this date
+                        string checkQuery = @"
+                    SELECT COUNT(*) FROM processedDTR 
+                    WHERE employee_id = @employeeID AND date = @date";
+
+                        using (MySqlCommand checkCmd = new MySqlCommand(checkQuery, conn))
                         {
-                            string updateQuery = @"
-                        INSERT INTO processedDTR (employee_id, date, time_in, time_out, rate)
-                        VALUES (@employeeID, @date, @timeIn, @timeOut, @rate)
-                        ON DUPLICATE KEY UPDATE 
-                            time_in = VALUES(time_in), 
-                            time_out = VALUES(time_out),
-                            rate = VALUES(rate);";
+                            checkCmd.Parameters.AddWithValue("@employeeID", employeeID);
+                            checkCmd.Parameters.AddWithValue("@date", date);
 
-                            using (MySqlCommand cmd = new MySqlCommand(updateQuery, conn, transaction))
+                            int recordExists = Convert.ToInt32(checkCmd.ExecuteScalar());
+
+                            if (recordExists > 0)
                             {
-                                cmd.Parameters.Add("@employeeID", MySqlDbType.VarChar);
-                                cmd.Parameters.Add("@date", MySqlDbType.Date);
-                                cmd.Parameters.Add("@timeIn", MySqlDbType.Time);
-                                cmd.Parameters.Add("@timeOut", MySqlDbType.Time);
-                                cmd.Parameters.Add("@rate", MySqlDbType.Decimal);
+                                // ✅ If a record exists, update only the Rate
+                                string updateQuery = @"
+                            UPDATE processedDTR 
+                            SET rate = @rate 
+                            WHERE employee_id = @employeeID AND date = @date";
 
-                                foreach (DataGridViewRow row in dgvDTR.Rows)
+                                using (MySqlCommand updateCmd = new MySqlCommand(updateQuery, conn))
                                 {
-                                    if (!row.IsNewRow) // ✅ Prevents empty row errors
-                                    {
-                                        cmd.Parameters["@employeeID"].Value = textID.Text;
-                                        cmd.Parameters["@date"].Value = Convert.ToDateTime(row.Cells["date"].Value);
-
-                                        object timeIn = row.Cells["TimeIn"].Value;
-                                        object timeOut = row.Cells["TimeOut"].Value;
-                                        object rate = row.Cells["Rate"].Value;
-
-                                        cmd.Parameters["@timeIn"].Value = timeIn != DBNull.Value && timeIn != null
-                                            ? TimeSpan.Parse(timeIn.ToString())
-                                            : (object)DBNull.Value;
-
-                                        cmd.Parameters["@timeOut"].Value = timeOut != DBNull.Value && timeOut != null
-                                            ? TimeSpan.Parse(timeOut.ToString())
-                                            : (object)DBNull.Value;
-
-                                        cmd.Parameters["@rate"].Value = rate != DBNull.Value && rate != null
-                                            ? Convert.ToDecimal(rate)
-                                            : 560; // ✅ Default rate if NULL
-
-                                        cmd.ExecuteNonQuery();
-                                    }
+                                    updateCmd.Parameters.AddWithValue("@rate", rate);
+                                    updateCmd.Parameters.AddWithValue("@employeeID", employeeID);
+                                    updateCmd.Parameters.AddWithValue("@date", date);
+                                    updateCmd.ExecuteNonQuery();
                                 }
                             }
+                            else
+                            {
+                                // ✅ If no record exists, insert a new entry
+                                string insertQuery = @"
+                            INSERT INTO processedDTR (employee_id, date, time_in, time_out, rate) 
+                            VALUES (@employeeID, @date, @timeIn, @timeOut, @rate)";
 
-                            transaction.Commit(); // ✅ Commits changes only if all updates succeed
-                            MessageBox.Show("Processed DTR saved successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        }
-                        catch (Exception ex)
-                        {
-                            transaction.Rollback(); // ✅ Prevents partial updates on failure
-                            MessageBox.Show("Error saving processed DTR: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                using (MySqlCommand insertCmd = new MySqlCommand(insertQuery, conn))
+                                {
+                                    insertCmd.Parameters.AddWithValue("@employeeID", employeeID);
+                                    insertCmd.Parameters.AddWithValue("@date", date);
+                                    insertCmd.Parameters.AddWithValue("@timeIn", timeIn);
+                                    insertCmd.Parameters.AddWithValue("@timeOut", timeOut);
+                                    insertCmd.Parameters.AddWithValue("@rate", rate);
+                                    insertCmd.ExecuteNonQuery();
+                                }
+                            }
                         }
                     }
+
+                    MessageBox.Show("DTR saved successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Database connection error: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Error saving DTR: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
