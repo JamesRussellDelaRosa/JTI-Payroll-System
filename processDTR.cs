@@ -15,6 +15,56 @@ namespace JTI_Payroll_System
         public processDTR()
         {
             InitializeComponent();
+            dgvDTR.DataError += dgvDTR_DataError; // ✅ Attach DataError handler
+        }
+
+        private void SetupRateDropdown()
+        {
+            string rateColumnName = "Rate";
+
+            // ✅ Ensure the column exists
+            if (!dgvDTR.Columns.Contains(rateColumnName))
+            {
+                MessageBox.Show("The 'Rate' column is missing.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            // ✅ Ensure it's a ComboBox column
+            if (!(dgvDTR.Columns[rateColumnName] is DataGridViewComboBoxColumn))
+            {
+                // Replace with ComboBox column
+                DataGridViewComboBoxColumn rateColumn = new DataGridViewComboBoxColumn
+                {
+                    Name = rateColumnName,
+                    HeaderText = "Rate",
+                    DataPropertyName = rateColumnName,
+                    DataSource = new List<int> { 560, 520, 545 }, // ✅ Predefined rates
+                    AutoComplete = true
+                };
+
+                int rateColIndex = dgvDTR.Columns[rateColumnName].Index;
+                dgvDTR.Columns.Remove(rateColumnName);
+                dgvDTR.Columns.Insert(rateColIndex, rateColumn);
+            }
+
+            // ✅ Ensure existing database values are in the dropdown list
+            List<int> allowedRates = new List<int> { 560, 520, 545 };
+
+            foreach (DataGridViewRow row in dgvDTR.Rows)
+            {
+                if (row.IsNewRow) continue;
+
+                object rateValue = row.Cells[rateColumnName].Value;
+                if (rateValue != null && int.TryParse(rateValue.ToString(), out int rateInt))
+                {
+                    if (!allowedRates.Contains(rateInt))
+                    {
+                        allowedRates.Add(rateInt); // ✅ Add unknown rates to the dropdown
+                    }
+                }
+            }
+
+            ((DataGridViewComboBoxColumn)dgvDTR.Columns[rateColumnName]).DataSource = allowedRates;
         }
 
         private void filter_Click(object sender, EventArgs e)
@@ -114,6 +164,9 @@ namespace JTI_Payroll_System
                                 textID.Text = dt.Rows[0]["EmployeeID"].ToString();
                                 textName.Text = dt.Rows[0]["EmployeeName"].ToString();
                                 dgvDTR.DataSource = dt; // ✅ Load into DataGridView
+                                // 🔹 Ensure Rate column is of type dropdown
+                                SetupRateDropdown();
+
                             }
                             else
                             {
@@ -167,6 +220,7 @@ namespace JTI_Payroll_System
                                 textID.Text = dt.Rows[0]["EmployeeID"].ToString();
                                 textName.Text = dt.Rows[0]["EmployeeName"].ToString();
                                 dgvDTR.DataSource = dt; // ✅ Load attendance into DataGridView
+                                SetupRateDropdown(); // Call method to set Rate dropdown                    }
                             }
                             else
                             {
@@ -240,10 +294,8 @@ namespace JTI_Payroll_System
                 using (MySqlConnection conn = DatabaseHelper.GetConnection())
                 {
                     conn.Open();
-
                     string employeeID = textID.Text; // Get current employee ID
 
-                    // 🔹 Loop through only the current employee's rows in DataGridView
                     foreach (DataGridViewRow row in dgvDTR.Rows)
                     {
                         if (row.IsNewRow) continue; // Skip empty new row
@@ -251,7 +303,15 @@ namespace JTI_Payroll_System
                         string date = row.Cells["date"].Value?.ToString() ?? "";
                         string timeIn = row.Cells["TimeIn"].Value?.ToString() ?? "NULL";
                         string timeOut = row.Cells["TimeOut"].Value?.ToString() ?? "NULL";
-                        string rate = row.Cells["Rate"].Value?.ToString() ?? "0"; // Default rate if empty
+
+                        // ✅ Ensure "Rate" column exists
+                        if (!dgvDTR.Columns.Contains("Rate"))
+                        {
+                            MessageBox.Show("The 'Rate' column is missing.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            return;
+                        }
+
+                        string rate = row.Cells["Rate"].Value?.ToString() ?? "0"; // Ensure it's using "Rate"
 
                         if (string.IsNullOrEmpty(date))
                         {
@@ -259,7 +319,7 @@ namespace JTI_Payroll_System
                             continue;
                         }
 
-                        // ✅ Check if the record already exists for this employee & date
+                        // ✅ Check if record exists
                         string checkQuery = @"
                     SELECT COUNT(*) FROM processedDTR 
                     WHERE employee_id = @employeeID AND date = @date;";
@@ -273,7 +333,7 @@ namespace JTI_Payroll_System
 
                             if (recordExists > 0)
                             {
-                                // ✅ If record exists, only update the rate
+                                // ✅ Update existing record
                                 string updateQuery = @"
                             UPDATE processedDTR 
                             SET rate = @rate
@@ -289,7 +349,7 @@ namespace JTI_Payroll_System
                             }
                             else
                             {
-                                // 🔹 If record does not exist, insert new attendance
+                                // ✅ Insert new record
                                 string insertQuery = @"
                             INSERT INTO processedDTR (employee_id, date, time_in, time_out, rate) 
                             VALUES (@employeeID, @date, @timeIn, @timeOut, @rate);";
@@ -315,6 +375,21 @@ namespace JTI_Payroll_System
                 MessageBox.Show("Error: " + ex.Message, "Save Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
+        private void dgvDTR_DataError(object sender, DataGridViewDataErrorEventArgs e)
+        {
+            if (e.ColumnIndex == dgvDTR.Columns["Rate"].Index && e.Exception != null)
+            {
+                MessageBox.Show($"Invalid value in Rate column: {dgvDTR.Rows[e.RowIndex].Cells[e.ColumnIndex].Value}",
+                                "Data Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+                // ✅ Set a default value to prevent crashes
+                dgvDTR.Rows[e.RowIndex].Cells[e.ColumnIndex].Value = 560;
+                e.ThrowException = false;
+            }
+        }
+
+
     }
 
 
