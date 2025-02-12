@@ -22,49 +22,40 @@ namespace JTI_Payroll_System
         {
             string rateColumnName = "Rate";
 
-            // ✅ Ensure the column exists
-            if (!dgvDTR.Columns.Contains(rateColumnName))
+            // ✅ Check if Rate column already exists
+            if (dgvDTR.Columns.Contains(rateColumnName))
             {
-                MessageBox.Show("The 'Rate' column is missing.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
+                dgvDTR.Columns.Remove(rateColumnName); // Remove existing column to re-add ComboBox
             }
 
-            // ✅ Ensure it's a ComboBox column
-            if (!(dgvDTR.Columns[rateColumnName] is DataGridViewComboBoxColumn))
+            // ✅ Create ComboBox Column with predefined rates
+            DataGridViewComboBoxColumn rateColumn = new DataGridViewComboBoxColumn
             {
-                // Replace with ComboBox column
-                DataGridViewComboBoxColumn rateColumn = new DataGridViewComboBoxColumn
-                {
-                    Name = rateColumnName,
-                    HeaderText = "Rate",
-                    DataPropertyName = rateColumnName,
-                    DataSource = new List<int> { 560, 520, 545 }, // ✅ Predefined rates
-                    AutoComplete = true
-                };
+                Name = rateColumnName,
+                HeaderText = "Rate",
+                DataPropertyName = rateColumnName,  // ✅ Binds to Rate column
+                DataSource = new List<decimal> { 560.00m, 520.00m, 545.00m }, // ✅ Use decimal values
+                AutoComplete = true
+            };
 
-                int rateColIndex = dgvDTR.Columns[rateColumnName].Index;
-                dgvDTR.Columns.Remove(rateColumnName);
-                dgvDTR.Columns.Insert(rateColIndex, rateColumn);
-            }
+            dgvDTR.Columns.Add(rateColumn);
 
-            // ✅ Ensure existing database values are in the dropdown list
-            List<int> allowedRates = new List<int> { 560, 520, 545 };
-
+            // ✅ Ensure existing database values match the DataSource
             foreach (DataGridViewRow row in dgvDTR.Rows)
             {
                 if (row.IsNewRow) continue;
 
                 object rateValue = row.Cells[rateColumnName].Value;
-                if (rateValue != null && int.TryParse(rateValue.ToString(), out int rateInt))
+
+                // Convert to decimal to match DataSource
+                if (rateValue == null || !new List<decimal> { 560.00m, 520.00m, 545.00m }.Contains(Convert.ToDecimal(rateValue)))
                 {
-                    if (!allowedRates.Contains(rateInt))
-                    {
-                        allowedRates.Add(rateInt); // ✅ Add unknown rates to the dropdown
-                    }
+                    row.Cells[rateColumnName].Value = 560.00m; // ✅ Default valid value
                 }
             }
 
-            ((DataGridViewComboBoxColumn)dgvDTR.Columns[rateColumnName]).DataSource = allowedRates;
+            // ✅ Set Rate column's value type to decimal to avoid type mismatches
+            dgvDTR.Columns[rateColumnName].ValueType = typeof(decimal);
         }
 
         private void filter_Click(object sender, EventArgs e)
@@ -135,12 +126,13 @@ namespace JTI_Payroll_System
                 using (MySqlConnection conn = DatabaseHelper.GetConnection())
                 {
                     conn.Open();
-
-                    // 🔹 First, check for existing processedDTR data
                     string query = @"
                 SELECT e.id_no AS EmployeeID, 
                        CONCAT(e.fname, ' ', e.lname) AS EmployeeName, 
-                       p.date, p.time_in AS TimeIn, p.time_out AS TimeOut, p.rate
+                       p.date, 
+                       p.time_in AS TimeIn, 
+                       p.time_out AS TimeOut, 
+                       COALESCE(p.rate, 560.00) AS Rate  -- ✅ Ensures NULL values are replaced with 560.00
                 FROM processedDTR p
                 INNER JOIN employee e ON p.employee_id = e.id_no
                 WHERE p.employee_id = @employeeID 
@@ -158,20 +150,30 @@ namespace JTI_Payroll_System
                             DataTable dt = new DataTable();
                             adapter.Fill(dt);
 
+                            // ✅ Ensure "Rate" column exists and is correctly formatted as decimal
+                            if (!dt.Columns.Contains("Rate"))
+                            {
+                                dt.Columns.Add("Rate", typeof(decimal)); // Ensure Rate is numeric
+                            }
+
+                            foreach (DataRow row in dt.Rows)
+                            {
+                                if (row["Rate"] == DBNull.Value || string.IsNullOrEmpty(row["Rate"].ToString()))
+                                {
+                                    row["Rate"] = 560.00m; // ✅ Set default rate
+                                }
+                            }
+
                             if (dt.Rows.Count > 0)
                             {
-                                // ✅ Processed DTR exists, load it
                                 textID.Text = dt.Rows[0]["EmployeeID"].ToString();
                                 textName.Text = dt.Rows[0]["EmployeeName"].ToString();
-                                dgvDTR.DataSource = dt; // ✅ Load into DataGridView
-                                // 🔹 Ensure Rate column is of type dropdown
-                                SetupRateDropdown();
-
+                                dgvDTR.DataSource = dt;
+                                SetupRateDropdown(); // ✅ Set up dropdown properly
                             }
                             else
                             {
-                                // 🚨 No processedDTR exists, load attendance data instead
-                                LoadAttendanceData(employeeID, startDate, endDate);
+                                LoadAttendanceData(employeeID, startDate, endDate); // ✅ Load attendance if no DTR found
                             }
                         }
                     }
@@ -191,18 +193,18 @@ namespace JTI_Payroll_System
                 {
                     conn.Open();
                     string query = @"
-            SELECT e.id_no AS EmployeeID, 
-                CONCAT(e.fname, ' ', e.lname) AS EmployeeName, 
-                a.date, 
-                MIN(a.time) AS TimeIn, 
-                MAX(a.time) AS TimeOut, 
-                NULL AS Rate
-            FROM attendance a
-            INNER JOIN employee e ON a.id = e.id_no
-            WHERE a.id = @employeeID 
-                AND a.date BETWEEN @startDate AND @endDate
-            GROUP BY a.date, e.id_no, e.fname, e.lname
-            ORDER BY a.date ASC;";
+                SELECT e.id_no AS EmployeeID, 
+                       CONCAT(e.fname, ' ', e.lname) AS EmployeeName, 
+                       a.date, 
+                       MIN(a.time) AS TimeIn, 
+                       MAX(a.time) AS TimeOut, 
+                       560.00 AS Rate  -- ✅ Default rate when loading attendance
+                FROM attendance a
+                INNER JOIN employee e ON a.id = e.id_no
+                WHERE a.id = @employeeID 
+                      AND a.date BETWEEN @startDate AND @endDate
+                GROUP BY a.date, e.id_no, e.fname, e.lname
+                ORDER BY a.date ASC;";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
@@ -215,17 +217,23 @@ namespace JTI_Payroll_System
                             DataTable dt = new DataTable();
                             adapter.Fill(dt);
 
+                            // ✅ Ensure "Rate" column exists
+                            if (!dt.Columns.Contains("Rate"))
+                            {
+                                dt.Columns.Add("Rate", typeof(decimal)); // Ensure Rate is numeric
+                            }
+
                             if (dt.Rows.Count > 0)
                             {
                                 textID.Text = dt.Rows[0]["EmployeeID"].ToString();
                                 textName.Text = dt.Rows[0]["EmployeeName"].ToString();
-                                dgvDTR.DataSource = dt; // ✅ Load attendance into DataGridView
-                                SetupRateDropdown(); // Call method to set Rate dropdown                    }
+                                dgvDTR.DataSource = dt;
+                                SetupRateDropdown(); // ✅ Setup dropdown
                             }
                             else
                             {
                                 MessageBox.Show("No attendance records found.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                                dgvDTR.DataSource = null; // Clear DataGridView if no records found
+                                dgvDTR.DataSource = null;
                             }
                         }
                     }
@@ -236,6 +244,8 @@ namespace JTI_Payroll_System
                 MessageBox.Show("Error: " + ex.Message, "Attendance Load Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
+
 
         private void btnNext_Click(object sender, EventArgs e)
         {
@@ -294,85 +304,69 @@ namespace JTI_Payroll_System
                 using (MySqlConnection conn = DatabaseHelper.GetConnection())
                 {
                     conn.Open();
-                    string employeeID = textID.Text; // Get current employee ID
 
-                    foreach (DataGridViewRow row in dgvDTR.Rows)
+                    using (MySqlTransaction transaction = conn.BeginTransaction()) // ✅ Ensures atomic updates
                     {
-                        if (row.IsNewRow) continue; // Skip empty new row
-
-                        string date = row.Cells["date"].Value?.ToString() ?? "";
-                        string timeIn = row.Cells["TimeIn"].Value?.ToString() ?? "NULL";
-                        string timeOut = row.Cells["TimeOut"].Value?.ToString() ?? "NULL";
-
-                        // ✅ Ensure "Rate" column exists
-                        if (!dgvDTR.Columns.Contains("Rate"))
+                        try
                         {
-                            MessageBox.Show("The 'Rate' column is missing.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            return;
-                        }
+                            string updateQuery = @"
+                        INSERT INTO processedDTR (employee_id, date, time_in, time_out, rate)
+                        VALUES (@employeeID, @date, @timeIn, @timeOut, @rate)
+                        ON DUPLICATE KEY UPDATE 
+                            time_in = VALUES(time_in), 
+                            time_out = VALUES(time_out),
+                            rate = VALUES(rate);";
 
-                        string rate = row.Cells["Rate"].Value?.ToString() ?? "0"; // Ensure it's using "Rate"
-
-                        if (string.IsNullOrEmpty(date))
-                        {
-                            MessageBox.Show("Missing date. Skipping row.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                            continue;
-                        }
-
-                        // ✅ Check if record exists
-                        string checkQuery = @"
-                    SELECT COUNT(*) FROM processedDTR 
-                    WHERE employee_id = @employeeID AND date = @date;";
-
-                        using (MySqlCommand checkCmd = new MySqlCommand(checkQuery, conn))
-                        {
-                            checkCmd.Parameters.AddWithValue("@employeeID", employeeID);
-                            checkCmd.Parameters.AddWithValue("@date", DateTime.Parse(date).ToString("yyyy-MM-dd"));
-
-                            int recordExists = Convert.ToInt32(checkCmd.ExecuteScalar());
-
-                            if (recordExists > 0)
+                            using (MySqlCommand cmd = new MySqlCommand(updateQuery, conn, transaction))
                             {
-                                // ✅ Update existing record
-                                string updateQuery = @"
-                            UPDATE processedDTR 
-                            SET rate = @rate
-                            WHERE employee_id = @employeeID AND date = @date;";
+                                cmd.Parameters.Add("@employeeID", MySqlDbType.VarChar);
+                                cmd.Parameters.Add("@date", MySqlDbType.Date);
+                                cmd.Parameters.Add("@timeIn", MySqlDbType.Time);
+                                cmd.Parameters.Add("@timeOut", MySqlDbType.Time);
+                                cmd.Parameters.Add("@rate", MySqlDbType.Decimal);
 
-                                using (MySqlCommand updateCmd = new MySqlCommand(updateQuery, conn))
+                                foreach (DataGridViewRow row in dgvDTR.Rows)
                                 {
-                                    updateCmd.Parameters.AddWithValue("@employeeID", employeeID);
-                                    updateCmd.Parameters.AddWithValue("@date", DateTime.Parse(date).ToString("yyyy-MM-dd"));
-                                    updateCmd.Parameters.AddWithValue("@rate", rate);
-                                    updateCmd.ExecuteNonQuery();
+                                    if (!row.IsNewRow) // ✅ Prevents empty row errors
+                                    {
+                                        cmd.Parameters["@employeeID"].Value = textID.Text;
+                                        cmd.Parameters["@date"].Value = Convert.ToDateTime(row.Cells["date"].Value);
+
+                                        object timeIn = row.Cells["TimeIn"].Value;
+                                        object timeOut = row.Cells["TimeOut"].Value;
+                                        object rate = row.Cells["Rate"].Value;
+
+                                        cmd.Parameters["@timeIn"].Value = timeIn != DBNull.Value && timeIn != null
+                                            ? TimeSpan.Parse(timeIn.ToString())
+                                            : (object)DBNull.Value;
+
+                                        cmd.Parameters["@timeOut"].Value = timeOut != DBNull.Value && timeOut != null
+                                            ? TimeSpan.Parse(timeOut.ToString())
+                                            : (object)DBNull.Value;
+
+                                        cmd.Parameters["@rate"].Value = rate != DBNull.Value && rate != null
+                                            ? Convert.ToDecimal(rate)
+                                            : 560; // ✅ Default rate if NULL
+
+                                        cmd.ExecuteNonQuery();
+                                    }
                                 }
                             }
-                            else
-                            {
-                                // ✅ Insert new record
-                                string insertQuery = @"
-                            INSERT INTO processedDTR (employee_id, date, time_in, time_out, rate) 
-                            VALUES (@employeeID, @date, @timeIn, @timeOut, @rate);";
 
-                                using (MySqlCommand insertCmd = new MySqlCommand(insertQuery, conn))
-                                {
-                                    insertCmd.Parameters.AddWithValue("@employeeID", employeeID);
-                                    insertCmd.Parameters.AddWithValue("@date", DateTime.Parse(date).ToString("yyyy-MM-dd"));
-                                    insertCmd.Parameters.AddWithValue("@timeIn", timeIn == "NULL" ? DBNull.Value : (object)timeIn);
-                                    insertCmd.Parameters.AddWithValue("@timeOut", timeOut == "NULL" ? DBNull.Value : (object)timeOut);
-                                    insertCmd.Parameters.AddWithValue("@rate", rate);
-                                    insertCmd.ExecuteNonQuery();
-                                }
-                            }
+                            transaction.Commit(); // ✅ Commits changes only if all updates succeed
+                            MessageBox.Show("Processed DTR saved successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback(); // ✅ Prevents partial updates on failure
+                            MessageBox.Show("Error saving processed DTR: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         }
                     }
-
-                    MessageBox.Show("Data saved successfully for Employee ID: " + employeeID, "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error: " + ex.Message, "Save Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Database connection error: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -384,10 +378,11 @@ namespace JTI_Payroll_System
                                 "Data Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 
                 // ✅ Set a default value to prevent crashes
-                dgvDTR.Rows[e.RowIndex].Cells[e.ColumnIndex].Value = 560;
+                dgvDTR.Rows[e.RowIndex].Cells[e.ColumnIndex].Value = 560.00m;
                 e.ThrowException = false;
             }
         }
+
 
 
     }
