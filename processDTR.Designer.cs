@@ -39,6 +39,7 @@
             btnBack = new Button();
             btnNext = new Button();
             btnSaveProcessedDTR = new Button();
+            btnOpenDeleteDTR = new Button();
             ((System.ComponentModel.ISupportInitialize)dgvDTR).BeginInit();
             SuspendLayout();
             // 
@@ -92,7 +93,7 @@
             dgvDTR.Location = new Point(12, 53);
             dgvDTR.Name = "dgvDTR";
             dgvDTR.RowHeadersWidth = 51;
-            dgvDTR.Size = new Size(1277, 451);
+            dgvDTR.Size = new Size(1443, 517);
             dgvDTR.TabIndex = 5;
             // 
             // textID
@@ -115,7 +116,7 @@
             // 
             // btnBack
             // 
-            btnBack.Location = new Point(630, 13);
+            btnBack.Location = new Point(460, 6);
             btnBack.Name = "btnBack";
             btnBack.Size = new Size(94, 29);
             btnBack.TabIndex = 8;
@@ -125,7 +126,7 @@
             // 
             // btnNext
             // 
-            btnNext.Location = new Point(730, 13);
+            btnNext.Location = new Point(560, 6);
             btnNext.Name = "btnNext";
             btnNext.Size = new Size(94, 29);
             btnNext.TabIndex = 9;
@@ -143,11 +144,22 @@
             btnSaveProcessedDTR.UseVisualStyleBackColor = true;
             btnSaveProcessedDTR.Click += btnSaveProcessedDTR_Click;
             // 
+            // btnOpenDeleteDTR
+            // 
+            btnOpenDeleteDTR.Location = new Point(771, 13);
+            btnOpenDeleteDTR.Name = "btnOpenDeleteDTR";
+            btnOpenDeleteDTR.Size = new Size(153, 29);
+            btnOpenDeleteDTR.TabIndex = 11;
+            btnOpenDeleteDTR.Text = "DELETE SAVED DTR";
+            btnOpenDeleteDTR.UseVisualStyleBackColor = true;
+            btnOpenDeleteDTR.Click += btnOpenDeleteDTR_Click;
+            // 
             // processDTR
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1312, 543);
+            ClientSize = new Size(1467, 582);
+            Controls.Add(btnOpenDeleteDTR);
             Controls.Add(btnSaveProcessedDTR);
             Controls.Add(btnNext);
             Controls.Add(btnBack);
@@ -179,5 +191,6 @@
         private Button btnBack;
         private Button btnNext;
         private Button btnSaveProcessedDTR;
+        private Button btnOpenDeleteDTR;
     }
 }

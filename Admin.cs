@@ -310,7 +310,6 @@ namespace JTI_Payroll_System
             // Redirect to ProcessDTR form
             processDTR processDTRForm = new processDTR();
             processDTRForm.Show();
-            this.Hide();
         }
     }
 }
