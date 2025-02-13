@@ -34,7 +34,7 @@ namespace JTI_Payroll_System
                 Name = rateColumnName,
                 HeaderText = "Rate",
                 DataPropertyName = rateColumnName,  // ✅ Binds to Rate column
-                DataSource = new List<decimal> { 560.00m, 520.00m, 545.00m }, // ✅ Use decimal values
+                DataSource = new List<decimal> { 0.00m, 560.00m, 520.00m, 545.00m }, // ✅ Use decimal values
                 AutoComplete = true
             };
 
@@ -48,9 +48,9 @@ namespace JTI_Payroll_System
                 object rateValue = row.Cells[rateColumnName].Value;
 
                 // Convert to decimal to match DataSource
-                if (rateValue == null || !new List<decimal> { 560.00m, 520.00m, 545.00m }.Contains(Convert.ToDecimal(rateValue)))
+                if (rateValue == null || !new List<decimal> { 0.00m, 560.00m, 520.00m, 545.00m }.Contains(Convert.ToDecimal(rateValue)))
                 {
-                    row.Cells[rateColumnName].Value = 560.00m; // ✅ Default valid value
+                    row.Cells[rateColumnName].Value = 0.00m; // ✅ Default valid value
                 }
             }
 
@@ -132,7 +132,7 @@ namespace JTI_Payroll_System
                        p.date, 
                        p.time_in AS TimeIn, 
                        p.time_out AS TimeOut, 
-                       COALESCE(p.rate, 560.00) AS Rate  -- ✅ Ensures NULL values are replaced with 560.00
+                       COALESCE(p.rate, 0.00) AS Rate  -- ✅ Ensures NULL values are replaced with 560.00
                 FROM processedDTR p
                 INNER JOIN employee e ON p.employee_id = e.id_no
                 WHERE p.employee_id = @employeeID 
@@ -160,7 +160,7 @@ namespace JTI_Payroll_System
                             {
                                 if (row["Rate"] == DBNull.Value || string.IsNullOrEmpty(row["Rate"].ToString()))
                                 {
-                                    row["Rate"] = 560.00m; // ✅ Set default rate
+                                    row["Rate"] = 0.00m; // ✅ Set default rate
                                 }
                             }
 
@@ -198,7 +198,7 @@ namespace JTI_Payroll_System
                        a.date, 
                        MIN(a.time) AS TimeIn, 
                        MAX(a.time) AS TimeOut, 
-                       560.00 AS Rate  -- ✅ Default rate when loading attendance
+                       0.00 AS Rate  -- ✅ Default rate when loading attendance
                 FROM attendance a
                 INNER JOIN employee e ON a.id = e.id_no
                 WHERE a.id = @employeeID 
@@ -380,7 +380,7 @@ namespace JTI_Payroll_System
                                 "Data Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 
                 // ✅ Set a default value to prevent crashes
-                dgvDTR.Rows[e.RowIndex].Cells[e.ColumnIndex].Value = 560.00m;
+                dgvDTR.Rows[e.RowIndex].Cells[e.ColumnIndex].Value = 0.00m;
                 e.ThrowException = false;
             }
         }
