@@ -28,13 +28,16 @@ namespace JTI_Payroll_System
                 dgvDTR.Columns.Remove(rateColumnName); // Remove existing column to re-add ComboBox
             }
 
-            // ✅ Create ComboBox Column with predefined rates
+            // ✅ Fetch rate values from database
+            List<decimal> rateValues = GetRateValuesFromDatabase();
+
+            // ✅ Create ComboBox Column with database rates
             DataGridViewComboBoxColumn rateColumn = new DataGridViewComboBoxColumn
             {
                 Name = rateColumnName,
                 HeaderText = "Rate",
                 DataPropertyName = rateColumnName,  // ✅ Binds to Rate column
-                DataSource = new List<decimal> { 0.00m, 560.00m, 520.00m, 545.00m }, // ✅ Use decimal values
+                DataSource = rateValues,  // ✅ Use dynamic database values
                 AutoComplete = true
             };
 
@@ -48,14 +51,39 @@ namespace JTI_Payroll_System
                 object rateValue = row.Cells[rateColumnName].Value;
 
                 // Convert to decimal to match DataSource
-                if (rateValue == null || !new List<decimal> { 0.00m, 560.00m, 520.00m, 545.00m }.Contains(Convert.ToDecimal(rateValue)))
+                if (rateValue == null || !rateValues.Contains(Convert.ToDecimal(rateValue)))
                 {
-                    row.Cells[rateColumnName].Value = 0.00m; // ✅ Default valid value
+                    row.Cells[rateColumnName].Value = rateValues.FirstOrDefault(); // ✅ Default valid value
                 }
             }
 
             // ✅ Set Rate column's value type to decimal to avoid type mismatches
             dgvDTR.Columns[rateColumnName].ValueType = typeof(decimal);
+        }
+
+        // ✅ Method to fetch rates from the database
+        private List<decimal> GetRateValuesFromDatabase()
+        {
+            List<decimal> rates = new List<decimal>();
+
+            using (MySqlConnection conn = DatabaseHelper.GetConnection())
+            {
+                string query = "SELECT rate_value FROM Rate ORDER BY rate_value ASC";
+
+                using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                {
+                    conn.Open();
+                    using (MySqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            rates.Add(reader.GetDecimal(0));
+                        }
+                    }
+                }
+            }
+
+            return rates;
         }
 
         private void filter_Click(object sender, EventArgs e)
