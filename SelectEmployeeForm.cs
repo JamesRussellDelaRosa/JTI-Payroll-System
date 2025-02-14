@@ -7,10 +7,41 @@ namespace JTI_Payroll_System
 {
     public partial class SelectEmployeeForm : Form
     {
-        [Browsable(false)] // Prevents serialization errors
-        public string SelectedID { get; private set; }
-        public string SelectedFName { get; private set; }
-        public string SelectedLName { get; private set; }
+        private string selectedID;
+
+        public string GetSelectedID()
+        {
+            return selectedID;
+        }
+
+        private void SetSelectedID(string value)
+        {
+            selectedID = value;
+        }
+
+        private string selectedFName;
+
+        public string GetSelectedFName()
+        {
+            return selectedFName;
+        }
+
+        private void SetSelectedFName(string value)
+        {
+            selectedFName = value;
+        }
+
+        private string selectedLName;
+
+        public string GetSelectedLName()
+        {
+            return selectedLName;
+        }
+
+        private void SetSelectedLName(string value)
+        {
+            selectedLName = value;
+        }
 
         public SelectEmployeeForm(DataTable employeeData)
         {
@@ -29,9 +60,9 @@ namespace JTI_Payroll_System
         {
             if (e.RowIndex >= 0) // Ensure a valid row is selected
             {
-                SelectedID = dataGridView1.Rows[e.RowIndex].Cells["id_no"].Value.ToString();
-                SelectedFName = dataGridView1.Rows[e.RowIndex].Cells["fname"].Value.ToString();
-                SelectedLName = dataGridView1.Rows[e.RowIndex].Cells["lname"].Value.ToString();
+                SetSelectedID(dataGridView1.Rows[e.RowIndex].Cells["id_no"].Value.ToString());
+                SetSelectedFName(dataGridView1.Rows[e.RowIndex].Cells["fname"].Value.ToString());
+                SetSelectedLName(dataGridView1.Rows[e.RowIndex].Cells["lname"].Value.ToString());
 
                 this.DialogResult = DialogResult.OK;
                 this.Close();

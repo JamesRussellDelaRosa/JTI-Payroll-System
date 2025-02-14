@@ -280,9 +280,9 @@ namespace JTI_Payroll_System
                             {
                                 if (selectForm.ShowDialog() == DialogResult.OK)
                                 {
-                                    textEmpID.Text = selectForm.SelectedID;
-                                    textFirstName.Text = selectForm.SelectedFName;
-                                    textLastName.Text = selectForm.SelectedLName; 
+                                    textEmpID.Text = selectForm.GetSelectedID();
+                                    textFirstName.Text = selectForm.GetSelectedFName();
+                                    textLastName.Text = selectForm.GetSelectedLName(); 
                                 }
                             }
                         }
@@ -304,9 +304,9 @@ namespace JTI_Payroll_System
             {
                 if (selectForm.ShowDialog() == DialogResult.OK)
                 {
-                    textEmpID.Text = selectForm.SelectedID;
-                    textFirstName.Text = selectForm.SelectedFName;
-                    textLastName.Text = selectForm.SelectedLName;
+                    textEmpID.Text = selectForm.GetSelectedID();
+                    textFirstName.Text = selectForm.GetSelectedFName();
+                    textLastName.Text = selectForm.GetSelectedLName();
                 }
             }
         }
