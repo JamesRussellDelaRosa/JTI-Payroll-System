@@ -151,61 +151,41 @@ namespace JTI_Payroll_System
         {
             try
             {
-                using (MySqlConnection conn = DatabaseHelper.GetConnection())
+                DataTable dt = LoadAttendanceData(employeeID, startDate, endDate); // ✅ Load Attendance Data
+
+                if (dt.Rows.Count > 0)
                 {
-                    conn.Open();
-                    string query = @"
-                SELECT e.id_no AS EmployeeID, 
-                       CONCAT(e.fname, ' ', e.lname) AS EmployeeName, 
-                       p.date, 
-                       p.time_in AS TimeIn, 
-                       p.time_out AS TimeOut, 
-                       COALESCE(p.rate, 0.00) AS Rate  -- ✅ Ensures NULL values are replaced with 560.00
-                FROM processedDTR p
-                INNER JOIN employee e ON p.employee_id = e.id_no
-                WHERE p.employee_id = @employeeID 
-                      AND p.date BETWEEN @startDate AND @endDate
-                ORDER BY p.date ASC;";
+                    // ✅ Set Employee ID and Name
+                    textID.Text = dt.Rows[0]["EmployeeID"].ToString();
+                    textName.Text = dt.Rows[0]["EmployeeName"].ToString();
+                }
+                else
+                {
+                    // Handle cases where no attendance data is found
+                    textID.Text = employeeID;
+                    textName.Text = "Unknown Employee";
+                }
 
-                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                // ✅ Ensure all dates between startDate and endDate are present
+                for (DateTime date = startDate; date <= endDate; date = date.AddDays(1))
+                {
+                    if (!dt.AsEnumerable().Any(row => Convert.ToDateTime(row["Date"]) == date))
                     {
-                        cmd.Parameters.AddWithValue("@employeeID", employeeID);
-                        cmd.Parameters.AddWithValue("@startDate", startDate.ToString("yyyy-MM-dd"));
-                        cmd.Parameters.AddWithValue("@endDate", endDate.ToString("yyyy-MM-dd"));
-
-                        using (MySqlDataAdapter adapter = new MySqlDataAdapter(cmd))
-                        {
-                            DataTable dt = new DataTable();
-                            adapter.Fill(dt);
-
-                            // ✅ Ensure "Rate" column exists and is correctly formatted as decimal
-                            if (!dt.Columns.Contains("Rate"))
-                            {
-                                dt.Columns.Add("Rate", typeof(decimal)); // Ensure Rate is numeric
-                            }
-
-                            foreach (DataRow row in dt.Rows)
-                            {
-                                if (row["Rate"] == DBNull.Value || string.IsNullOrEmpty(row["Rate"].ToString()))
-                                {
-                                    row["Rate"] = 0.00m; // ✅ Set default rate
-                                }
-                            }
-
-                            if (dt.Rows.Count > 0)
-                            {
-                                textID.Text = dt.Rows[0]["EmployeeID"].ToString();
-                                textName.Text = dt.Rows[0]["EmployeeName"].ToString();
-                                dgvDTR.DataSource = dt;
-                                SetupRateDropdown(); // ✅ Set up dropdown properly
-                            }
-                            else
-                            {
-                                LoadAttendanceData(employeeID, startDate, endDate); // ✅ Load attendance if no DTR found
-                            }
-                        }
+                        DataRow newRow = dt.NewRow();
+                        newRow["EmployeeID"] = employeeID;
+                        newRow["EmployeeName"] = textName.Text;
+                        newRow["Date"] = date;
+                        newRow["TimeIn"] = DBNull.Value;
+                        newRow["TimeOut"] = DBNull.Value;
+                        newRow["Rate"] = 0.00m;
+                        dt.Rows.Add(newRow);
                     }
                 }
+
+                dt.DefaultView.Sort = "Date ASC"; // ✅ Ensure sorting by date
+
+                dgvDTR.DataSource = dt;
+                SetupRateDropdown();
             }
             catch (Exception ex)
             {
@@ -213,8 +193,17 @@ namespace JTI_Payroll_System
             }
         }
 
-        private void LoadAttendanceData(string employeeID, DateTime startDate, DateTime endDate)
+
+        private DataTable LoadAttendanceData(string employeeID, DateTime startDate, DateTime endDate)
         {
+            DataTable dt = new DataTable();
+            dt.Columns.Add("EmployeeID", typeof(string));
+            dt.Columns.Add("EmployeeName", typeof(string));
+            dt.Columns.Add("Date", typeof(DateTime));
+            dt.Columns.Add("TimeIn", typeof(TimeSpan));
+            dt.Columns.Add("TimeOut", typeof(TimeSpan));
+            dt.Columns.Add("Rate", typeof(decimal));
+
             try
             {
                 using (MySqlConnection conn = DatabaseHelper.GetConnection())
@@ -226,52 +215,36 @@ namespace JTI_Payroll_System
                        a.date, 
                        MIN(a.time) AS TimeIn, 
                        MAX(a.time) AS TimeOut, 
-                       0.00 AS Rate  -- ✅ Default rate when loading attendance
-                FROM attendance a
-                INNER JOIN employee e ON a.id = e.id_no
-                WHERE a.id = @employeeID 
+                       COALESCE(p.rate, 0.00) AS Rate 
+                FROM employee e
+                LEFT JOIN attendance a ON e.id_no = a.id
+                LEFT JOIN processedDTR p ON a.id = p.employee_id AND a.date = p.date
+                WHERE e.id_no = @employeeID 
                       AND a.date BETWEEN @startDate AND @endDate
-                GROUP BY a.date, e.id_no, e.fname, e.lname
+                GROUP BY e.id_no, e.fname, e.lname, a.date, p.rate
                 ORDER BY a.date ASC;";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@employeeID", employeeID);
-                        cmd.Parameters.AddWithValue("@startDate", startDate.ToString("yyyy-MM-dd"));
-                        cmd.Parameters.AddWithValue("@endDate", endDate.ToString("yyyy-MM-dd"));
+                        cmd.Parameters.AddWithValue("@startDate", startDate);
+                        cmd.Parameters.AddWithValue("@endDate", endDate);
 
                         using (MySqlDataAdapter adapter = new MySqlDataAdapter(cmd))
                         {
-                            DataTable dt = new DataTable();
                             adapter.Fill(dt);
-
-                            // ✅ Ensure "Rate" column exists
-                            if (!dt.Columns.Contains("Rate"))
-                            {
-                                dt.Columns.Add("Rate", typeof(decimal)); // Ensure Rate is numeric
-                            }
-
-                            if (dt.Rows.Count > 0)
-                            {
-                                textID.Text = dt.Rows[0]["EmployeeID"].ToString();
-                                textName.Text = dt.Rows[0]["EmployeeName"].ToString();
-                                dgvDTR.DataSource = dt;
-                                SetupRateDropdown(); // ✅ Setup dropdown
-                            }
-                            else
-                            {
-                                MessageBox.Show("No attendance records found.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                                dgvDTR.DataSource = null;
-                            }
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error: " + ex.Message, "Attendance Load Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Error loading attendance data: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+
+            return dt;
         }
+
 
 
 
@@ -338,15 +311,37 @@ namespace JTI_Payroll_System
                         if (row.IsNewRow) continue; // Skip empty rows
 
                         string employeeID = textID.Text;
-                        DateTime date = Convert.ToDateTime(row.Cells["date"].Value);
-                        TimeSpan timeIn = TimeSpan.Parse(row.Cells["TimeIn"].Value.ToString());
-                        TimeSpan timeOut = TimeSpan.Parse(row.Cells["TimeOut"].Value.ToString());
-                        decimal rate = Convert.ToDecimal(row.Cells["Rate"].Value);
+                        DateTime date = Convert.ToDateTime(row.Cells["Date"].Value);
 
-                        // ✅ First, check if an entry already exists for this employee on this date
+                        // ✅ Handle NULL, empty, or invalid TimeIn/TimeOut values
+                        TimeSpan? timeIn = null;
+                        TimeSpan? timeOut = null;
+
+                        if (row.Cells["TimeIn"].Value != null && row.Cells["TimeIn"].Value != DBNull.Value && !string.IsNullOrWhiteSpace(row.Cells["TimeIn"].Value.ToString()))
+                        {
+                            if (TimeSpan.TryParse(row.Cells["TimeIn"].Value.ToString(), out TimeSpan parsedTimeIn))
+                            {
+                                timeIn = parsedTimeIn;
+                            }
+                        }
+
+                        if (row.Cells["TimeOut"].Value != null && row.Cells["TimeOut"].Value != DBNull.Value && !string.IsNullOrWhiteSpace(row.Cells["TimeOut"].Value.ToString()))
+                        {
+                            if (TimeSpan.TryParse(row.Cells["TimeOut"].Value.ToString(), out TimeSpan parsedTimeOut))
+                            {
+                                timeOut = parsedTimeOut;
+                            }
+                        }
+
+                        // ✅ Handle NULL or empty Rate values
+                        decimal rate = row.Cells["Rate"].Value != DBNull.Value && row.Cells["Rate"].Value != null && !string.IsNullOrWhiteSpace(row.Cells["Rate"].Value.ToString())
+                            ? Convert.ToDecimal(row.Cells["Rate"].Value)
+                            : 0.00m;
+
+                        // ✅ First, check if an entry already exists
                         string checkQuery = @"
-                    SELECT COUNT(*) FROM processedDTR 
-                    WHERE employee_id = @employeeID AND date = @date";
+                SELECT COUNT(*) FROM processedDTR 
+                WHERE employee_id = @employeeID AND date = @date";
 
                         using (MySqlCommand checkCmd = new MySqlCommand(checkQuery, conn))
                         {
@@ -357,33 +352,37 @@ namespace JTI_Payroll_System
 
                             if (recordExists > 0)
                             {
-                                // ✅ If a record exists, update only the Rate
+                                // ✅ If record exists, update only non-null values
                                 string updateQuery = @"
-                            UPDATE processedDTR 
-                            SET rate = @rate 
-                            WHERE employee_id = @employeeID AND date = @date";
+                        UPDATE processedDTR 
+                        SET rate = @rate, 
+                            time_in = IFNULL(@timeIn, time_in), 
+                            time_out = IFNULL(@timeOut, time_out) 
+                        WHERE employee_id = @employeeID AND date = @date";
 
                                 using (MySqlCommand updateCmd = new MySqlCommand(updateQuery, conn))
                                 {
                                     updateCmd.Parameters.AddWithValue("@rate", rate);
                                     updateCmd.Parameters.AddWithValue("@employeeID", employeeID);
                                     updateCmd.Parameters.AddWithValue("@date", date);
+                                    updateCmd.Parameters.AddWithValue("@timeIn", (object)timeIn ?? DBNull.Value);
+                                    updateCmd.Parameters.AddWithValue("@timeOut", (object)timeOut ?? DBNull.Value);
                                     updateCmd.ExecuteNonQuery();
                                 }
                             }
                             else
                             {
-                                // ✅ If no record exists, insert a new entry
+                                // ✅ Insert new entry, allowing NULL values for TimeIn and TimeOut
                                 string insertQuery = @"
-                            INSERT INTO processedDTR (employee_id, date, time_in, time_out, rate) 
-                            VALUES (@employeeID, @date, @timeIn, @timeOut, @rate)";
+                        INSERT INTO processedDTR (employee_id, date, time_in, time_out, rate) 
+                        VALUES (@employeeID, @date, @timeIn, @timeOut, @rate)";
 
                                 using (MySqlCommand insertCmd = new MySqlCommand(insertQuery, conn))
                                 {
                                     insertCmd.Parameters.AddWithValue("@employeeID", employeeID);
                                     insertCmd.Parameters.AddWithValue("@date", date);
-                                    insertCmd.Parameters.AddWithValue("@timeIn", timeIn);
-                                    insertCmd.Parameters.AddWithValue("@timeOut", timeOut);
+                                    insertCmd.Parameters.AddWithValue("@timeIn", (object)timeIn ?? DBNull.Value);
+                                    insertCmd.Parameters.AddWithValue("@timeOut", (object)timeOut ?? DBNull.Value);
                                     insertCmd.Parameters.AddWithValue("@rate", rate);
                                     insertCmd.ExecuteNonQuery();
                                 }
