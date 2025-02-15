@@ -16,6 +16,7 @@ namespace JTI_Payroll_System
         {
             InitializeComponent();
             dgvDTR.DataError += dgvDTR_DataError; // ✅ Attach DataError handler
+            dgvDTR.CellEndEdit += dgvDTR_CellEndEdit;
         }
 
         private void SetupRateDropdown()
@@ -178,7 +179,23 @@ namespace JTI_Payroll_System
                         newRow["TimeIn"] = DBNull.Value;
                         newRow["TimeOut"] = DBNull.Value;
                         newRow["Rate"] = 0.00m;
+                        newRow["WorkingHours"] = 0.00m; // ✅ Default to 0
                         dt.Rows.Add(newRow);
+                    }
+                }
+
+                // ✅ Compute Working Hours for each row
+                foreach (DataRow row in dt.Rows)
+                {
+                    if (row["TimeIn"] != DBNull.Value && row["TimeOut"] != DBNull.Value)
+                    {
+                        TimeSpan timeIn = (TimeSpan)row["TimeIn"];
+                        TimeSpan timeOut = (TimeSpan)row["TimeOut"];
+                        row["WorkingHours"] = (decimal)(timeOut - timeIn).TotalHours;
+                    }
+                    else
+                    {
+                        row["WorkingHours"] = 0.00m; // ✅ Default to 0 if missing data
                     }
                 }
 
@@ -186,13 +203,27 @@ namespace JTI_Payroll_System
 
                 dgvDTR.DataSource = dt;
                 SetupRateDropdown();
+
+                // ✅ Ensure Working Hours column exists in dgvDTR
+                if (!dgvDTR.Columns.Contains("WorkingHours"))
+                {
+                    DataGridViewTextBoxColumn workingHoursColumn = new DataGridViewTextBoxColumn
+                    {
+                        Name = "WorkingHours",
+                        HeaderText = "Working Hours",
+                        ReadOnly = true
+                    };
+                    dgvDTR.Columns.Add(workingHoursColumn);
+                }
+
+                // ✅ Format Working Hours column
+                dgvDTR.Columns["WorkingHours"].DefaultCellStyle.Format = "N2"; // Two decimal places
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Error: " + ex.Message, "DTR Load Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
 
         private DataTable LoadAttendanceData(string employeeID, DateTime startDate, DateTime endDate)
         {
@@ -203,6 +234,7 @@ namespace JTI_Payroll_System
             dt.Columns.Add("TimeIn", typeof(TimeSpan));
             dt.Columns.Add("TimeOut", typeof(TimeSpan));
             dt.Columns.Add("Rate", typeof(decimal));
+            dt.Columns.Add("WorkingHours", typeof(decimal)); // ✅ Add Working Hours column
 
             try
             {
@@ -210,19 +242,19 @@ namespace JTI_Payroll_System
                 {
                     conn.Open();
                     string query = @"
-                SELECT e.id_no AS EmployeeID, 
-                       CONCAT(e.fname, ' ', e.lname) AS EmployeeName, 
-                       a.date, 
-                       MIN(a.time) AS TimeIn, 
-                       MAX(a.time) AS TimeOut, 
-                       COALESCE(p.rate, 0.00) AS Rate 
-                FROM employee e
-                LEFT JOIN attendance a ON e.id_no = a.id
-                LEFT JOIN processedDTR p ON a.id = p.employee_id AND a.date = p.date
-                WHERE e.id_no = @employeeID 
-                      AND a.date BETWEEN @startDate AND @endDate
-                GROUP BY e.id_no, e.fname, e.lname, a.date, p.rate
-                ORDER BY a.date ASC;";
+            SELECT e.id_no AS EmployeeID, 
+                   CONCAT(e.fname, ' ', e.lname) AS EmployeeName, 
+                   a.date, 
+                   MIN(a.time) AS TimeIn, 
+                   MAX(a.time) AS TimeOut, 
+                   COALESCE(p.rate, 0.00) AS Rate 
+            FROM employee e
+            LEFT JOIN attendance a ON e.id_no = a.id
+            LEFT JOIN processedDTR p ON a.id = p.employee_id AND a.date = p.date
+            WHERE e.id_no = @employeeID 
+                  AND a.date BETWEEN @startDate AND @endDate
+            GROUP BY e.id_no, e.fname, e.lname, a.date, p.rate
+            ORDER BY a.date ASC;";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
@@ -234,6 +266,21 @@ namespace JTI_Payroll_System
                         {
                             adapter.Fill(dt);
                         }
+                    }
+                }
+
+                // ✅ Compute Working Hours
+                foreach (DataRow row in dt.Rows)
+                {
+                    if (row["TimeIn"] != DBNull.Value && row["TimeOut"] != DBNull.Value)
+                    {
+                        TimeSpan timeIn = (TimeSpan)row["TimeIn"];
+                        TimeSpan timeOut = (TimeSpan)row["TimeOut"];
+                        row["WorkingHours"] = (decimal)(timeOut - timeIn).TotalHours; // ✅ Compute hours
+                    }
+                    else
+                    {
+                        row["WorkingHours"] = 0.00m; // ✅ Default to 0 if missing data
                     }
                 }
             }
@@ -308,40 +355,16 @@ namespace JTI_Payroll_System
 
                     foreach (DataGridViewRow row in dgvDTR.Rows)
                     {
-                        if (row.IsNewRow) continue; // Skip empty rows
+                        if (row.IsNewRow) continue;
 
                         string employeeID = textID.Text;
                         DateTime date = Convert.ToDateTime(row.Cells["Date"].Value);
+                        TimeSpan? timeIn = row.Cells["TimeIn"].Value != DBNull.Value ? (TimeSpan?)TimeSpan.Parse(row.Cells["TimeIn"].Value.ToString()) : null;
+                        TimeSpan? timeOut = row.Cells["TimeOut"].Value != DBNull.Value ? (TimeSpan?)TimeSpan.Parse(row.Cells["TimeOut"].Value.ToString()) : null;
+                        decimal rate = row.Cells["Rate"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["Rate"].Value) : 0.00m;
+                        decimal workingHours = row.Cells["WorkingHours"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["WorkingHours"].Value) : 0.00m;
 
-                        // ✅ Handle NULL, empty, or invalid TimeIn/TimeOut values
-                        TimeSpan? timeIn = null;
-                        TimeSpan? timeOut = null;
-
-                        if (row.Cells["TimeIn"].Value != null && row.Cells["TimeIn"].Value != DBNull.Value && !string.IsNullOrWhiteSpace(row.Cells["TimeIn"].Value.ToString()))
-                        {
-                            if (TimeSpan.TryParse(row.Cells["TimeIn"].Value.ToString(), out TimeSpan parsedTimeIn))
-                            {
-                                timeIn = parsedTimeIn;
-                            }
-                        }
-
-                        if (row.Cells["TimeOut"].Value != null && row.Cells["TimeOut"].Value != DBNull.Value && !string.IsNullOrWhiteSpace(row.Cells["TimeOut"].Value.ToString()))
-                        {
-                            if (TimeSpan.TryParse(row.Cells["TimeOut"].Value.ToString(), out TimeSpan parsedTimeOut))
-                            {
-                                timeOut = parsedTimeOut;
-                            }
-                        }
-
-                        // ✅ Handle NULL or empty Rate values
-                        decimal rate = row.Cells["Rate"].Value != DBNull.Value && row.Cells["Rate"].Value != null && !string.IsNullOrWhiteSpace(row.Cells["Rate"].Value.ToString())
-                            ? Convert.ToDecimal(row.Cells["Rate"].Value)
-                            : 0.00m;
-
-                        // ✅ First, check if an entry already exists
-                        string checkQuery = @"
-                SELECT COUNT(*) FROM processedDTR 
-                WHERE employee_id = @employeeID AND date = @date";
+                        string checkQuery = "SELECT COUNT(*) FROM processedDTR WHERE employee_id = @employeeID AND date = @date";
 
                         using (MySqlCommand checkCmd = new MySqlCommand(checkQuery, conn))
                         {
@@ -352,12 +375,12 @@ namespace JTI_Payroll_System
 
                             if (recordExists > 0)
                             {
-                                // ✅ If record exists, update only non-null values
                                 string updateQuery = @"
                         UPDATE processedDTR 
                         SET rate = @rate, 
                             time_in = IFNULL(@timeIn, time_in), 
-                            time_out = IFNULL(@timeOut, time_out) 
+                            time_out = IFNULL(@timeOut, time_out), 
+                            working_hours = @workingHours 
                         WHERE employee_id = @employeeID AND date = @date";
 
                                 using (MySqlCommand updateCmd = new MySqlCommand(updateQuery, conn))
@@ -367,24 +390,8 @@ namespace JTI_Payroll_System
                                     updateCmd.Parameters.AddWithValue("@date", date);
                                     updateCmd.Parameters.AddWithValue("@timeIn", (object)timeIn ?? DBNull.Value);
                                     updateCmd.Parameters.AddWithValue("@timeOut", (object)timeOut ?? DBNull.Value);
+                                    updateCmd.Parameters.AddWithValue("@workingHours", workingHours);
                                     updateCmd.ExecuteNonQuery();
-                                }
-                            }
-                            else
-                            {
-                                // ✅ Insert new entry, allowing NULL values for TimeIn and TimeOut
-                                string insertQuery = @"
-                        INSERT INTO processedDTR (employee_id, date, time_in, time_out, rate) 
-                        VALUES (@employeeID, @date, @timeIn, @timeOut, @rate)";
-
-                                using (MySqlCommand insertCmd = new MySqlCommand(insertQuery, conn))
-                                {
-                                    insertCmd.Parameters.AddWithValue("@employeeID", employeeID);
-                                    insertCmd.Parameters.AddWithValue("@date", date);
-                                    insertCmd.Parameters.AddWithValue("@timeIn", (object)timeIn ?? DBNull.Value);
-                                    insertCmd.Parameters.AddWithValue("@timeOut", (object)timeOut ?? DBNull.Value);
-                                    insertCmd.Parameters.AddWithValue("@rate", rate);
-                                    insertCmd.ExecuteNonQuery();
                                 }
                             }
                         }
@@ -416,6 +423,31 @@ namespace JTI_Payroll_System
         {
             DeleteDTRForm deleteForm = new DeleteDTRForm();
             deleteForm.ShowDialog(); // Open as a modal dialog
+        }
+
+        private void dgvDTR_CellEndEdit(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.ColumnIndex == dgvDTR.Columns["TimeIn"].Index || e.ColumnIndex == dgvDTR.Columns["TimeOut"].Index)
+            {
+                DataGridViewRow row = dgvDTR.Rows[e.RowIndex];
+
+                if (row.Cells["TimeIn"].Value != DBNull.Value && row.Cells["TimeOut"].Value != DBNull.Value)
+                {
+                    if (TimeSpan.TryParse(row.Cells["TimeIn"].Value.ToString(), out TimeSpan timeIn) &&
+                        TimeSpan.TryParse(row.Cells["TimeOut"].Value.ToString(), out TimeSpan timeOut))
+                    {
+                        row.Cells["WorkingHours"].Value = (decimal)(timeOut - timeIn).TotalHours;
+                    }
+                    else
+                    {
+                        row.Cells["WorkingHours"].Value = 0.00m;
+                    }
+                }
+                else
+                {
+                    row.Cells["WorkingHours"].Value = 0.00m;
+                }
+            }
         }
     }
 
