@@ -110,11 +110,12 @@ namespace JTI_Payroll_System
                 {
                     conn.Open();
                     string query = @"
-                        SELECT DISTINCT e.id_no
-                        FROM employee e
-                        INNER JOIN attendance a ON e.id_no = a.id
-                        WHERE a.date BETWEEN @startDate AND @endDate
-                        ORDER BY e.id_no ASC;";  // Ensure ordered list
+                SELECT DISTINCT e.id_no
+                FROM employee e
+                LEFT JOIN processedDTR p ON e.id_no = p.employee_id AND p.date BETWEEN @startDate AND @endDate
+                LEFT JOIN attendance a ON e.id_no = a.id AND a.date BETWEEN @startDate AND @endDate
+                WHERE p.employee_id IS NOT NULL OR a.id IS NOT NULL
+                ORDER BY e.id_no ASC;";  // ✅ Fetch from processedDTR first, fallback to attendance
 
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
@@ -167,6 +168,12 @@ namespace JTI_Payroll_System
                     textName.Text = "Unknown Employee";
                 }
 
+                // ✅ Ensure OTHours column exists
+                if (!dt.Columns.Contains("OTHours"))
+                {
+                    dt.Columns.Add("OTHours", typeof(decimal)); // ✅ Add OTHours column
+                }
+
                 // ✅ Ensure all dates between startDate and endDate are present
                 for (DateTime date = startDate; date <= endDate; date = date.AddDays(1))
                 {
@@ -180,22 +187,28 @@ namespace JTI_Payroll_System
                         newRow["TimeOut"] = DBNull.Value;
                         newRow["Rate"] = 0.00m;
                         newRow["WorkingHours"] = 0.00m; // ✅ Default to 0
+                        newRow["OTHours"] = 0.00m; // ✅ Default to 0
                         dt.Rows.Add(newRow);
                     }
                 }
 
-                // ✅ Compute Working Hours for each row
+                // ✅ Compute Working Hours & OTHours for each row
                 foreach (DataRow row in dt.Rows)
                 {
                     if (row["TimeIn"] != DBNull.Value && row["TimeOut"] != DBNull.Value)
                     {
                         TimeSpan timeIn = (TimeSpan)row["TimeIn"];
                         TimeSpan timeOut = (TimeSpan)row["TimeOut"];
-                        row["WorkingHours"] = (decimal)(timeOut - timeIn).TotalHours;
+                        double workingHours = (timeOut - timeIn).TotalHours;
+                        double otHours = workingHours > 8 ? workingHours - 8 : 0; // ✅ Compute OTHours
+
+                        row["WorkingHours"] = (decimal)(workingHours > 8 ? 8 : workingHours); // ✅ Cap at 8hrs
+                        row["OTHours"] = (decimal)otHours; // ✅ Assign OT Hours
                     }
                     else
                     {
                         row["WorkingHours"] = 0.00m; // ✅ Default to 0 if missing data
+                        row["OTHours"] = 0.00m; // ✅ Default to 0 if missing data
                     }
                 }
 
@@ -216,8 +229,21 @@ namespace JTI_Payroll_System
                     dgvDTR.Columns.Add(workingHoursColumn);
                 }
 
-                // ✅ Format Working Hours column
+                // ✅ Ensure OTHours column exists in dgvDTR
+                if (!dgvDTR.Columns.Contains("OTHours"))
+                {
+                    DataGridViewTextBoxColumn otHoursColumn = new DataGridViewTextBoxColumn
+                    {
+                        Name = "OTHours",
+                        HeaderText = "OT Hours",
+                        ReadOnly = true
+                    };
+                    dgvDTR.Columns.Add(otHoursColumn);
+                }
+
+                // ✅ Format Working Hours & OTHours columns
                 dgvDTR.Columns["WorkingHours"].DefaultCellStyle.Format = "N2"; // Two decimal places
+                dgvDTR.Columns["OTHours"].DefaultCellStyle.Format = "N2"; // Two decimal places
             }
             catch (Exception ex)
             {
@@ -235,6 +261,7 @@ namespace JTI_Payroll_System
             dt.Columns.Add("TimeOut", typeof(TimeSpan));
             dt.Columns.Add("Rate", typeof(decimal));
             dt.Columns.Add("WorkingHours", typeof(decimal)); // ✅ Add Working Hours column
+            dt.Columns.Add("OTHours", typeof(decimal)); // ✅ Add OTHours column
 
             try
             {
@@ -269,18 +296,23 @@ namespace JTI_Payroll_System
                     }
                 }
 
-                // ✅ Compute Working Hours
+                // ✅ Compute Working Hours & OTHours
                 foreach (DataRow row in dt.Rows)
                 {
                     if (row["TimeIn"] != DBNull.Value && row["TimeOut"] != DBNull.Value)
                     {
                         TimeSpan timeIn = (TimeSpan)row["TimeIn"];
                         TimeSpan timeOut = (TimeSpan)row["TimeOut"];
-                        row["WorkingHours"] = (decimal)(timeOut - timeIn).TotalHours; // ✅ Compute hours
+                        double workingHours = (timeOut - timeIn).TotalHours;
+                        double otHours = workingHours > 8 ? workingHours - 8 : 0; // ✅ Compute OTHours
+
+                        row["WorkingHours"] = (decimal)(workingHours > 8 ? 8 : workingHours); // ✅ Cap at 8hrs
+                        row["OTHours"] = (decimal)otHours; // ✅ Assign OT Hours
                     }
                     else
                     {
                         row["WorkingHours"] = 0.00m; // ✅ Default to 0 if missing data
+                        row["OTHours"] = 0.00m; // ✅ Default to 0 if missing data
                     }
                 }
             }
@@ -364,6 +396,9 @@ namespace JTI_Payroll_System
                         decimal rate = row.Cells["Rate"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["Rate"].Value) : 0.00m;
                         decimal workingHours = row.Cells["WorkingHours"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["WorkingHours"].Value) : 0.00m;
 
+                        // 🔹 Compute Overtime Hours
+                        decimal otHours = workingHours > 8 ? workingHours - 8 : 0.00m;
+
                         // Check if the record exists
                         string checkQuery = "SELECT COUNT(*) FROM processedDTR WHERE employee_id = @employeeID AND date = @date";
 
@@ -377,12 +412,13 @@ namespace JTI_Payroll_System
                             {
                                 // **Update the existing record**
                                 string updateQuery = @"
-                        UPDATE processedDTR 
-                        SET rate = @rate, 
-                            time_in = IFNULL(@timeIn, time_in), 
-                            time_out = IFNULL(@timeOut, time_out), 
-                            working_hours = @workingHours 
-                        WHERE employee_id = @employeeID AND date = @date";
+                            UPDATE processedDTR 
+                            SET rate = @rate, 
+                                time_in = IFNULL(@timeIn, time_in), 
+                                time_out = IFNULL(@timeOut, time_out), 
+                                working_hours = @workingHours, 
+                                ot_hrs = @otHours
+                            WHERE employee_id = @employeeID AND date = @date";
 
                                 using (MySqlCommand updateCmd = new MySqlCommand(updateQuery, conn))
                                 {
@@ -392,6 +428,7 @@ namespace JTI_Payroll_System
                                     updateCmd.Parameters.AddWithValue("@timeIn", (object)timeIn ?? DBNull.Value);
                                     updateCmd.Parameters.AddWithValue("@timeOut", (object)timeOut ?? DBNull.Value);
                                     updateCmd.Parameters.AddWithValue("@workingHours", workingHours);
+                                    updateCmd.Parameters.AddWithValue("@otHours", otHours);
                                     updateCmd.ExecuteNonQuery();
                                 }
                             }
@@ -399,8 +436,8 @@ namespace JTI_Payroll_System
                             {
                                 // **Insert a new record if it doesn't exist**
                                 string insertQuery = @"
-                        INSERT INTO processedDTR (employee_id, date, time_in, time_out, rate, working_hours)
-                        VALUES (@employeeID, @date, @timeIn, @timeOut, @rate, @workingHours)";
+                            INSERT INTO processedDTR (employee_id, date, time_in, time_out, rate, working_hours, ot_hrs)
+                            VALUES (@employeeID, @date, @timeIn, @timeOut, @rate, @workingHours, @otHours)";
 
                                 using (MySqlCommand insertCmd = new MySqlCommand(insertQuery, conn))
                                 {
@@ -410,6 +447,7 @@ namespace JTI_Payroll_System
                                     insertCmd.Parameters.AddWithValue("@timeOut", (object)timeOut ?? DBNull.Value);
                                     insertCmd.Parameters.AddWithValue("@rate", rate);
                                     insertCmd.Parameters.AddWithValue("@workingHours", workingHours);
+                                    insertCmd.Parameters.AddWithValue("@otHours", otHours);
                                     insertCmd.ExecuteNonQuery();
                                 }
                             }
@@ -455,17 +493,62 @@ namespace JTI_Payroll_System
                     if (TimeSpan.TryParse(row.Cells["TimeIn"].Value.ToString(), out TimeSpan timeIn) &&
                         TimeSpan.TryParse(row.Cells["TimeOut"].Value.ToString(), out TimeSpan timeOut))
                     {
-                        row.Cells["WorkingHours"].Value = (decimal)(timeOut - timeIn).TotalHours;
+                        decimal workingHours = (decimal)(timeOut - timeIn).TotalHours;
+                        decimal otHours = workingHours > 8 ? workingHours - 8 : 0.00m; // ✅ Calculate OT hours
+
+                        row.Cells["WorkingHours"].Value = workingHours;
+                        row.Cells["OTHours"].Value = otHours;
+
+                        // ✅ Update the database with new WorkingHours and OTHours
+                        UpdateProcessedDTR(row.Cells["EmployeeID"].Value.ToString(),
+                                           Convert.ToDateTime(row.Cells["Date"].Value),
+                                           timeIn, timeOut, workingHours, otHours);
                     }
                     else
                     {
                         row.Cells["WorkingHours"].Value = 0.00m;
+                        row.Cells["OTHours"].Value = 0.00m;
                     }
                 }
                 else
                 {
                     row.Cells["WorkingHours"].Value = 0.00m;
+                    row.Cells["OTHours"].Value = 0.00m;
                 }
+            }
+        }
+
+        private void UpdateProcessedDTR(string employeeID, DateTime date, TimeSpan timeIn, TimeSpan timeOut, decimal workingHours, decimal otHours)
+        {
+            try
+            {
+                using (MySqlConnection conn = DatabaseHelper.GetConnection())
+                {
+                    conn.Open();
+
+                    string query = @"
+                UPDATE processedDTR 
+                SET time_in = @timeIn, 
+                    time_out = @timeOut, 
+                    working_hours = @workingHours, 
+                    ot_hrs = @otHours 
+                WHERE employee_id = @employeeID AND date = @date";
+
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@timeIn", timeIn);
+                        cmd.Parameters.AddWithValue("@timeOut", timeOut);
+                        cmd.Parameters.AddWithValue("@workingHours", workingHours);
+                        cmd.Parameters.AddWithValue("@otHours", otHours);
+                        cmd.Parameters.AddWithValue("@employeeID", employeeID);
+                        cmd.Parameters.AddWithValue("@date", date);
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error updating DTR: " + ex.Message, "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }
