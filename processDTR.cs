@@ -364,17 +364,18 @@ namespace JTI_Payroll_System
                         decimal rate = row.Cells["Rate"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["Rate"].Value) : 0.00m;
                         decimal workingHours = row.Cells["WorkingHours"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["WorkingHours"].Value) : 0.00m;
 
+                        // Check if the record exists
                         string checkQuery = "SELECT COUNT(*) FROM processedDTR WHERE employee_id = @employeeID AND date = @date";
 
                         using (MySqlCommand checkCmd = new MySqlCommand(checkQuery, conn))
                         {
                             checkCmd.Parameters.AddWithValue("@employeeID", employeeID);
                             checkCmd.Parameters.AddWithValue("@date", date);
-
                             int recordExists = Convert.ToInt32(checkCmd.ExecuteScalar());
 
                             if (recordExists > 0)
                             {
+                                // **Update the existing record**
                                 string updateQuery = @"
                         UPDATE processedDTR 
                         SET rate = @rate, 
@@ -392,6 +393,24 @@ namespace JTI_Payroll_System
                                     updateCmd.Parameters.AddWithValue("@timeOut", (object)timeOut ?? DBNull.Value);
                                     updateCmd.Parameters.AddWithValue("@workingHours", workingHours);
                                     updateCmd.ExecuteNonQuery();
+                                }
+                            }
+                            else
+                            {
+                                // **Insert a new record if it doesn't exist**
+                                string insertQuery = @"
+                        INSERT INTO processedDTR (employee_id, date, time_in, time_out, rate, working_hours)
+                        VALUES (@employeeID, @date, @timeIn, @timeOut, @rate, @workingHours)";
+
+                                using (MySqlCommand insertCmd = new MySqlCommand(insertQuery, conn))
+                                {
+                                    insertCmd.Parameters.AddWithValue("@employeeID", employeeID);
+                                    insertCmd.Parameters.AddWithValue("@date", date);
+                                    insertCmd.Parameters.AddWithValue("@timeIn", (object)timeIn ?? DBNull.Value);
+                                    insertCmd.Parameters.AddWithValue("@timeOut", (object)timeOut ?? DBNull.Value);
+                                    insertCmd.Parameters.AddWithValue("@rate", rate);
+                                    insertCmd.Parameters.AddWithValue("@workingHours", workingHours);
+                                    insertCmd.ExecuteNonQuery();
                                 }
                             }
                         }
