@@ -269,19 +269,40 @@ namespace JTI_Payroll_System
                 {
                     conn.Open();
                     string query = @"
-            SELECT e.id_no AS EmployeeID, 
-                   CONCAT(e.fname, ' ', e.lname) AS EmployeeName, 
-                   a.date, 
-                   MIN(a.time) AS TimeIn, 
-                   MAX(a.time) AS TimeOut, 
-                   COALESCE(p.rate, 0.00) AS Rate 
-            FROM employee e
-            LEFT JOIN attendance a ON e.id_no = a.id
-            LEFT JOIN processedDTR p ON a.id = p.employee_id AND a.date = p.date
-            WHERE e.id_no = @employeeID 
-                  AND a.date BETWEEN @startDate AND @endDate
-            GROUP BY e.id_no, e.fname, e.lname, a.date, p.rate
-            ORDER BY a.date ASC;";
+                    WITH RECURSIVE DateRange AS (
+                        SELECT @startDate AS Date
+                        UNION ALL
+                        SELECT DATE_ADD(Date, INTERVAL 1 DAY)
+                        FROM DateRange
+                        WHERE Date < @endDate
+                    )
+                    SELECT 
+                        e.id_no AS EmployeeID, 
+                        CONCAT(e.fname, ' ', e.lname) AS EmployeeName, 
+                        d.Date, 
+                        COALESCE(p.time_in, MIN(a.time)) AS TimeIn, 
+                        COALESCE(p.time_out, MAX(a.time)) AS TimeOut, 
+                        COALESCE(p.rate, 0.00) AS Rate, 
+                        COALESCE(p.working_hours, 
+                                 CASE WHEN TIMESTAMPDIFF(SECOND, MIN(a.time), MAX(a.time)) / 3600 > 8 
+                                      THEN 8 
+                                      ELSE TIMESTAMPDIFF(SECOND, MIN(a.time), MAX(a.time)) / 3600 
+                                 END
+                        ) AS WorkingHours,
+                        COALESCE(p.ot_hrs, 
+                                 CASE WHEN TIMESTAMPDIFF(SECOND, MIN(a.time), MAX(a.time)) / 3600 > 8 
+                                      THEN TIMESTAMPDIFF(SECOND, MIN(a.time), MAX(a.time)) / 3600 - 8 
+                                      ELSE 0 
+                                 END
+                        ) AS OTHours
+                    FROM employee e
+                    JOIN DateRange d ON 1=1
+                    LEFT JOIN attendance a ON e.id_no = a.id AND a.date = d.Date
+                    LEFT JOIN processedDTR p ON e.id_no = p.employee_id AND p.date = d.Date
+                    WHERE e.id_no = @employeeID
+                    GROUP BY e.id_no, e.fname, e.lname, d.Date, p.time_in, p.time_out, p.rate, p.working_hours, p.ot_hrs
+                    ORDER BY d.Date ASC;";
+
 
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
