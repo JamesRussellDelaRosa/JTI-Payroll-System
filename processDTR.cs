@@ -15,7 +15,7 @@ namespace JTI_Payroll_System
         public processDTR()
         {
             InitializeComponent();
-            dgvDTR.DataError += dgvDTR_DataError; // ✅ Attach DataError handler
+            dgvDTR.DataError += dgvDTR_DataError;
             dgvDTR.CellEndEdit += dgvDTR_CellEndEdit;
         }
 
@@ -62,7 +62,6 @@ namespace JTI_Payroll_System
             dgvDTR.Columns[rateColumnName].ValueType = typeof(decimal);
         }
 
-        // ✅ Method to fetch rates from the database
         private List<decimal> GetRateValuesFromDatabase()
         {
             List<decimal> rates = new List<decimal>();
@@ -127,7 +126,6 @@ namespace JTI_Payroll_System
             }
         }
 
-        // ✅ Method to fetch shift codes from the database
         private List<string> GetShiftCodesFromDatabase()
         {
             List<string> shiftCodes = new List<string>();
@@ -263,8 +261,9 @@ namespace JTI_Payroll_System
                         dt.Rows.Add(newRow);
                     }
                 }
+                // Do not overwrite othours
 
-                foreach (DataRow row in dt.Rows)
+                /*foreach (DataRow row in dt.Rows)
                 {
                     if (row["ShiftCode"] != DBNull.Value)
                     {
@@ -291,7 +290,7 @@ namespace JTI_Payroll_System
                         row["StartTime"] = DBNull.Value;
                         row["EndTime"] = DBNull.Value;
                     }
-                }
+                }*/
 
                 dt.DefaultView.Sort = "Date ASC";
                 dgvDTR.DataSource = dt;
@@ -328,7 +327,6 @@ namespace JTI_Payroll_System
             }
         }
 
-        //Helper Class for easier use
         private class ShiftCodeData
         {
             public string ShiftCode { get; set; }
@@ -396,8 +394,8 @@ namespace JTI_Payroll_System
             dt.Columns.Add("WorkingHours", typeof(decimal));
             dt.Columns.Add("OTHours", typeof(decimal));
             dt.Columns.Add("ShiftCode", typeof(string));
-            dt.Columns.Add("StartTime", typeof(TimeSpan));  // Add StartTime
-            dt.Columns.Add("EndTime", typeof(TimeSpan)); // Add EndTime
+            dt.Columns.Add("StartTime", typeof(TimeSpan));
+            dt.Columns.Add("EndTime", typeof(TimeSpan));
 
 
             try
@@ -420,8 +418,8 @@ namespace JTI_Payroll_System
                     COALESCE(p.time_in, MIN(a.time)) AS TimeIn,
                     COALESCE(p.time_out, MAX(a.time)) AS TimeOut,
                     COALESCE(p.rate, 0.00) AS Rate,
-                    COALESCE(sc.regular_hours, 0.00) AS WorkingHours,  -- Get from ShiftCode table
-                    COALESCE(sc.ot_hours, 0.00) AS OTHours,  -- Get from ShiftCode table
+                    COALESCE(sc.regular_hours, 0.00) AS WorkingHours,  -- Get WorkingHours from ShiftCode table
+                    COALESCE(p.ot_hrs, sc.ot_hours, 0.00) AS OTHours,   -- Try to load it from p.ot_hrs but if it doesn't exist then try sc.ot_hours
                     p.shift_code AS ShiftCode,
                     sc.start_time AS StartTime,  -- Get from ShiftCode table
                     sc.end_time AS EndTime  -- Get from ShiftCode table
@@ -431,9 +429,8 @@ namespace JTI_Payroll_System
                 LEFT JOIN processedDTR p ON e.id_no = p.employee_id AND p.date = d.Date
                 LEFT JOIN ShiftCodes sc ON p.shift_code = sc.shift_code
                 WHERE e.id_no = @employeeID
-                GROUP BY e.id_no, e.fname, e.lname, d.Date, p.time_in, p.time_out, p.rate, p.shift_code, sc.start_time, sc.end_time, sc.regular_hours, sc.ot_hours
+                GROUP BY e.id_no, e.fname, e.lname, d.Date, p.time_in, p.time_out, p.rate, p.shift_code, sc.start_time, sc.end_time, sc.regular_hours, p.ot_hrs, sc.ot_hours
                 ORDER BY d.Date ASC;";
-
 
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
@@ -638,14 +635,14 @@ namespace JTI_Payroll_System
                         row.Cells["EndTime"].Value = shiftData.EndTime;
                         row.Cells["WorkingHours"].Value = shiftData.RegularHours;
 
-                        //Calculate OT
+                        // Calculate overtime hours
                         decimal otHours = CalculateOvertime(row);
                         row.Cells["OTHours"].Value = otHours;
 
                         // Update the database
                         UpdateProcessedDTR(row.Cells["EmployeeID"].Value.ToString(),
                                            Convert.ToDateTime(row.Cells["Date"].Value),
-                                           shiftCode, Convert.ToDecimal(row.Cells["WorkingHours"].Value), Convert.ToDecimal(row.Cells["OTHours"].Value), Convert.ToDecimal(row.Cells["Rate"].Value),
+                                           shiftCode, Convert.ToDecimal(row.Cells["WorkingHours"].Value), otHours, Convert.ToDecimal(row.Cells["Rate"].Value),
                                            row.Cells["TimeIn"].Value == DBNull.Value ? (TimeSpan?)null : TimeSpan.Parse(row.Cells["TimeIn"].Value.ToString()),
                                            row.Cells["TimeOut"].Value == DBNull.Value ? (TimeSpan?)null : TimeSpan.Parse(row.Cells["TimeOut"].Value.ToString()));
                     }
@@ -665,16 +662,23 @@ namespace JTI_Payroll_System
                     row.Cells["EndTime"].Value = DBNull.Value;
                     row.Cells["WorkingHours"].Value = 0.00m;
                     row.Cells["OTHours"].Value = 0.00m;
+
                 }
             }
-
             else if (e.ColumnIndex == dgvDTR.Columns["TimeIn"].Index || e.ColumnIndex == dgvDTR.Columns["TimeOut"].Index) //If TimeIn or TimeOut has changed, do the recalculations.
             {
                 decimal otHours = CalculateOvertime(row);
                 row.Cells["OTHours"].Value = otHours;
+                UpdateProcessedDTR(row.Cells["EmployeeID"].Value.ToString(),
+                                          Convert.ToDateTime(row.Cells["Date"].Value),
+                                          row.Cells["ShiftCode"].Value.ToString(), Convert.ToDecimal(row.Cells["WorkingHours"].Value), otHours, Convert.ToDecimal(row.Cells["Rate"].Value),
+                                          row.Cells["TimeIn"].Value == DBNull.Value ? (TimeSpan?)null : TimeSpan.Parse(row.Cells["TimeIn"].Value.ToString()),
+                                          row.Cells["TimeOut"].Value == DBNull.Value ? (TimeSpan?)null : TimeSpan.Parse(row.Cells["TimeOut"].Value.ToString()));
             }
+
         }
 
+        //New function to calculate overtime, based on ShiftCode data
         private decimal CalculateOvertime(DataGridViewRow row)
         {
             decimal otHours = 0.00m;
@@ -700,6 +704,7 @@ namespace JTI_Payroll_System
             return otHours;
         }
 
+        //Overload UpdateProcessedDTR to take into account more values.  This one is if we changed shiftcode
         private void UpdateProcessedDTR(string employeeID, DateTime date, string shiftCode, decimal workingHours, decimal otHours, decimal rate, TimeSpan? timeIn = null, TimeSpan? timeOut = null)
         {
             try
