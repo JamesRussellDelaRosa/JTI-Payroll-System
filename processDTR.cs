@@ -637,7 +637,10 @@ namespace JTI_Payroll_System
                         row.Cells["StartTime"].Value = shiftData.StartTime;
                         row.Cells["EndTime"].Value = shiftData.EndTime;
                         row.Cells["WorkingHours"].Value = shiftData.RegularHours;
-                        row.Cells["OTHours"].Value = shiftData.OtHours;
+
+                        //Calculate OT
+                        decimal otHours = CalculateOvertime(row);
+                        row.Cells["OTHours"].Value = otHours;
 
                         // Update the database
                         UpdateProcessedDTR(row.Cells["EmployeeID"].Value.ToString(),
@@ -664,9 +667,39 @@ namespace JTI_Payroll_System
                     row.Cells["OTHours"].Value = 0.00m;
                 }
             }
+
+            else if (e.ColumnIndex == dgvDTR.Columns["TimeIn"].Index || e.ColumnIndex == dgvDTR.Columns["TimeOut"].Index) //If TimeIn or TimeOut has changed, do the recalculations.
+            {
+                decimal otHours = CalculateOvertime(row);
+                row.Cells["OTHours"].Value = otHours;
+            }
         }
 
-        //Overload UpdateProcessedDTR to take into account more values.  This one is if we changed shiftcode
+        private decimal CalculateOvertime(DataGridViewRow row)
+        {
+            decimal otHours = 0.00m;
+
+            //First, check if TimeIn and TimeOut exists.  If it doesn't, then there are 0 ot hours
+            if (row.Cells["TimeIn"].Value != DBNull.Value && row.Cells["TimeOut"].Value != DBNull.Value)
+            {
+                //Let's load timespans to do date calculations
+                TimeSpan timeIn = (TimeSpan)row.Cells["TimeIn"].Value;
+                TimeSpan timeOut = (TimeSpan)row.Cells["TimeOut"].Value;
+
+                //Now, to get OT hours we will first get total hours worked
+                decimal totalHours = (decimal)(timeOut - timeIn).TotalHours;
+
+                //Regular hours are specified in database
+                decimal regularHours = Convert.ToDecimal(row.Cells["WorkingHours"].Value);
+
+                //Calculate OT hours by getting totalHours and removing regular hours
+                otHours = Math.Max(0, totalHours - regularHours);
+            }
+            //Otherwise, if either one doesn't exist, then OTHours are 0
+
+            return otHours;
+        }
+
         private void UpdateProcessedDTR(string employeeID, DateTime date, string shiftCode, decimal workingHours, decimal otHours, decimal rate, TimeSpan? timeIn = null, TimeSpan? timeOut = null)
         {
             try
