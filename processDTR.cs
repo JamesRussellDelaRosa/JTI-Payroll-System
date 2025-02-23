@@ -236,6 +236,16 @@ namespace JTI_Payroll_System
                     dt.Columns.Add("EndTime", typeof(TimeSpan));
                 }
 
+                if (!dt.Columns.Contains("NightDifferentialHours"))
+                {
+                    dt.Columns.Add("NightDifferentialHours", typeof(decimal));
+                }
+
+                if (!dt.Columns.Contains("NightDifferentialOtHours"))
+                {
+                    dt.Columns.Add("NightDifferentialOtHours", typeof(decimal));
+                }
+
                 for (DateTime date = startDate; date <= endDate; date = date.AddDays(1))
                 {
                     if (!dt.AsEnumerable().Any(row => Convert.ToDateTime(row["Date"]) == date))
@@ -252,39 +262,11 @@ namespace JTI_Payroll_System
                         newRow["ShiftCode"] = DBNull.Value;
                         newRow["StartTime"] = DBNull.Value;
                         newRow["EndTime"] = DBNull.Value;
+                        newRow["NightDifferentialHours"] = 0.00m;
+                        newRow["NightDifferentialOtHours"] = 0.00m;
                         dt.Rows.Add(newRow);
                     }
                 }
-                // Do not overwrite othours
-
-                /*foreach (DataRow row in dt.Rows)
-                {
-                    if (row["ShiftCode"] != DBNull.Value)
-                    {
-                        ShiftCodeData shiftData = GetShiftCodeData(row["ShiftCode"].ToString());
-                        if (shiftData != null)
-                        {
-                            row["WorkingHours"] = shiftData.RegularHours;
-                            row["OTHours"] = shiftData.OtHours;
-                            row["StartTime"] = shiftData.StartTime;
-                            row["EndTime"] = shiftData.EndTime;
-                        }
-                        else
-                        {
-                            row["WorkingHours"] = 0.00m;
-                            row["OTHours"] = 0.00m;
-                            row["StartTime"] = DBNull.Value;
-                            row["EndTime"] = DBNull.Value;
-                        }
-                    }
-                    else
-                    {
-                        row["WorkingHours"] = 0.00m;
-                        row["OTHours"] = 0.00m;
-                        row["StartTime"] = DBNull.Value;
-                        row["EndTime"] = DBNull.Value;
-                    }
-                }*/
 
                 dt.DefaultView.Sort = "Date ASC";
                 dgvDTR.DataSource = dt;
@@ -308,10 +290,36 @@ namespace JTI_Payroll_System
                     dgvDTR.Columns.Add(new DataGridViewTextBoxColumn { Name = "EndTime", HeaderText = "End Time", ReadOnly = true });
                 }
 
+                //Add New Column - NightDifferential
+                if (!dgvDTR.Columns.Contains("NightDifferentialHours"))
+                {
+                    DataGridViewTextBoxColumn nightDifferentialColumn = new DataGridViewTextBoxColumn
+                    {
+                        Name = "NightDifferentialHours",
+                        HeaderText = "Night Differential Hours",
+                        ReadOnly = true
+                    };
+                    dgvDTR.Columns.Add(nightDifferentialColumn);
+                }
+
+                //Add New Column - NightDifferentialOT
+                if (!dgvDTR.Columns.Contains("NightDifferentialOtHours"))
+                {
+                    DataGridViewTextBoxColumn nightDifferentialOTColumn = new DataGridViewTextBoxColumn
+                    {
+                        Name = "NightDifferentialOtHours",
+                        HeaderText = "Night Differential OT Hours",
+                        ReadOnly = true
+                    };
+                    dgvDTR.Columns.Add(nightDifferentialOTColumn);
+                }
+
                 dgvDTR.Columns["WorkingHours"].DefaultCellStyle.Format = "N2";
                 dgvDTR.Columns["OTHours"].DefaultCellStyle.Format = "N2";
                 dgvDTR.Columns["StartTime"].DefaultCellStyle.Format = "hh\\:mm";
                 dgvDTR.Columns["EndTime"].DefaultCellStyle.Format = "hh\\:mm";
+                dgvDTR.Columns["NightDifferentialHours"].DefaultCellStyle.Format = "N2";
+                dgvDTR.Columns["NightDifferentialOtHours"].DefaultCellStyle.Format = "N2";
 
                 dgvDTR.Refresh();
             }
@@ -327,7 +335,7 @@ namespace JTI_Payroll_System
             public TimeSpan EndTime { get; set; }
             public decimal RegularHours { get; set; }
             public decimal OtHours { get; set; }
-            public decimal NightDifferentialHours { get; set; }
+            public decimal NightDifferentialHours { get; set; } //NEW
             public decimal NightDifferentialOtHours { get; set; }
         }
         private ShiftCodeData GetShiftCodeData(string shiftCode)
@@ -358,7 +366,7 @@ namespace JTI_Payroll_System
                                     EndTime = reader.GetTimeSpan("end_time"),
                                     RegularHours = reader.GetDecimal("regular_hours"),
                                     OtHours = reader.GetDecimal("ot_hours"),
-                                    NightDifferentialHours = reader.GetDecimal("night_differential_hours"),
+                                    NightDifferentialHours = reader.GetDecimal("night_differential_hours"), //NEW
                                     NightDifferentialOtHours = reader.GetDecimal("night_differential_ot_hours")
                                 };
                             }
@@ -387,7 +395,8 @@ namespace JTI_Payroll_System
             dt.Columns.Add("ShiftCode", typeof(string));
             dt.Columns.Add("StartTime", typeof(TimeSpan));
             dt.Columns.Add("EndTime", typeof(TimeSpan));
-
+            dt.Columns.Add("NightDifferentialHours", typeof(decimal)); //NEW
+            dt.Columns.Add("NightDifferentialOtHours", typeof(decimal));
 
             try
             {
@@ -409,18 +418,20 @@ namespace JTI_Payroll_System
                     COALESCE(p.time_in, MIN(a.time)) AS TimeIn,
                     COALESCE(p.time_out, MAX(a.time)) AS TimeOut,
                     COALESCE(p.rate, 0.00) AS Rate,
-                    COALESCE(sc.regular_hours, 0.00) AS WorkingHours,  -- Get WorkingHours from ShiftCode table
-                    COALESCE(p.ot_hrs, sc.ot_hours, 0.00) AS OTHours,   -- Try to load it from p.ot_hrs but if it doesn't exist then try sc.ot_hours
+                    COALESCE(sc.regular_hours, 0.00) AS WorkingHours,
+                    COALESCE(p.ot_hrs, sc.ot_hours, 0.00) AS OTHours, -- Try to load it from p.ot_hrs but if it doesn't exist then try sc.ot_hours,0.00
                     p.shift_code AS ShiftCode,
-                    sc.start_time AS StartTime,  -- Get from ShiftCode table
-                    sc.end_time AS EndTime  -- Get from ShiftCode table
+                    sc.start_time AS StartTime,
+                    sc.end_time AS EndTime,
+                   sc.night_differential_hours AS NightDifferentialHours,
+                   sc.night_differential_ot_hours AS NightDifferentialOtHours
                 FROM employee e
                 JOIN DateRange d ON 1=1
                 LEFT JOIN attendance a ON e.id_no = a.id AND a.date = d.Date
                 LEFT JOIN processedDTR p ON e.id_no = p.employee_id AND p.date = d.Date
                 LEFT JOIN ShiftCodes sc ON p.shift_code = sc.shift_code
                 WHERE e.id_no = @employeeID
-                GROUP BY e.id_no, e.fname, e.lname, d.Date, p.time_in, p.time_out, p.rate, p.shift_code, sc.start_time, sc.end_time, sc.regular_hours, p.ot_hrs, sc.ot_hours
+                GROUP BY e.id_no, e.fname, e.lname, d.Date, p.time_in, p.time_out, p.rate, p.shift_code, sc.start_time, sc.end_time, sc.regular_hours, p.ot_hrs, sc.ot_hours, sc.night_differential_hours, sc.night_differential_ot_hours
                 ORDER BY d.Date ASC;";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
@@ -511,6 +522,9 @@ namespace JTI_Payroll_System
                         decimal workingHours = row.Cells["WorkingHours"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["WorkingHours"].Value) : 0.00m;
                         decimal otHours = row.Cells["OTHours"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["OTHours"].Value) : 0.00m;
                         string shiftCode = row.Cells["ShiftCode"].Value?.ToString();  // Get ShiftCode from DGV
+                        decimal ndHours = row.Cells["NightDifferentialHours"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["NightDifferentialHours"].Value) : 0.00m;
+                        decimal ndOtHours = row.Cells["NightDifferentialOtHours"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["NightDifferentialOtHours"].Value) : 0.00m;
+
 
                         // Check if the record exists
                         string checkQuery = "SELECT COUNT(*) FROM processedDTR WHERE employee_id = @employeeID AND date = @date";
@@ -531,7 +545,9 @@ namespace JTI_Payroll_System
                                 time_out = IFNULL(@timeOut, time_out), 
                                 working_hours = @workingHours, 
                                 ot_hrs = @otHours,
-                                shift_code = @shiftCode
+                                shift_code = @shiftCode,
+                                nd_hrs = @ndHours,
+                                ndot_hrs = @ndOtHours
                             WHERE employee_id = @employeeID AND date = @date";
 
                                 using (MySqlCommand updateCmd = new MySqlCommand(updateQuery, conn))
@@ -544,6 +560,8 @@ namespace JTI_Payroll_System
                                     updateCmd.Parameters.AddWithValue("@workingHours", workingHours);
                                     updateCmd.Parameters.AddWithValue("@otHours", otHours);
                                     updateCmd.Parameters.AddWithValue("@shiftCode", shiftCode);
+                                    updateCmd.Parameters.AddWithValue("@ndHours", ndHours);
+                                    updateCmd.Parameters.AddWithValue("@ndOtHours", ndOtHours);
                                     updateCmd.ExecuteNonQuery();
                                 }
                             }
@@ -551,8 +569,8 @@ namespace JTI_Payroll_System
                             {
                                 // **Insert a new record if it doesn't exist**
                                 string insertQuery = @"
-                            INSERT INTO processedDTR (employee_id, date, time_in, time_out, rate, working_hours, ot_hrs, shift_code)
-                            VALUES (@employeeID, @date, @timeIn, @timeOut, @rate, @workingHours, @otHours, @shiftCode)";
+                            INSERT INTO processedDTR (employee_id, date, time_in, time_out, rate, working_hours, ot_hrs, shift_code, nd_hrs, ndot_hrs)
+                            VALUES (@employeeID, @date, @timeIn, @timeOut, @rate, @workingHours, @otHours, @shiftCode, @ndHours, @ndOtHours)";
 
                                 using (MySqlCommand insertCmd = new MySqlCommand(insertQuery, conn))
                                 {
@@ -564,6 +582,8 @@ namespace JTI_Payroll_System
                                     insertCmd.Parameters.AddWithValue("@workingHours", workingHours);
                                     insertCmd.Parameters.AddWithValue("@otHours", otHours);
                                     insertCmd.Parameters.AddWithValue("@shiftCode", shiftCode);
+                                    insertCmd.Parameters.AddWithValue("@ndHours", ndHours);
+                                    insertCmd.Parameters.AddWithValue("@ndOtHours", ndOtHours);
                                     insertCmd.ExecuteNonQuery();
                                 }
                             }
@@ -605,20 +625,6 @@ namespace JTI_Payroll_System
         {
             DataGridViewRow row = dgvDTR.Rows[e.RowIndex];
 
-            // If WorkingHours is changed...
-            if (e.ColumnIndex == dgvDTR.Columns["WorkingHours"].Index)
-            {
-                decimal otHours = CalculateOvertime(row);
-                row.Cells["OTHours"].Value = otHours;
-
-                UpdateProcessedDTR(row.Cells["EmployeeID"].Value.ToString(),
-                                  Convert.ToDateTime(row.Cells["Date"].Value),
-                                  row.Cells["ShiftCode"].Value.ToString(), Convert.ToDecimal(row.Cells["WorkingHours"].Value), otHours, Convert.ToDecimal(row.Cells["Rate"].Value),
-                                  row.Cells["TimeIn"].Value == DBNull.Value ? (TimeSpan?)null : TimeSpan.Parse(row.Cells["TimeIn"].Value.ToString()),
-                                  row.Cells["TimeOut"].Value == DBNull.Value ? (TimeSpan?)null : TimeSpan.Parse(row.Cells["TimeOut"].Value.ToString()));
-            }
-
-            // If ShiftCode is changed...
             if (e.ColumnIndex == dgvDTR.Columns["ShiftCode"].Index)
             {
                 if (row.Cells["ShiftCode"].Value != null)
@@ -628,22 +634,26 @@ namespace JTI_Payroll_System
 
                     if (shiftData != null)
                     {
-                        // Check ShiftCodeData existence
                         row.Cells["StartTime"].Value = shiftData.StartTime;
                         row.Cells["EndTime"].Value = shiftData.EndTime;
                         row.Cells["WorkingHours"].Value = shiftData.RegularHours;
+                        row.Cells["NightDifferentialHours"].Value = shiftData.NightDifferentialHours;
+                        row.Cells["NightDifferentialOtHours"].Value = shiftData.NightDifferentialOtHours;
 
-                        //Update OTHours based on calculate Overtime
                         decimal otHours = CalculateOvertime(row);
                         row.Cells["OTHours"].Value = otHours;
 
+                        //Set night differential to calculated value
+                        decimal ndHours = CalculateNightDifferential(row); //NEW
+                        decimal ndOtHours = CalculateNightDifferentialOT(row); //Calculate NDOT
 
                         // Update the database
                         UpdateProcessedDTR(row.Cells["EmployeeID"].Value.ToString(),
                                            Convert.ToDateTime(row.Cells["Date"].Value),
                                            shiftCode, Convert.ToDecimal(row.Cells["WorkingHours"].Value), otHours, Convert.ToDecimal(row.Cells["Rate"].Value),
                                            row.Cells["TimeIn"].Value == DBNull.Value ? (TimeSpan?)null : TimeSpan.Parse(row.Cells["TimeIn"].Value.ToString()),
-                                           row.Cells["TimeOut"].Value == DBNull.Value ? (TimeSpan?)null : TimeSpan.Parse(row.Cells["TimeOut"].Value.ToString()));
+                                           row.Cells["TimeOut"].Value == DBNull.Value ? (TimeSpan?)null : TimeSpan.Parse(row.Cells["TimeOut"].Value.ToString()),
+                                           ndHours, ndOtHours);
                     }
                     else
                     {
@@ -651,8 +661,10 @@ namespace JTI_Payroll_System
                         row.Cells["ShiftCode"].Value = DBNull.Value; //Reset shift code
                         row.Cells["StartTime"].Value = DBNull.Value;
                         row.Cells["EndTime"].Value = DBNull.Value;
-                        row.Cells["WorkingHours"].Value = 0.00m;
-                        row.Cells["OTHours"].Value = 0.00m;
+                        row.Cells["WorkingHours"].Value = DBNull.Value;
+                        row.Cells["OTHours"].Value = DBNull.Value;
+                        row.Cells["NightDifferentialHours"].Value = DBNull.Value;
+                        row.Cells["NightDifferentialOtHours"].Value = DBNull.Value;
                     }
                 }
                 else
@@ -661,17 +673,26 @@ namespace JTI_Payroll_System
                     row.Cells["EndTime"].Value = DBNull.Value;
                     row.Cells["WorkingHours"].Value = DBNull.Value;
                     row.Cells["OTHours"].Value = DBNull.Value;
+                    row.Cells["NightDifferentialHours"].Value = DBNull.Value;
+                    row.Cells["NightDifferentialOtHours"].Value = DBNull.Value;
                 }
             }
             else if (e.ColumnIndex == dgvDTR.Columns["TimeIn"].Index || e.ColumnIndex == dgvDTR.Columns["TimeOut"].Index) //If TimeIn or TimeOut has changed, do the recalculations.
             {
+
+                //Set night differential to calculated value
                 decimal otHours = CalculateOvertime(row);
                 row.Cells["OTHours"].Value = otHours;
+
+                decimal ndHours = CalculateNightDifferential(row); //NEW
+                decimal ndOtHours = CalculateNightDifferentialOT(row); //Calculate NDOT
+
                 UpdateProcessedDTR(row.Cells["EmployeeID"].Value.ToString(),
                                          Convert.ToDateTime(row.Cells["Date"].Value),
                                          row.Cells["ShiftCode"].Value.ToString(), Convert.ToDecimal(row.Cells["WorkingHours"].Value), otHours, Convert.ToDecimal(row.Cells["Rate"].Value),
                                          row.Cells["TimeIn"].Value == DBNull.Value ? (TimeSpan?)null : TimeSpan.Parse(row.Cells["TimeIn"].Value.ToString()),
-                                         row.Cells["TimeOut"].Value == DBNull.Value ? (TimeSpan?)null : TimeSpan.Parse(row.Cells["TimeOut"].Value.ToString()));
+                                         row.Cells["TimeOut"].Value == DBNull.Value ? (TimeSpan?)null : TimeSpan.Parse(row.Cells["TimeOut"].Value.ToString()),
+                                         ndHours, ndOtHours);
             }
 
 
@@ -700,7 +721,47 @@ namespace JTI_Payroll_System
 
             return otHours;
         }
-        private void UpdateProcessedDTR(string employeeID, DateTime date, string shiftCode, decimal workingHours, decimal otHours, decimal rate, TimeSpan? timeIn = null, TimeSpan? timeOut = null)
+        private decimal CalculateNightDifferential(DataGridViewRow row)
+        {
+            decimal ndHours = 0.00m;
+            //First, check if TimeIn and TimeOut exists.  If it doesn't, then there are 0 ot hours
+            if (row.Cells["TimeIn"].Value != DBNull.Value && row.Cells["TimeOut"].Value != DBNull.Value)
+            {
+                //Let's load timespans to do date calculations
+                TimeSpan timeIn = (TimeSpan)row.Cells["TimeIn"].Value;
+                TimeSpan timeOut = (TimeSpan)row.Cells["TimeOut"].Value;
+                ShiftCodeData shiftCodeData = GetShiftCodeData(row.Cells["ShiftCode"].Value.ToString());
+
+                //If night starts after shift start and if night ends before shift end it is part of ND
+                if (shiftCodeData != null)
+                {
+                    ndHours = shiftCodeData.NightDifferentialHours;
+                }
+
+            }
+
+            return ndHours;
+        }
+        private decimal CalculateNightDifferentialOT(DataGridViewRow row)
+        {
+            decimal ndotHours = 0.00m;
+
+            decimal regularHours = Convert.ToDecimal(row.Cells["WorkingHours"].Value);
+
+            //First, check if TimeIn and TimeOut exists.  If it doesn't, then there are 0 ot hours
+            if (row.Cells["TimeIn"].Value != DBNull.Value && row.Cells["TimeOut"].Value != DBNull.Value)
+            {
+                decimal otHours = CalculateOvertime(row);
+
+                //Load night differential data and do a multiplication
+                ShiftCodeData shiftCodeData = GetShiftCodeData(row.Cells["ShiftCode"].Value.ToString());
+                ndotHours = otHours * shiftCodeData.NightDifferentialOtHours;
+
+
+            }
+            return ndotHours;
+        }
+        private void UpdateProcessedDTR(string employeeID, DateTime date, string shiftCode, decimal workingHours, decimal otHours, decimal rate, TimeSpan? timeIn = null, TimeSpan? timeOut = null, decimal ndHours = 0, decimal ndOtHours = 0)
         {
             try
             {
@@ -715,7 +776,9 @@ namespace JTI_Payroll_System
                     working_hours = @workingHours, 
                     ot_hrs = @otHours,
                     rate = @rate,
-                    shift_code = @shiftCode
+                    shift_code = @shiftCode,
+                    nd_hrs = @ndHours,
+                    ndot_hrs=@ndOtHours
                 WHERE employee_id = @employeeID AND date = @date";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
@@ -726,6 +789,8 @@ namespace JTI_Payroll_System
                         cmd.Parameters.AddWithValue("@otHours", otHours);
                         cmd.Parameters.AddWithValue("@rate", rate);
                         cmd.Parameters.AddWithValue("@shiftCode", shiftCode);
+                        cmd.Parameters.AddWithValue("@ndHours", ndHours);
+                        cmd.Parameters.AddWithValue("@ndOtHours", ndOtHours);
                         cmd.Parameters.AddWithValue("@employeeID", employeeID);
                         cmd.Parameters.AddWithValue("@date", date);
                         cmd.ExecuteNonQuery();
