@@ -61,7 +61,6 @@ namespace JTI_Payroll_System
             // ✅ Set Rate column's value type to decimal to avoid type mismatches
             dgvDTR.Columns[rateColumnName].ValueType = typeof(decimal);
         }
-
         private List<decimal> GetRateValuesFromDatabase()
         {
             List<decimal> rates = new List<decimal>();
@@ -85,7 +84,6 @@ namespace JTI_Payroll_System
 
             return rates;
         }
-
         private void SetupShiftCodeDropdown()
         {
             string shiftCodeColumnName = "ShiftCode";
@@ -125,7 +123,6 @@ namespace JTI_Payroll_System
                 }
             }
         }
-
         private List<string> GetShiftCodesFromDatabase()
         {
             List<string> shiftCodes = new List<string>();
@@ -149,7 +146,6 @@ namespace JTI_Payroll_System
 
             return shiftCodes;
         }
-
         private void filter_Click(object sender, EventArgs e)
         {
             // ✅ Convert TextBox values to DateTime
@@ -164,7 +160,6 @@ namespace JTI_Payroll_System
             // ✅ Load Employees for Navigation
             LoadEmployeesForNavigation(startDate, endDate);
         }
-
         private void LoadEmployeesForNavigation(DateTime startDate, DateTime endDate)
         {
             try
@@ -211,7 +206,6 @@ namespace JTI_Payroll_System
                 MessageBox.Show("Error: " + ex.Message, "Navigation Load Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
         private void LoadEmployeeDTR(string employeeID, DateTime startDate, DateTime endDate)
         {
             try
@@ -326,7 +320,6 @@ namespace JTI_Payroll_System
                 MessageBox.Show("Error: " + ex.Message, "DTR Load Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
         private class ShiftCodeData
         {
             public string ShiftCode { get; set; }
@@ -337,7 +330,6 @@ namespace JTI_Payroll_System
             public decimal NightDifferentialHours { get; set; }
             public decimal NightDifferentialOtHours { get; set; }
         }
-
         private ShiftCodeData GetShiftCodeData(string shiftCode)
         {
             ShiftCodeData shiftData = null;
@@ -381,7 +373,6 @@ namespace JTI_Payroll_System
 
             return shiftData;
         }
-
         private DataTable LoadAttendanceData(string employeeID, DateTime startDate, DateTime endDate)
         {
             DataTable dt = new DataTable();
@@ -452,7 +443,6 @@ namespace JTI_Payroll_System
 
             return dt;
         }
-
         private void btnNext_Click(object sender, EventArgs e)
         {
             if (employeeIDs.Count == 0) return;
@@ -477,7 +467,6 @@ namespace JTI_Payroll_System
                 MessageBox.Show("No more employees.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
-
         private void btnBack_Click(object sender, EventArgs e)
         {
             if (employeeIDs.Count == 0) return;
@@ -502,7 +491,6 @@ namespace JTI_Payroll_System
                 MessageBox.Show("This is the first employee.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
-
         private void btnSaveProcessedDTR_Click(object sender, EventArgs e)
         {
             try
@@ -590,7 +578,6 @@ namespace JTI_Payroll_System
                 MessageBox.Show("Error saving DTR: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
         private void dgvDTR_DataError(object sender, DataGridViewDataErrorEventArgs e)
         {
             if (e.ColumnIndex == dgvDTR.Columns["Rate"].Index && e.Exception != null)
@@ -609,16 +596,27 @@ namespace JTI_Payroll_System
                 e.ThrowException = false;
             }
         }
-
         private void btnOpenDeleteDTR_Click(object sender, EventArgs e)
         {
             DeleteDTRForm deleteForm = new DeleteDTRForm();
             deleteForm.ShowDialog(); // Open as a modal dialog
         }
-
         private void dgvDTR_CellEndEdit(object sender, DataGridViewCellEventArgs e)
         {
             DataGridViewRow row = dgvDTR.Rows[e.RowIndex];
+
+            // If WorkingHours is changed...
+            if (e.ColumnIndex == dgvDTR.Columns["WorkingHours"].Index)
+            {
+                decimal otHours = CalculateOvertime(row);
+                row.Cells["OTHours"].Value = otHours;
+
+                UpdateProcessedDTR(row.Cells["EmployeeID"].Value.ToString(),
+                                  Convert.ToDateTime(row.Cells["Date"].Value),
+                                  row.Cells["ShiftCode"].Value.ToString(), Convert.ToDecimal(row.Cells["WorkingHours"].Value), otHours, Convert.ToDecimal(row.Cells["Rate"].Value),
+                                  row.Cells["TimeIn"].Value == DBNull.Value ? (TimeSpan?)null : TimeSpan.Parse(row.Cells["TimeIn"].Value.ToString()),
+                                  row.Cells["TimeOut"].Value == DBNull.Value ? (TimeSpan?)null : TimeSpan.Parse(row.Cells["TimeOut"].Value.ToString()));
+            }
 
             // If ShiftCode is changed...
             if (e.ColumnIndex == dgvDTR.Columns["ShiftCode"].Index)
@@ -635,9 +633,10 @@ namespace JTI_Payroll_System
                         row.Cells["EndTime"].Value = shiftData.EndTime;
                         row.Cells["WorkingHours"].Value = shiftData.RegularHours;
 
-                        // Calculate overtime hours
+                        //Update OTHours based on calculate Overtime
                         decimal otHours = CalculateOvertime(row);
                         row.Cells["OTHours"].Value = otHours;
+
 
                         // Update the database
                         UpdateProcessedDTR(row.Cells["EmployeeID"].Value.ToString(),
@@ -660,9 +659,8 @@ namespace JTI_Payroll_System
                 {
                     row.Cells["StartTime"].Value = DBNull.Value;
                     row.Cells["EndTime"].Value = DBNull.Value;
-                    row.Cells["WorkingHours"].Value = 0.00m;
-                    row.Cells["OTHours"].Value = 0.00m;
-
+                    row.Cells["WorkingHours"].Value = DBNull.Value;
+                    row.Cells["OTHours"].Value = DBNull.Value;
                 }
             }
             else if (e.ColumnIndex == dgvDTR.Columns["TimeIn"].Index || e.ColumnIndex == dgvDTR.Columns["TimeOut"].Index) //If TimeIn or TimeOut has changed, do the recalculations.
@@ -670,15 +668,14 @@ namespace JTI_Payroll_System
                 decimal otHours = CalculateOvertime(row);
                 row.Cells["OTHours"].Value = otHours;
                 UpdateProcessedDTR(row.Cells["EmployeeID"].Value.ToString(),
-                                          Convert.ToDateTime(row.Cells["Date"].Value),
-                                          row.Cells["ShiftCode"].Value.ToString(), Convert.ToDecimal(row.Cells["WorkingHours"].Value), otHours, Convert.ToDecimal(row.Cells["Rate"].Value),
-                                          row.Cells["TimeIn"].Value == DBNull.Value ? (TimeSpan?)null : TimeSpan.Parse(row.Cells["TimeIn"].Value.ToString()),
-                                          row.Cells["TimeOut"].Value == DBNull.Value ? (TimeSpan?)null : TimeSpan.Parse(row.Cells["TimeOut"].Value.ToString()));
+                                         Convert.ToDateTime(row.Cells["Date"].Value),
+                                         row.Cells["ShiftCode"].Value.ToString(), Convert.ToDecimal(row.Cells["WorkingHours"].Value), otHours, Convert.ToDecimal(row.Cells["Rate"].Value),
+                                         row.Cells["TimeIn"].Value == DBNull.Value ? (TimeSpan?)null : TimeSpan.Parse(row.Cells["TimeIn"].Value.ToString()),
+                                         row.Cells["TimeOut"].Value == DBNull.Value ? (TimeSpan?)null : TimeSpan.Parse(row.Cells["TimeOut"].Value.ToString()));
             }
 
-        }
 
-        //New function to calculate overtime, based on ShiftCode data
+        }
         private decimal CalculateOvertime(DataGridViewRow row)
         {
             decimal otHours = 0.00m;
@@ -703,8 +700,6 @@ namespace JTI_Payroll_System
 
             return otHours;
         }
-
-        //Overload UpdateProcessedDTR to take into account more values.  This one is if we changed shiftcode
         private void UpdateProcessedDTR(string employeeID, DateTime date, string shiftCode, decimal workingHours, decimal otHours, decimal rate, TimeSpan? timeIn = null, TimeSpan? timeOut = null)
         {
             try
