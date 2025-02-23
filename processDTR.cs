@@ -627,6 +627,7 @@ namespace JTI_Payroll_System
 
             if (e.ColumnIndex == dgvDTR.Columns["ShiftCode"].Index)
             {
+                // ... (rest of the ShiftCode handling, but remove the old NDOT calculation) ...
                 if (row.Cells["ShiftCode"].Value != null)
                 {
                     string shiftCode = row.Cells["ShiftCode"].Value.ToString();
@@ -637,8 +638,8 @@ namespace JTI_Payroll_System
                         row.Cells["StartTime"].Value = shiftData.StartTime;
                         row.Cells["EndTime"].Value = shiftData.EndTime;
                         row.Cells["WorkingHours"].Value = shiftData.RegularHours;
-                        row.Cells["NightDifferentialHours"].Value = shiftData.NightDifferentialHours;
-                        row.Cells["NightDifferentialOtHours"].Value = shiftData.NightDifferentialOtHours;
+                        //row.Cells["NightDifferentialHours"].Value = shiftData.NightDifferentialHours; // Remove and Recalculate
+                        //row.Cells["NightDifferentialOtHours"].Value = shiftData.NightDifferentialOtHours; //Remove this
 
                         decimal otHours = CalculateOvertime(row);
                         row.Cells["OTHours"].Value = otHours;
@@ -646,6 +647,9 @@ namespace JTI_Payroll_System
                         //Set night differential to calculated value
                         decimal ndHours = CalculateNightDifferential(row); //NEW
                         decimal ndOtHours = CalculateNightDifferentialOT(row); //Calculate NDOT
+                                                                               //Assign Calculated Value
+                        row.Cells["NightDifferentialHours"].Value = ndHours;
+                        row.Cells["NightDifferentialOtHours"].Value = ndOtHours;
 
                         // Update the database
                         UpdateProcessedDTR(row.Cells["EmployeeID"].Value.ToString(),
@@ -677,15 +681,18 @@ namespace JTI_Payroll_System
                     row.Cells["NightDifferentialOtHours"].Value = DBNull.Value;
                 }
             }
-            else if (e.ColumnIndex == dgvDTR.Columns["TimeIn"].Index || e.ColumnIndex == dgvDTR.Columns["TimeOut"].Index) //If TimeIn or TimeOut has changed, do the recalculations.
+            else if (e.ColumnIndex == dgvDTR.Columns["TimeIn"].Index || e.ColumnIndex == dgvDTR.Columns["TimeOut"].Index)
             {
-
-                //Set night differential to calculated value
+                // Calculate Overtime
                 decimal otHours = CalculateOvertime(row);
                 row.Cells["OTHours"].Value = otHours;
+                // Calculate Night Differential Hours
+                decimal ndHours = CalculateNightDifferential(row);
+                row.Cells["NightDifferentialHours"].Value = ndHours; // Update the cell
+                                                                     // Calculate and update NightDifferentialOtHours:
+                decimal ndOtHours = CalculateNightDifferentialOT(row);
+                row.Cells["NightDifferentialOtHours"].Value = ndOtHours;
 
-                decimal ndHours = CalculateNightDifferential(row); //NEW
-                decimal ndOtHours = CalculateNightDifferentialOT(row); //Calculate NDOT
 
                 UpdateProcessedDTR(row.Cells["EmployeeID"].Value.ToString(),
                                          Convert.ToDateTime(row.Cells["Date"].Value),
@@ -694,8 +701,6 @@ namespace JTI_Payroll_System
                                          row.Cells["TimeOut"].Value == DBNull.Value ? (TimeSpan?)null : TimeSpan.Parse(row.Cells["TimeOut"].Value.ToString()),
                                          ndHours, ndOtHours);
             }
-
-
         }
         private decimal CalculateOvertime(DataGridViewRow row)
         {
@@ -724,40 +729,98 @@ namespace JTI_Payroll_System
         private decimal CalculateNightDifferential(DataGridViewRow row)
         {
             decimal ndHours = 0.00m;
-            //First, check if TimeIn and TimeOut exists.  If it doesn't, then there are 0 ot hours
-            if (row.Cells["TimeIn"].Value != DBNull.Value && row.Cells["TimeOut"].Value != DBNull.Value)
+
+            if (row.Cells["TimeIn"].Value != DBNull.Value && row.Cells["TimeOut"].Value != DBNull.Value && row.Cells["ShiftCode"].Value != DBNull.Value)
             {
-                //Let's load timespans to do date calculations
                 TimeSpan timeIn = (TimeSpan)row.Cells["TimeIn"].Value;
                 TimeSpan timeOut = (TimeSpan)row.Cells["TimeOut"].Value;
-                ShiftCodeData shiftCodeData = GetShiftCodeData(row.Cells["ShiftCode"].Value.ToString());
+                DateTime date = Convert.ToDateTime(row.Cells["Date"].Value);
+                ShiftCodeData shiftData = GetShiftCodeData(row.Cells["ShiftCode"].Value.ToString());
 
-                //If night starts after shift start and if night ends before shift end it is part of ND
-                if (shiftCodeData != null)
+
+                if (shiftData != null && shiftData.NightDifferentialHours > 0) // Only if ND is applicable
                 {
-                    ndHours = shiftCodeData.NightDifferentialHours;
+                    DateTime nightShiftStart = date.Date + shiftData.StartTime;
+                    DateTime nightShiftEnd = date.Date + shiftData.EndTime;
+                    DateTime actualTimeIn = date.Date + timeIn;
+                    DateTime actualTimeOut = date.Date + timeOut;
+
+                    // Adjust for midnight crossing:
+                    if (nightShiftEnd < nightShiftStart)
+                    {
+                        nightShiftEnd = nightShiftEnd.AddDays(1);
+                    }
+                    if (actualTimeOut < actualTimeIn)
+                    {
+                        actualTimeOut = actualTimeOut.AddDays(1);
+                    }
+
+                    //Regular Shift
+                    DateTime shiftStart = date.Date + shiftData.StartTime;
+                    DateTime shiftEnd = date.Date + shiftData.EndTime;
+
+                    if (shiftEnd < shiftStart)
+                    {
+                        shiftEnd = shiftEnd.AddDays(1);
+                    }
+                    // Calculate the overlap between actual work hours and the ENTIRE shift (not just ND hours):
+                    DateTime overlapStart = actualTimeIn > shiftStart ? actualTimeIn : shiftStart;
+                    DateTime overlapEnd = actualTimeOut < shiftEnd ? actualTimeOut : shiftEnd;
+
+                    if (overlapEnd > overlapStart)
+                    {
+                        decimal totalWorkHours = (decimal)(overlapEnd - overlapStart).TotalHours;
+
+                        ndHours = Math.Min(totalWorkHours, shiftData.NightDifferentialHours);
+                    }
+
                 }
-
             }
-
             return ndHours;
         }
         private decimal CalculateNightDifferentialOT(DataGridViewRow row)
         {
             decimal ndotHours = 0.00m;
 
-            decimal regularHours = Convert.ToDecimal(row.Cells["WorkingHours"].Value);
-
-            //First, check if TimeIn and TimeOut exists.  If it doesn't, then there are 0 ot hours
-            if (row.Cells["TimeIn"].Value != DBNull.Value && row.Cells["TimeOut"].Value != DBNull.Value)
+            if (row.Cells["TimeIn"].Value != DBNull.Value && row.Cells["TimeOut"].Value != DBNull.Value && row.Cells["ShiftCode"].Value != DBNull.Value)
             {
-                decimal otHours = CalculateOvertime(row);
+                TimeSpan timeIn = (TimeSpan)row.Cells["TimeIn"].Value;
+                TimeSpan timeOut = (TimeSpan)row.Cells["TimeOut"].Value;
+                DateTime date = Convert.ToDateTime(row.Cells["Date"].Value); // Get the date
 
-                //Load night differential data and do a multiplication
-                ShiftCodeData shiftCodeData = GetShiftCodeData(row.Cells["ShiftCode"].Value.ToString());
-                ndotHours = otHours * shiftCodeData.NightDifferentialOtHours;
+                ShiftCodeData shiftData = GetShiftCodeData(row.Cells["ShiftCode"].Value.ToString());
+
+                // Check if the shift code has night differential hours
+                if (shiftData != null && shiftData.NightDifferentialHours > 0)
+                {
+                    // Use shiftData.StartTime and shiftData.EndTime as the night differential period
+                    DateTime nightShiftStart = date.Date + shiftData.StartTime;
+                    DateTime nightShiftEnd = date.Date + shiftData.EndTime;
+                    DateTime actualTimeIn = date.Date + timeIn;
+                    DateTime actualTimeOut = date.Date + timeOut;
+
+                    // Adjust nightShiftEnd if it crosses midnight
+                    if (nightShiftEnd < nightShiftStart)
+                    {
+                        nightShiftEnd = nightShiftEnd.AddDays(1);
+                    }
+
+                    //Adjust TimeOut if it crosses midnight
+                    if (actualTimeOut < actualTimeIn)
+                    {
+                        actualTimeOut = actualTimeOut.AddDays(1);
+                    }
 
 
+                    // Calculate overlap
+                    DateTime overlapStart = actualTimeIn > nightShiftStart ? actualTimeIn : nightShiftStart;
+                    DateTime overlapEnd = actualTimeOut < nightShiftEnd ? actualTimeOut : nightShiftEnd;
+
+                    if (overlapEnd > overlapStart)
+                    {
+                        ndotHours = (decimal)(overlapEnd - overlapStart).TotalHours;
+                    }
+                }
             }
             return ndotHours;
         }
