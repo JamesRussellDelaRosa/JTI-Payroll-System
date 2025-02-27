@@ -93,7 +93,7 @@
             dgvDTR.Location = new Point(12, 53);
             dgvDTR.Name = "dgvDTR";
             dgvDTR.RowHeadersWidth = 51;
-            dgvDTR.Size = new Size(1443, 517);
+            dgvDTR.Size = new Size(1738, 517);
             dgvDTR.TabIndex = 5;
             // 
             // textID
@@ -158,7 +158,7 @@
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1467, 582);
+            ClientSize = new Size(1762, 582);
             Controls.Add(btnOpenDeleteDTR);
             Controls.Add(btnSaveProcessedDTR);
             Controls.Add(btnNext);
