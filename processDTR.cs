@@ -247,6 +247,11 @@ namespace JTI_Payroll_System
                     dt.Columns.Add("NightDifferentialOtHours", typeof(decimal));
                 }
 
+                if (!dt.Columns.Contains("Remarks"))
+                {
+                    dt.Columns.Add("Remarks", typeof(string));
+                }
+
                 for (DateTime date = startDate; date <= endDate; date = date.AddDays(1))
                 {
                     if (!dt.AsEnumerable().Any(row => Convert.ToDateTime(row["Date"]) == date))
@@ -265,6 +270,7 @@ namespace JTI_Payroll_System
                         newRow["EndTime"] = DBNull.Value;
                         newRow["NightDifferentialHours"] = 0.00m;
                         newRow["NightDifferentialOtHours"] = 0.00m;
+                        newRow["Remarks"] = DBNull.Value;
                         dt.Rows.Add(newRow);
                     }
                 }
@@ -315,6 +321,18 @@ namespace JTI_Payroll_System
                     dgvDTR.Columns.Add(nightDifferentialOTColumn);
                 }
 
+                // Add New Column - Remarks
+                if (!dgvDTR.Columns.Contains("Remarks"))
+                {
+                    DataGridViewTextBoxColumn remarksColumn = new DataGridViewTextBoxColumn
+                    {
+                        Name = "Remarks",
+                        HeaderText = "Remarks",
+                        ReadOnly = true
+                    };
+                    dgvDTR.Columns.Add(remarksColumn);
+                }
+
                 dgvDTR.Columns["WorkingHours"].DefaultCellStyle.Format = "N2";
                 dgvDTR.Columns["OTHours"].DefaultCellStyle.Format = "N2";
                 dgvDTR.Columns["StartTime"].DefaultCellStyle.Format = "h\\:mm";
@@ -353,9 +371,9 @@ namespace JTI_Payroll_System
                 {
                     conn.Open();
                     string query = @"
-                        SELECT shift_code, start_time, end_time, regular_hours, ot_hours, 
-                            night_differential_hours, night_differential_ot_hours
-                        FROM ShiftCodes WHERE shift_code = @shiftCode";
+                SELECT shift_code, start_time, end_time, regular_hours, ot_hours, 
+                    night_differential_hours, night_differential_ot_hours
+                FROM ShiftCodes WHERE shift_code = @shiftCode";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
@@ -371,7 +389,7 @@ namespace JTI_Payroll_System
                                     EndTime = reader.GetTimeSpan("end_time"),
                                     RegularHours = reader.GetDecimal("regular_hours"),
                                     OtHours = reader.GetDecimal("ot_hours"),
-                                    NightDifferentialHours = reader.GetDecimal("night_differential_hours"), //NEW
+                                    NightDifferentialHours = reader.GetDecimal("night_differential_hours"),
                                     NightDifferentialOtHours = reader.GetDecimal("night_differential_ot_hours")
                                 };
                             }
@@ -615,8 +633,7 @@ namespace JTI_Payroll_System
             }
             else if (e.ColumnIndex == dgvDTR.Columns["ShiftCode"].Index && e.Exception != null)
             {
-                MessageBox.Show($"Invalid value in ShiftCode column: {dgvDTR.Rows[e.RowIndex].Cells[e.ColumnIndex].Value}",
-                                "Data Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                // Suppress the error for the ShiftCode column
                 e.ThrowException = false;
             }
         }
@@ -647,13 +664,18 @@ namespace JTI_Payroll_System
                         row.Cells["NightDifferentialHours"].Value = shiftData.NightDifferentialHours;
                         row.Cells["NightDifferentialOtHours"].Value = shiftData.NightDifferentialOtHours;
 
-                        UpdateProcessedDTR(row.Cells["EmployeeID"].Value.ToString(),
-                                           Convert.ToDateTime(row.Cells["Date"].Value),
-                                           shiftCode, shiftData.RegularHours, shiftData.OtHours,
-                                           Convert.ToDecimal(row.Cells["Rate"].Value),
-                                           row.Cells["TimeIn"].Value == DBNull.Value ? (TimeSpan?)null : TimeSpan.Parse(row.Cells["TimeIn"].Value.ToString()),
-                                           row.Cells["TimeOut"].Value == DBNull.Value ? (TimeSpan?)null : TimeSpan.Parse(row.Cells["TimeOut"].Value.ToString()),
-                                           shiftData.NightDifferentialHours, shiftData.NightDifferentialOtHours);
+                        // Set default values for TimeIn and TimeOut to 0:00 if they are blank
+                        if (row.Cells["TimeIn"].Value == DBNull.Value)
+                        {
+                            row.Cells["TimeIn"].Value = TimeSpan.Zero;
+                        }
+                        if (row.Cells["TimeOut"].Value == DBNull.Value)
+                        {
+                            row.Cells["TimeOut"].Value = TimeSpan.Zero;
+                        }
+
+                        // Update Remarks based on TimeIn and TimeOut values
+                        row.Cells["Remarks"].Value = CalculateRemarks(row);
                     }
                     else
                     {
@@ -665,6 +687,7 @@ namespace JTI_Payroll_System
                         row.Cells["OTHours"].Value = DBNull.Value;
                         row.Cells["NightDifferentialHours"].Value = DBNull.Value;
                         row.Cells["NightDifferentialOtHours"].Value = DBNull.Value;
+                        row.Cells["Remarks"].Value = DBNull.Value;
                     }
                 }
                 else
@@ -675,6 +698,7 @@ namespace JTI_Payroll_System
                     row.Cells["OTHours"].Value = DBNull.Value;
                     row.Cells["NightDifferentialHours"].Value = DBNull.Value;
                     row.Cells["NightDifferentialOtHours"].Value = DBNull.Value;
+                    row.Cells["Remarks"].Value = DBNull.Value;
                 }
             }
             else if (e.ColumnIndex == dgvDTR.Columns["Rate"].Index)
@@ -709,6 +733,8 @@ namespace JTI_Payroll_System
                         row.Cells["NightDifferentialOtHours"].Value = shiftData.NightDifferentialOtHours;
                     }
                 }
+
+                row.Cells["Remarks"].Value = CalculateRemarks(row);
 
                 UpdateProcessedDTR(row.Cells["EmployeeID"].Value.ToString(),
                                    Convert.ToDateTime(row.Cells["Date"].Value),
@@ -782,42 +808,82 @@ namespace JTI_Payroll_System
             if (dgvDTR.CurrentCell != null && dgvDTR.CurrentCell.ColumnIndex == dgvDTR.Columns["ShiftCode"].Index)
             {
                 DataGridViewRow row = dgvDTR.Rows[dgvDTR.CurrentCell.RowIndex];
-                string shiftCode = (sender as ComboBox).SelectedItem.ToString();
-                ShiftCodeData shiftData = GetShiftCodeData(shiftCode);
+                ComboBox comboBox = sender as ComboBox;
 
-                if (shiftData != null)
+                if (comboBox != null && comboBox.SelectedItem != null)
                 {
-                    row.Cells["StartTime"].Value = shiftData.StartTime;
-                    row.Cells["EndTime"].Value = shiftData.EndTime;
-                    row.Cells["WorkingHours"].Value = shiftData.RegularHours;
+                    string shiftCode = comboBox.SelectedItem.ToString();
+                    ShiftCodeData shiftData = GetShiftCodeData(shiftCode);
 
-                    // Use fixed values from ShiftCodeData instead of calculations
-                    row.Cells["OTHours"].Value = shiftData.OtHours;
-                    row.Cells["NightDifferentialHours"].Value = shiftData.NightDifferentialHours;
-                    row.Cells["NightDifferentialOtHours"].Value = shiftData.NightDifferentialOtHours;
+                    if (shiftData != null)
+                    {
+                        row.Cells["StartTime"].Value = shiftData.StartTime;
+                        row.Cells["EndTime"].Value = shiftData.EndTime;
+                        row.Cells["WorkingHours"].Value = shiftData.RegularHours;
 
-                    UpdateProcessedDTR(row.Cells["EmployeeID"].Value.ToString(),
-                                       Convert.ToDateTime(row.Cells["Date"].Value),
-                                       shiftCode, shiftData.RegularHours, shiftData.OtHours,
-                                       Convert.ToDecimal(row.Cells["Rate"].Value),
-                                       row.Cells["TimeIn"].Value == DBNull.Value ? (TimeSpan?)null : TimeSpan.Parse(row.Cells["TimeIn"].Value.ToString()),
-                                       row.Cells["TimeOut"].Value == DBNull.Value ? (TimeSpan?)null : TimeSpan.Parse(row.Cells["TimeOut"].Value.ToString()),
-                                       shiftData.NightDifferentialHours, shiftData.NightDifferentialOtHours);
+                        // Use fixed values from ShiftCodeData instead of calculations
+                        row.Cells["OTHours"].Value = shiftData.OtHours;
+                        row.Cells["NightDifferentialHours"].Value = shiftData.NightDifferentialHours;
+                        row.Cells["NightDifferentialOtHours"].Value = shiftData.NightDifferentialOtHours;
 
-                    // Refresh the DataGridView to reflect changes
-                    dgvDTR.Refresh();
+                        // Set default values for TimeIn and TimeOut to 0:00 if they are blank
+                        if (row.Cells["TimeIn"].Value == DBNull.Value)
+                        {
+                            row.Cells["TimeIn"].Value = TimeSpan.Zero;
+                        }
+                        if (row.Cells["TimeOut"].Value == DBNull.Value)
+                        {
+                            row.Cells["TimeOut"].Value = TimeSpan.Zero;
+                        }
+
+                        // Update Remarks based on TimeIn and TimeOut values
+                        row.Cells["Remarks"].Value = CalculateRemarks(row);
+
+                        // Update the DataGridView to reflect changes
+                        dgvDTR.Refresh();
+                    }
+                    else
+                    {
+                        // Handle invalid shift code gracefully
+                        row.Cells["StartTime"].Value = DBNull.Value;
+                        row.Cells["EndTime"].Value = DBNull.Value;
+                        row.Cells["WorkingHours"].Value = DBNull.Value;
+                        row.Cells["OTHours"].Value = DBNull.Value;
+                        row.Cells["NightDifferentialHours"].Value = DBNull.Value;
+                        row.Cells["NightDifferentialOtHours"].Value = DBNull.Value;
+                        row.Cells["Remarks"].Value = "Invalid Shift Code";
+                    }
                 }
-                else
-                {
-                    MessageBox.Show("Invalid Shift Code", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    row.Cells["ShiftCode"].Value = DBNull.Value;
-                    row.Cells["StartTime"].Value = DBNull.Value;
-                    row.Cells["EndTime"].Value = DBNull.Value;
-                    row.Cells["WorkingHours"].Value = DBNull.Value;
-                    row.Cells["OTHours"].Value = DBNull.Value;
-                    row.Cells["NightDifferentialHours"].Value = DBNull.Value;
-                    row.Cells["NightDifferentialOtHours"].Value = DBNull.Value;
-                }
+            }
+        }
+        private string CalculateRemarks(DataGridViewRow row)
+        {
+            if (row.Cells["TimeIn"].Value == DBNull.Value || row.Cells["TimeOut"].Value == DBNull.Value)
+            {
+                return "Absent";
+            }
+
+            if (row.Cells["StartTime"].Value == DBNull.Value || row.Cells["EndTime"].Value == DBNull.Value)
+            {
+                return "No Shift Data";
+            }
+
+            TimeSpan timeIn = (TimeSpan)row.Cells["TimeIn"].Value;
+            TimeSpan timeOut = (TimeSpan)row.Cells["TimeOut"].Value;
+            TimeSpan startTime = (TimeSpan)row.Cells["StartTime"].Value;
+            TimeSpan endTime = (TimeSpan)row.Cells["EndTime"].Value;
+
+            if (timeIn > startTime)
+            {
+                return "Late";
+            }
+            else if (timeOut < endTime)
+            {
+                return "Undertime";
+            }
+            else
+            {
+                return "Present";
             }
         }
     }
