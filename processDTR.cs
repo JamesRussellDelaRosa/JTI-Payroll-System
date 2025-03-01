@@ -418,8 +418,9 @@ namespace JTI_Payroll_System
             dt.Columns.Add("ShiftCode", typeof(string));
             dt.Columns.Add("StartTime", typeof(TimeSpan));
             dt.Columns.Add("EndTime", typeof(TimeSpan));
-            dt.Columns.Add("NightDifferentialHours", typeof(decimal)); //NEW
+            dt.Columns.Add("NightDifferentialHours", typeof(decimal));
             dt.Columns.Add("NightDifferentialOtHours", typeof(decimal));
+            dt.Columns.Add("Remarks", typeof(string)); // Add Remarks column
 
             try
             {
@@ -427,35 +428,36 @@ namespace JTI_Payroll_System
                 {
                     conn.Open();
                     string query = @"
-                WITH RECURSIVE DateRange AS (
-                    SELECT @startDate AS Date
-                    UNION ALL
-                    SELECT DATE_ADD(Date, INTERVAL 1 DAY)
-                    FROM DateRange
-                    WHERE Date < @endDate
-                )
-                SELECT
-                    e.id_no AS EmployeeID,
-                    CONCAT(e.fname, ' ', e.lname) AS EmployeeName,
-                    d.Date,
-                    COALESCE(p.time_in, MIN(a.time)) AS TimeIn,
-                    COALESCE(p.time_out, MAX(a.time)) AS TimeOut,
-                    COALESCE(p.rate, 0.00) AS Rate,
-                    COALESCE(sc.regular_hours, 0.00) AS WorkingHours,
-                    COALESCE(p.ot_hrs, sc.ot_hours, 0.00) AS OTHours, -- Try to load it from p.ot_hrs but if it doesn't exist then try sc.ot_hours,0.00
-                    p.shift_code AS ShiftCode,
-                    sc.start_time AS StartTime,
-                    sc.end_time AS EndTime,
-                   sc.night_differential_hours AS NightDifferentialHours,
-                   sc.night_differential_ot_hours AS NightDifferentialOtHours
-                FROM employee e
-                JOIN DateRange d ON 1=1
-                LEFT JOIN attendance a ON e.id_no = a.id AND a.date = d.Date
-                LEFT JOIN processedDTR p ON e.id_no = p.employee_id AND p.date = d.Date
-                LEFT JOIN ShiftCodes sc ON p.shift_code = sc.shift_code
-                WHERE e.id_no = @employeeID
-                GROUP BY e.id_no, e.fname, e.lname, d.Date, p.time_in, p.time_out, p.rate, p.shift_code, sc.start_time, sc.end_time, sc.regular_hours, p.ot_hrs, sc.ot_hours, sc.night_differential_hours, sc.night_differential_ot_hours
-                ORDER BY d.Date ASC;";
+            WITH RECURSIVE DateRange AS (
+                SELECT @startDate AS Date
+                UNION ALL
+                SELECT DATE_ADD(Date, INTERVAL 1 DAY)
+                FROM DateRange
+                WHERE Date < @endDate
+            )
+            SELECT
+                e.id_no AS EmployeeID,
+                CONCAT(e.fname, ' ', e.lname) AS EmployeeName,
+                d.Date,
+                COALESCE(p.time_in, MIN(a.time)) AS TimeIn,
+                COALESCE(p.time_out, MAX(a.time)) AS TimeOut,
+                COALESCE(p.rate, 0.00) AS Rate,
+                COALESCE(sc.regular_hours, 0.00) AS WorkingHours,
+                COALESCE(p.ot_hrs, sc.ot_hours, 0.00) AS OTHours,
+                p.shift_code AS ShiftCode,
+                sc.start_time AS StartTime,
+                sc.end_time AS EndTime,
+                sc.night_differential_hours AS NightDifferentialHours,
+                sc.night_differential_ot_hours AS NightDifferentialOtHours,
+                p.remarks AS Remarks
+            FROM employee e
+            JOIN DateRange d ON 1=1
+            LEFT JOIN attendance a ON e.id_no = a.id AND a.date = d.Date
+            LEFT JOIN processedDTR p ON e.id_no = p.employee_id AND p.date = d.Date
+            LEFT JOIN ShiftCodes sc ON p.shift_code = sc.shift_code
+            WHERE e.id_no = @employeeID
+            GROUP BY e.id_no, e.fname, e.lname, d.Date, p.time_in, p.time_out, p.rate, p.shift_code, sc.start_time, sc.end_time, sc.regular_hours, p.ot_hrs, sc.ot_hours, sc.night_differential_hours, sc.night_differential_ot_hours, p.remarks
+            ORDER BY d.Date ASC;";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
@@ -547,6 +549,7 @@ namespace JTI_Payroll_System
                         string shiftCode = row.Cells["ShiftCode"].Value?.ToString();
                         decimal ndHours = row.Cells["NightDifferentialHours"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["NightDifferentialHours"].Value) : 0.00m;
                         decimal ndOtHours = row.Cells["NightDifferentialOtHours"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["NightDifferentialOtHours"].Value) : 0.00m;
+                        string remarks = row.Cells["Remarks"].Value?.ToString();
 
                         // Check if the record exists
                         string checkQuery = "SELECT COUNT(*) FROM processedDTR WHERE employee_id = @employeeID AND date = @date";
@@ -561,16 +564,17 @@ namespace JTI_Payroll_System
                             {
                                 // Update the existing record
                                 string updateQuery = @"
-                            UPDATE processedDTR 
-                            SET rate = @rate, 
-                                time_in = IFNULL(@timeIn, time_in), 
-                                time_out = IFNULL(@timeOut, time_out), 
-                                working_hours = @workingHours, 
-                                ot_hrs = @otHours,
-                                shift_code = @shiftCode,
-                                nd_hrs = @ndHours,
-                                ndot_hrs = @ndOtHours
-                            WHERE employee_id = @employeeID AND date = @date";
+                        UPDATE processedDTR 
+                        SET rate = @rate, 
+                            time_in = IFNULL(@timeIn, time_in), 
+                            time_out = IFNULL(@timeOut, time_out), 
+                            working_hours = @workingHours, 
+                            ot_hrs = @otHours,
+                            shift_code = @shiftCode,
+                            nd_hrs = @ndHours,
+                            ndot_hrs = @ndOtHours,
+                            remarks = @remarks
+                        WHERE employee_id = @employeeID AND date = @date";
 
                                 using (MySqlCommand updateCmd = new MySqlCommand(updateQuery, conn))
                                 {
@@ -584,6 +588,7 @@ namespace JTI_Payroll_System
                                     updateCmd.Parameters.AddWithValue("@shiftCode", shiftCode);
                                     updateCmd.Parameters.AddWithValue("@ndHours", ndHours);
                                     updateCmd.Parameters.AddWithValue("@ndOtHours", ndOtHours);
+                                    updateCmd.Parameters.AddWithValue("@remarks", remarks);
                                     updateCmd.ExecuteNonQuery();
                                 }
                             }
@@ -591,8 +596,8 @@ namespace JTI_Payroll_System
                             {
                                 // Insert a new record if it doesn't exist
                                 string insertQuery = @"
-                            INSERT INTO processedDTR (employee_id, date, time_in, time_out, rate, working_hours, ot_hrs, shift_code, nd_hrs, ndot_hrs)
-                            VALUES (@employeeID, @date, @timeIn, @timeOut, @rate, @workingHours, @otHours, @shiftCode, @ndHours, @ndOtHours)";
+                        INSERT INTO processedDTR (employee_id, date, time_in, time_out, rate, working_hours, ot_hrs, shift_code, nd_hrs, ndot_hrs, remarks)
+                        VALUES (@employeeID, @date, @timeIn, @timeOut, @rate, @workingHours, @otHours, @shiftCode, @ndHours, @ndOtHours, @remarks)";
 
                                 using (MySqlCommand insertCmd = new MySqlCommand(insertQuery, conn))
                                 {
@@ -606,6 +611,7 @@ namespace JTI_Payroll_System
                                     insertCmd.Parameters.AddWithValue("@shiftCode", shiftCode);
                                     insertCmd.Parameters.AddWithValue("@ndHours", ndHours);
                                     insertCmd.Parameters.AddWithValue("@ndOtHours", ndOtHours);
+                                    insertCmd.Parameters.AddWithValue("@remarks", remarks);
                                     insertCmd.ExecuteNonQuery();
                                 }
                             }
@@ -751,7 +757,7 @@ namespace JTI_Payroll_System
             // Refresh the DataGridView to reflect changes
             dgvDTR.Refresh();
         }
-        private void UpdateProcessedDTR(string employeeID, DateTime date, string shiftCode, decimal workingHours, decimal otHours, decimal rate, TimeSpan? timeIn = null, TimeSpan? timeOut = null, decimal ndHours = 0, decimal ndOtHours = 0)
+        private void UpdateProcessedDTR(string employeeID, DateTime date, string shiftCode, decimal workingHours, decimal otHours, decimal rate, TimeSpan? timeIn = null, TimeSpan? timeOut = null, decimal ndHours = 0, decimal ndOtHours = 0, string remarks = null)
         {
             try
             {
@@ -760,16 +766,17 @@ namespace JTI_Payroll_System
                     conn.Open();
 
                     string query = @"
-                UPDATE processedDTR 
-                SET time_in = @timeIn, 
-                    time_out = @timeOut, 
-                    working_hours = @workingHours, 
-                    ot_hrs = @otHours,
-                    rate = @rate,
-                    shift_code = @shiftCode,
-                    nd_hrs = @ndHours,
-                    ndot_hrs=@ndOtHours
-                WHERE employee_id = @employeeID AND date = @date";
+            UPDATE processedDTR 
+            SET time_in = @timeIn, 
+                time_out = @timeOut, 
+                working_hours = @workingHours, 
+                ot_hrs = @otHours,
+                rate = @rate,
+                shift_code = @shiftCode,
+                nd_hrs = @ndHours,
+                ndot_hrs = @ndOtHours,
+                remarks = @remarks
+            WHERE employee_id = @employeeID AND date = @date";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
@@ -781,6 +788,7 @@ namespace JTI_Payroll_System
                         cmd.Parameters.AddWithValue("@shiftCode", shiftCode);
                         cmd.Parameters.AddWithValue("@ndHours", ndHours);
                         cmd.Parameters.AddWithValue("@ndOtHours", ndOtHours);
+                        cmd.Parameters.AddWithValue("@remarks", remarks);
                         cmd.Parameters.AddWithValue("@employeeID", employeeID);
                         cmd.Parameters.AddWithValue("@date", date);
                         cmd.ExecuteNonQuery();
