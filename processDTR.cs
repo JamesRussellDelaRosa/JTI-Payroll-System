@@ -252,6 +252,12 @@ namespace JTI_Payroll_System
                     dt.Columns.Add("Remarks", typeof(string));
                 }
 
+                // Add Tardiness/Undertime column
+                if (!dt.Columns.Contains("TardinessUndertime"))
+                {
+                    dt.Columns.Add("TardinessUndertime", typeof(decimal));
+                }
+
                 for (DateTime date = startDate; date <= endDate; date = date.AddDays(1))
                 {
                     if (!dt.AsEnumerable().Any(row => Convert.ToDateTime(row["Date"]) == date))
@@ -271,6 +277,7 @@ namespace JTI_Payroll_System
                         newRow["NightDifferentialHours"] = 0.00m;
                         newRow["NightDifferentialOtHours"] = 0.00m;
                         newRow["Remarks"] = DBNull.Value;
+                        newRow["TardinessUndertime"] = 0.00m;
                         dt.Rows.Add(newRow);
                     }
                 }
@@ -331,6 +338,19 @@ namespace JTI_Payroll_System
                         ReadOnly = true
                     };
                     dgvDTR.Columns.Add(remarksColumn);
+                }
+
+                // Add New Column - Tardiness/Undertime
+                if (!dgvDTR.Columns.Contains("TardinessUndertime"))
+                {
+                    DataGridViewTextBoxColumn tardinessUndertimeColumn = new DataGridViewTextBoxColumn
+                    {
+                        Name = "TardinessUndertime",
+                        HeaderText = "Tardiness/Undertime",
+                        ReadOnly = true,
+                        DefaultCellStyle = { Format = "N2" } // Set the format to "N2"
+                    };
+                    dgvDTR.Columns.Add(tardinessUndertimeColumn);
                 }
 
                 dgvDTR.Columns["WorkingHours"].DefaultCellStyle.Format = "N2";
@@ -420,7 +440,8 @@ namespace JTI_Payroll_System
             dt.Columns.Add("EndTime", typeof(TimeSpan));
             dt.Columns.Add("NightDifferentialHours", typeof(decimal));
             dt.Columns.Add("NightDifferentialOtHours", typeof(decimal));
-            dt.Columns.Add("Remarks", typeof(string)); // Add Remarks column
+            dt.Columns.Add("Remarks", typeof(string));
+            dt.Columns.Add("TardinessUndertime", typeof(decimal)); // Add Tardiness/Undertime column
 
             try
             {
@@ -449,14 +470,15 @@ namespace JTI_Payroll_System
                 sc.end_time AS EndTime,
                 sc.night_differential_hours AS NightDifferentialHours,
                 sc.night_differential_ot_hours AS NightDifferentialOtHours,
-                p.remarks AS Remarks
+                p.remarks AS Remarks,
+                COALESCE(p.tardiness_undertime, 0.00) AS TardinessUndertime
             FROM employee e
             JOIN DateRange d ON 1=1
             LEFT JOIN attendance a ON e.id_no = a.id AND a.date = d.Date
             LEFT JOIN processedDTR p ON e.id_no = p.employee_id AND p.date = d.Date
             LEFT JOIN ShiftCodes sc ON p.shift_code = sc.shift_code
             WHERE e.id_no = @employeeID
-            GROUP BY e.id_no, e.fname, e.lname, d.Date, p.time_in, p.time_out, p.rate, p.shift_code, sc.start_time, sc.end_time, sc.regular_hours, p.ot_hrs, sc.ot_hours, sc.night_differential_hours, sc.night_differential_ot_hours, p.remarks
+            GROUP BY e.id_no, e.fname, e.lname, d.Date, p.time_in, p.time_out, p.rate, p.shift_code, sc.start_time, sc.end_time, sc.regular_hours, p.ot_hrs, sc.ot_hours, sc.night_differential_hours, sc.night_differential_ot_hours, p.remarks, p.tardiness_undertime
             ORDER BY d.Date ASC;";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
@@ -470,6 +492,12 @@ namespace JTI_Payroll_System
                             adapter.Fill(dt);
                         }
                     }
+                }
+
+                // Calculate Tardiness/Undertime for each row
+                foreach (DataRow row in dt.Rows)
+                {
+                    CalculateTardinessUndertime(row);
                 }
             }
             catch (Exception ex)
@@ -550,6 +578,12 @@ namespace JTI_Payroll_System
                         decimal ndHours = row.Cells["NightDifferentialHours"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["NightDifferentialHours"].Value) : 0.00m;
                         decimal ndOtHours = row.Cells["NightDifferentialOtHours"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["NightDifferentialOtHours"].Value) : 0.00m;
                         string remarks = row.Cells["Remarks"].Value?.ToString();
+                        decimal tardinessUndertime = 0.00m;
+
+                        if (!string.IsNullOrEmpty(shiftCode) && shiftCode != "00000")
+                        {
+                            tardinessUndertime = row.Cells["TardinessUndertime"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["TardinessUndertime"].Value) : 0.00m;
+                        }
 
                         // Check if the record exists
                         string checkQuery = "SELECT COUNT(*) FROM processedDTR WHERE employee_id = @employeeID AND date = @date";
@@ -573,7 +607,8 @@ namespace JTI_Payroll_System
                             shift_code = @shiftCode,
                             nd_hrs = @ndHours,
                             ndot_hrs = @ndOtHours,
-                            remarks = @remarks
+                            remarks = @remarks,
+                            tardiness_undertime = @tardinessUndertime
                         WHERE employee_id = @employeeID AND date = @date";
 
                                 using (MySqlCommand updateCmd = new MySqlCommand(updateQuery, conn))
@@ -589,6 +624,7 @@ namespace JTI_Payroll_System
                                     updateCmd.Parameters.AddWithValue("@ndHours", ndHours);
                                     updateCmd.Parameters.AddWithValue("@ndOtHours", ndOtHours);
                                     updateCmd.Parameters.AddWithValue("@remarks", remarks);
+                                    updateCmd.Parameters.AddWithValue("@tardinessUndertime", tardinessUndertime);
                                     updateCmd.ExecuteNonQuery();
                                 }
                             }
@@ -596,8 +632,8 @@ namespace JTI_Payroll_System
                             {
                                 // Insert a new record if it doesn't exist
                                 string insertQuery = @"
-                        INSERT INTO processedDTR (employee_id, date, time_in, time_out, rate, working_hours, ot_hrs, shift_code, nd_hrs, ndot_hrs, remarks)
-                        VALUES (@employeeID, @date, @timeIn, @timeOut, @rate, @workingHours, @otHours, @shiftCode, @ndHours, @ndOtHours, @remarks)";
+                        INSERT INTO processedDTR (employee_id, date, time_in, time_out, rate, working_hours, ot_hrs, shift_code, nd_hrs, ndot_hrs, remarks, tardiness_undertime)
+                        VALUES (@employeeID, @date, @timeIn, @timeOut, @rate, @workingHours, @otHours, @shiftCode, @ndHours, @ndOtHours, @remarks, @tardinessUndertime)";
 
                                 using (MySqlCommand insertCmd = new MySqlCommand(insertQuery, conn))
                                 {
@@ -612,6 +648,7 @@ namespace JTI_Payroll_System
                                     insertCmd.Parameters.AddWithValue("@ndHours", ndHours);
                                     insertCmd.Parameters.AddWithValue("@ndOtHours", ndOtHours);
                                     insertCmd.Parameters.AddWithValue("@remarks", remarks);
+                                    insertCmd.Parameters.AddWithValue("@tardinessUndertime", tardinessUndertime);
                                     insertCmd.ExecuteNonQuery();
                                 }
                             }
@@ -722,7 +759,9 @@ namespace JTI_Payroll_System
                                        row.Cells["TimeIn"].Value == DBNull.Value ? (TimeSpan?)null : TimeSpan.Parse(row.Cells["TimeIn"].Value.ToString()),
                                        row.Cells["TimeOut"].Value == DBNull.Value ? (TimeSpan?)null : TimeSpan.Parse(row.Cells["TimeOut"].Value.ToString()),
                                        Convert.ToDecimal(row.Cells["NightDifferentialHours"].Value),
-                                       Convert.ToDecimal(row.Cells["NightDifferentialOtHours"].Value));
+                                       Convert.ToDecimal(row.Cells["NightDifferentialOtHours"].Value),
+                                       row.Cells["Remarks"].Value?.ToString(),
+                                       Convert.ToDecimal(row.Cells["TardinessUndertime"].Value));
                 }
             }
             else if (e.ColumnIndex == dgvDTR.Columns["TimeIn"].Index || e.ColumnIndex == dgvDTR.Columns["TimeOut"].Index)
@@ -751,13 +790,15 @@ namespace JTI_Payroll_System
                                    row.Cells["TimeIn"].Value == DBNull.Value ? (TimeSpan?)null : TimeSpan.Parse(row.Cells["TimeIn"].Value.ToString()),
                                    row.Cells["TimeOut"].Value == DBNull.Value ? (TimeSpan?)null : TimeSpan.Parse(row.Cells["TimeOut"].Value.ToString()),
                                    Convert.ToDecimal(row.Cells["NightDifferentialHours"].Value),
-                                   Convert.ToDecimal(row.Cells["NightDifferentialOtHours"].Value));
+                                   Convert.ToDecimal(row.Cells["NightDifferentialOtHours"].Value),
+                                   row.Cells["Remarks"].Value?.ToString(),
+                                   Convert.ToDecimal(row.Cells["TardinessUndertime"].Value));
             }
 
             // Refresh the DataGridView to reflect changes
             dgvDTR.Refresh();
         }
-        private void UpdateProcessedDTR(string employeeID, DateTime date, string shiftCode, decimal workingHours, decimal otHours, decimal rate, TimeSpan? timeIn = null, TimeSpan? timeOut = null, decimal ndHours = 0, decimal ndOtHours = 0, string remarks = null)
+        private void UpdateProcessedDTR(string employeeID, DateTime date, string shiftCode, decimal workingHours, decimal otHours, decimal rate, TimeSpan? timeIn = null, TimeSpan? timeOut = null, decimal ndHours = 0, decimal ndOtHours = 0, string remarks = null, decimal tardinessUndertime = 0.00m)
         {
             try
             {
@@ -775,7 +816,8 @@ namespace JTI_Payroll_System
                 shift_code = @shiftCode,
                 nd_hrs = @ndHours,
                 ndot_hrs = @ndOtHours,
-                remarks = @remarks
+                remarks = @remarks,
+                tardiness_undertime = @tardinessUndertime
             WHERE employee_id = @employeeID AND date = @date";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
@@ -789,6 +831,7 @@ namespace JTI_Payroll_System
                         cmd.Parameters.AddWithValue("@ndHours", ndHours);
                         cmd.Parameters.AddWithValue("@ndOtHours", ndOtHours);
                         cmd.Parameters.AddWithValue("@remarks", remarks);
+                        cmd.Parameters.AddWithValue("@tardinessUndertime", tardinessUndertime);
                         cmd.Parameters.AddWithValue("@employeeID", employeeID);
                         cmd.Parameters.AddWithValue("@date", date);
                         cmd.ExecuteNonQuery();
@@ -868,11 +911,13 @@ namespace JTI_Payroll_System
         {
             if (row.Cells["TimeIn"].Value == DBNull.Value || row.Cells["TimeOut"].Value == DBNull.Value)
             {
+                row.Cells["TardinessUndertime"].Value = 0.00m;
                 return "Absent";
             }
 
             if (row.Cells["StartTime"].Value == DBNull.Value || row.Cells["EndTime"].Value == DBNull.Value)
             {
+                row.Cells["TardinessUndertime"].Value = 0.00m;
                 return "No Shift Data";
             }
 
@@ -881,18 +926,75 @@ namespace JTI_Payroll_System
             TimeSpan startTime = (TimeSpan)row.Cells["StartTime"].Value;
             TimeSpan endTime = (TimeSpan)row.Cells["EndTime"].Value;
 
+            double tardiness = 0;
+            double undertime = 0;
+
             if (timeIn > startTime)
             {
-                return "Late";
+                // Calculate tardiness
+                tardiness = (timeIn - startTime).TotalMinutes / 60.0;
             }
-            else if (timeOut < endTime)
+
+            if (timeOut < endTime)
             {
-                return "Undertime";
+                // Calculate undertime
+                undertime = (endTime - timeOut).TotalMinutes / 60.0;
+            }
+
+            double total = tardiness + undertime;
+            row.Cells["TardinessUndertime"].Value = Math.Round((decimal)total, 2);
+
+            if (total > 0)
+            {
+                return "Late or Undertime";
             }
             else
             {
                 return "Present";
             }
+        }
+        private void CalculateTardinessUndertime(DataRow row)
+        {
+            if (row["ShiftCode"] == DBNull.Value || string.IsNullOrEmpty(row["ShiftCode"].ToString()) || row["ShiftCode"].ToString() == "00000")
+            {
+                row["TardinessUndertime"] = 0.00m;
+                return;
+            }
+
+            if (row["TimeIn"] == DBNull.Value || row["TimeOut"] == DBNull.Value)
+            {
+                row["TardinessUndertime"] = 0.00m;
+                return;
+            }
+
+            if (row["StartTime"] == DBNull.Value || row["EndTime"] == DBNull.Value)
+            {
+                row["TardinessUndertime"] = 0.00m;
+                return;
+            }
+
+            TimeSpan timeIn = (TimeSpan)row["TimeIn"];
+            TimeSpan timeOut = (TimeSpan)row["TimeOut"];
+            TimeSpan startTime = (TimeSpan)row["StartTime"];
+            TimeSpan endTime = (TimeSpan)row["EndTime"];
+
+            double tardiness = 0;
+            double undertime = 0;
+
+            if (timeIn > startTime)
+            {
+                // Calculate tardiness
+                tardiness = (timeIn - startTime).TotalMinutes / 60.0;
+            }
+
+            if (timeOut < endTime)
+            {
+                // Calculate undertime
+                undertime = (endTime - timeOut).TotalMinutes / 60.0;
+            }
+
+            double total = tardiness + undertime;
+            row["TardinessUndertime"] = Math.Round((decimal)total, 2);
         }
     }
 
