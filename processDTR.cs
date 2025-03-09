@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Drawing; // Add this line to resolve ambiguity
 using System.Windows.Forms;
 using DocumentFormat.OpenXml.Wordprocessing;
 using MySql.Data.MySqlClient;
@@ -18,6 +19,8 @@ namespace JTI_Payroll_System
             dgvDTR.DataError += dgvDTR_DataError;
             dgvDTR.CellEndEdit += dgvDTR_CellEndEdit;
             dgvDTR.EditingControlShowing += dgvDTR_EditingControlShowing;
+            dgvDTR.CellValueChanged += dgvDTR_CellValueChanged; // Add this line
+            dgvDTR.CurrentCellDirtyStateChanged += dgvDTR_CurrentCellDirtyStateChanged; // Add this line
         }
 
         private void SetupRateDropdown()
@@ -224,40 +227,6 @@ namespace JTI_Payroll_System
                     textName.Text = "Unknown Employee";
                 }
 
-                if (!dt.Columns.Contains("OTHours"))
-                {
-                    dt.Columns.Add("OTHours", typeof(decimal));
-                }
-                if (!dt.Columns.Contains("StartTime"))
-                {
-                    dt.Columns.Add("StartTime", typeof(TimeSpan));
-                }
-                if (!dt.Columns.Contains("EndTime"))
-                {
-                    dt.Columns.Add("EndTime", typeof(TimeSpan));
-                }
-
-                if (!dt.Columns.Contains("NightDifferentialHours"))
-                {
-                    dt.Columns.Add("NightDifferentialHours", typeof(decimal));
-                }
-
-                if (!dt.Columns.Contains("NightDifferentialOtHours"))
-                {
-                    dt.Columns.Add("NightDifferentialOtHours", typeof(decimal));
-                }
-
-                if (!dt.Columns.Contains("Remarks"))
-                {
-                    dt.Columns.Add("Remarks", typeof(string));
-                }
-
-                // Add Tardiness/Undertime column
-                if (!dt.Columns.Contains("TardinessUndertime"))
-                {
-                    dt.Columns.Add("TardinessUndertime", typeof(decimal));
-                }
-
                 for (DateTime date = startDate; date <= endDate; date = date.AddDays(1))
                 {
                     if (!dt.AsEnumerable().Any(row => Convert.ToDateTime(row["Date"]) == date))
@@ -278,6 +247,10 @@ namespace JTI_Payroll_System
                         newRow["NightDifferentialOtHours"] = 0.00m;
                         newRow["Remarks"] = DBNull.Value;
                         newRow["TardinessUndertime"] = 0.00m;
+                        newRow["RestDay"] = false;
+                        newRow["LegalHoliday"] = false;
+                        newRow["SpecialHoliday"] = false;
+                        newRow["NonWorkingDay"] = false;
                         dt.Rows.Add(newRow);
                     }
                 }
@@ -303,8 +276,6 @@ namespace JTI_Payroll_System
                 {
                     dgvDTR.Columns.Add(new DataGridViewTextBoxColumn { Name = "EndTime", HeaderText = "End Time", ReadOnly = true });
                 }
-
-                // Add New Column - NightDifferential
                 if (!dgvDTR.Columns.Contains("NightDifferentialHours"))
                 {
                     DataGridViewTextBoxColumn nightDifferentialColumn = new DataGridViewTextBoxColumn
@@ -315,8 +286,6 @@ namespace JTI_Payroll_System
                     };
                     dgvDTR.Columns.Add(nightDifferentialColumn);
                 }
-
-                // Add New Column - NightDifferentialOT
                 if (!dgvDTR.Columns.Contains("NightDifferentialOtHours"))
                 {
                     DataGridViewTextBoxColumn nightDifferentialOTColumn = new DataGridViewTextBoxColumn
@@ -327,8 +296,6 @@ namespace JTI_Payroll_System
                     };
                     dgvDTR.Columns.Add(nightDifferentialOTColumn);
                 }
-
-                // Add New Column - Remarks
                 if (!dgvDTR.Columns.Contains("Remarks"))
                 {
                     DataGridViewTextBoxColumn remarksColumn = new DataGridViewTextBoxColumn
@@ -339,8 +306,6 @@ namespace JTI_Payroll_System
                     };
                     dgvDTR.Columns.Add(remarksColumn);
                 }
-
-                // Add New Column - Tardiness/Undertime
                 if (!dgvDTR.Columns.Contains("TardinessUndertime"))
                 {
                     DataGridViewTextBoxColumn tardinessUndertimeColumn = new DataGridViewTextBoxColumn
@@ -348,9 +313,47 @@ namespace JTI_Payroll_System
                         Name = "TardinessUndertime",
                         HeaderText = "Tardiness/Undertime",
                         ReadOnly = true,
-                        DefaultCellStyle = { Format = "N2" } // Set the format to "N2"
+                        DefaultCellStyle = { Format = "N2" }
                     };
                     dgvDTR.Columns.Add(tardinessUndertimeColumn);
+                }
+
+                // Add new checkbox columns to DataGridView
+                if (!dgvDTR.Columns.Contains("RestDay"))
+                {
+                    DataGridViewCheckBoxColumn restDayColumn = new DataGridViewCheckBoxColumn
+                    {
+                        Name = "RestDay",
+                        HeaderText = "Rest Day"
+                    };
+                    dgvDTR.Columns.Add(restDayColumn);
+                }
+                if (!dgvDTR.Columns.Contains("LegalHoliday"))
+                {
+                    DataGridViewCheckBoxColumn legalHolidayColumn = new DataGridViewCheckBoxColumn
+                    {
+                        Name = "LegalHoliday",
+                        HeaderText = "Legal Holiday"
+                    };
+                    dgvDTR.Columns.Add(legalHolidayColumn);
+                }
+                if (!dgvDTR.Columns.Contains("SpecialHoliday"))
+                {
+                    DataGridViewCheckBoxColumn specialHolidayColumn = new DataGridViewCheckBoxColumn
+                    {
+                        Name = "SpecialHoliday",
+                        HeaderText = "Special Holiday"
+                    };
+                    dgvDTR.Columns.Add(specialHolidayColumn);
+                }
+                if (!dgvDTR.Columns.Contains("NonWorkingDay"))
+                {
+                    DataGridViewCheckBoxColumn nonWorkingDayColumn = new DataGridViewCheckBoxColumn
+                    {
+                        Name = "NonWorkingDay",
+                        HeaderText = "Non-Working Day"
+                    };
+                    dgvDTR.Columns.Add(nonWorkingDayColumn);
                 }
 
                 dgvDTR.Columns["WorkingHours"].DefaultCellStyle.Format = "N2";
@@ -360,7 +363,6 @@ namespace JTI_Payroll_System
                 dgvDTR.Columns["NightDifferentialHours"].DefaultCellStyle.Format = "N2";
                 dgvDTR.Columns["NightDifferentialOtHours"].DefaultCellStyle.Format = "N2";
 
-                // Hide EmployeeID and EmployeeName columns
                 dgvDTR.Columns["EmployeeID"].Visible = false;
                 dgvDTR.Columns["EmployeeName"].Visible = false;
 
@@ -441,7 +443,11 @@ namespace JTI_Payroll_System
             dt.Columns.Add("NightDifferentialHours", typeof(decimal));
             dt.Columns.Add("NightDifferentialOtHours", typeof(decimal));
             dt.Columns.Add("Remarks", typeof(string));
-            dt.Columns.Add("TardinessUndertime", typeof(decimal)); // Add Tardiness/Undertime column
+            dt.Columns.Add("TardinessUndertime", typeof(decimal));
+            dt.Columns.Add("RestDay", typeof(bool));
+            dt.Columns.Add("LegalHoliday", typeof(bool));
+            dt.Columns.Add("SpecialHoliday", typeof(bool));
+            dt.Columns.Add("NonWorkingDay", typeof(bool));
 
             try
             {
@@ -449,37 +455,51 @@ namespace JTI_Payroll_System
                 {
                     conn.Open();
                     string query = @"
-            WITH RECURSIVE DateRange AS (
-                SELECT @startDate AS Date
-                UNION ALL
-                SELECT DATE_ADD(Date, INTERVAL 1 DAY)
-                FROM DateRange
-                WHERE Date < @endDate
-            )
-            SELECT
-                e.id_no AS EmployeeID,
-                CONCAT(e.fname, ' ', e.lname) AS EmployeeName,
-                d.Date,
-                COALESCE(p.time_in, MIN(a.time)) AS TimeIn,
-                COALESCE(p.time_out, MAX(a.time)) AS TimeOut,
-                COALESCE(p.rate, 0.00) AS Rate,
-                COALESCE(sc.regular_hours, 0.00) AS WorkingHours,
-                COALESCE(p.ot_hrs, sc.ot_hours, 0.00) AS OTHours,
-                p.shift_code AS ShiftCode,
-                sc.start_time AS StartTime,
-                sc.end_time AS EndTime,
-                sc.night_differential_hours AS NightDifferentialHours,
-                sc.night_differential_ot_hours AS NightDifferentialOtHours,
-                p.remarks AS Remarks,
-                COALESCE(p.tardiness_undertime, 0.00) AS TardinessUndertime
-            FROM employee e
-            JOIN DateRange d ON 1=1
-            LEFT JOIN attendance a ON e.id_no = a.id AND a.date = d.Date
-            LEFT JOIN processedDTR p ON e.id_no = p.employee_id AND p.date = d.Date
-            LEFT JOIN ShiftCodes sc ON p.shift_code = sc.shift_code
-            WHERE e.id_no = @employeeID
-            GROUP BY e.id_no, e.fname, e.lname, d.Date, p.time_in, p.time_out, p.rate, p.shift_code, sc.start_time, sc.end_time, sc.regular_hours, p.ot_hrs, sc.ot_hours, sc.night_differential_hours, sc.night_differential_ot_hours, p.remarks, p.tardiness_undertime
-            ORDER BY d.Date ASC;";
+                WITH RECURSIVE DateRange AS (
+                    SELECT @startDate AS Date
+                    UNION ALL
+                    SELECT DATE_ADD(Date, INTERVAL 1 DAY)
+                    FROM DateRange
+                    WHERE Date < @endDate
+                )
+                SELECT
+                    e.id_no AS EmployeeID,
+                    CONCAT(e.fname, ' ', e.lname) AS EmployeeName,
+                    d.Date,
+                    COALESCE(p.time_in, MIN(a.time)) AS TimeIn,
+                    COALESCE(p.time_out, MAX(a.time)) AS TimeOut,
+                    COALESCE(p.rate, 0.00) AS Rate,
+                    COALESCE(sc.regular_hours, 0.00) AS WorkingHours,
+                    COALESCE(p.ot_hrs, sc.ot_hours, 0.00) AS OTHours,
+                    p.shift_code AS ShiftCode,
+                    sc.start_time AS StartTime,
+                    sc.end_time AS EndTime,
+                    sc.night_differential_hours AS NightDifferentialHours,
+                    sc.night_differential_ot_hours AS NightDifferentialOtHours,
+                    p.remarks AS Remarks,
+                    COALESCE(p.tardiness_undertime, 0.00) AS TardinessUndertime,
+                    COALESCE(p.rest_day, false) AS RestDay,
+                    COALESCE(p.legal_holiday, false) AS LegalHoliday,
+                    COALESCE(p.special_holiday, false) AS SpecialHoliday,
+                    COALESCE(p.non_working_day, false) AS NonWorkingDay
+                FROM employee e
+                JOIN DateRange d ON 1=1
+                LEFT JOIN attendance a
+                    ON e.id_no = a.id AND a.date = d.Date
+                LEFT JOIN processedDTR p
+                    ON e.id_no = p.employee_id AND p.date = d.Date
+                LEFT JOIN ShiftCodes sc
+                    ON p.shift_code = sc.shift_code
+                WHERE e.id_no = @employeeID
+                GROUP BY
+                    e.id_no, e.fname, e.lname, d.Date,
+                    p.time_in, p.time_out, p.rate,
+                    p.shift_code, sc.start_time, sc.end_time,
+                    sc.regular_hours, p.ot_hrs, sc.ot_hours,
+                    sc.night_differential_hours, sc.night_differential_ot_hours,
+                    p.remarks, p.tardiness_undertime,
+                    p.rest_day, p.legal_holiday, p.special_holiday, p.non_working_day
+                ORDER BY d.Date ASC;";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
@@ -569,25 +589,50 @@ namespace JTI_Payroll_System
 
                         string employeeID = row.Cells["EmployeeID"].Value.ToString();
                         DateTime date = Convert.ToDateTime(row.Cells["Date"].Value);
-                        TimeSpan? timeIn = row.Cells["TimeIn"].Value != DBNull.Value ? (TimeSpan?)TimeSpan.Parse(row.Cells["TimeIn"].Value.ToString()) : null;
-                        TimeSpan? timeOut = row.Cells["TimeOut"].Value != DBNull.Value ? (TimeSpan?)TimeSpan.Parse(row.Cells["TimeOut"].Value.ToString()) : null;
-                        decimal rate = row.Cells["Rate"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["Rate"].Value) : 0.00m;
-                        decimal workingHours = row.Cells["WorkingHours"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["WorkingHours"].Value) : 0.00m;
-                        decimal otHours = row.Cells["OTHours"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["OTHours"].Value) : 0.00m;
+                        TimeSpan? timeIn = row.Cells["TimeIn"].Value != DBNull.Value
+                            ? (TimeSpan?)TimeSpan.Parse(row.Cells["TimeIn"].Value.ToString())
+                            : null;
+                        TimeSpan? timeOut = row.Cells["TimeOut"].Value != DBNull.Value
+                            ? (TimeSpan?)TimeSpan.Parse(row.Cells["TimeOut"].Value.ToString())
+                            : null;
+                        decimal rate = row.Cells["Rate"].Value != DBNull.Value
+                            ? Convert.ToDecimal(row.Cells["Rate"].Value)
+                            : 0.00m;
+                        decimal workingHours = row.Cells["WorkingHours"].Value != DBNull.Value
+                            ? Convert.ToDecimal(row.Cells["WorkingHours"].Value)
+                            : 0.00m;
+                        decimal otHours = row.Cells["OTHours"].Value != DBNull.Value
+                            ? Convert.ToDecimal(row.Cells["OTHours"].Value)
+                            : 0.00m;
                         string shiftCode = row.Cells["ShiftCode"].Value?.ToString();
-                        decimal ndHours = row.Cells["NightDifferentialHours"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["NightDifferentialHours"].Value) : 0.00m;
-                        decimal ndOtHours = row.Cells["NightDifferentialOtHours"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["NightDifferentialOtHours"].Value) : 0.00m;
+                        decimal ndHours = row.Cells["NightDifferentialHours"].Value != DBNull.Value
+                            ? Convert.ToDecimal(row.Cells["NightDifferentialHours"].Value)
+                            : 0.00m;
+                        decimal ndOtHours = row.Cells["NightDifferentialOtHours"].Value != DBNull.Value
+                            ? Convert.ToDecimal(row.Cells["NightDifferentialOtHours"].Value)
+                            : 0.00m;
                         string remarks = row.Cells["Remarks"].Value?.ToString();
                         decimal tardinessUndertime = 0.00m;
 
+                        // Retrieve new checkbox columns
+                        bool restDay = row.Cells["RestDay"].Value != DBNull.Value
+                            && Convert.ToBoolean(row.Cells["RestDay"].Value);
+                        bool legalHoliday = row.Cells["LegalHoliday"].Value != DBNull.Value
+                            && Convert.ToBoolean(row.Cells["LegalHoliday"].Value);
+                        bool specialHoliday = row.Cells["SpecialHoliday"].Value != DBNull.Value
+                            && Convert.ToBoolean(row.Cells["SpecialHoliday"].Value);
+                        bool nonWorkingDay = row.Cells["NonWorkingDay"].Value != DBNull.Value
+                            && Convert.ToBoolean(row.Cells["NonWorkingDay"].Value);
+
                         if (!string.IsNullOrEmpty(shiftCode) && shiftCode != "00000")
                         {
-                            tardinessUndertime = row.Cells["TardinessUndertime"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["TardinessUndertime"].Value) : 0.00m;
+                            tardinessUndertime = row.Cells["TardinessUndertime"].Value != DBNull.Value
+                                ? Convert.ToDecimal(row.Cells["TardinessUndertime"].Value)
+                                : 0.00m;
                         }
 
-                        // Check if the record exists
+                        // Check if record already exists
                         string checkQuery = "SELECT COUNT(*) FROM processedDTR WHERE employee_id = @employeeID AND date = @date";
-
                         using (MySqlCommand checkCmd = new MySqlCommand(checkQuery, conn))
                         {
                             checkCmd.Parameters.AddWithValue("@employeeID", employeeID);
@@ -596,26 +641,28 @@ namespace JTI_Payroll_System
 
                             if (recordExists > 0)
                             {
-                                // Update the existing record
+                                // Update existing record
                                 string updateQuery = @"
-                        UPDATE processedDTR 
-                        SET rate = @rate, 
-                            time_in = IFNULL(@timeIn, time_in), 
-                            time_out = IFNULL(@timeOut, time_out), 
-                            working_hours = @workingHours, 
-                            ot_hrs = @otHours,
-                            shift_code = @shiftCode,
-                            nd_hrs = @ndHours,
-                            ndot_hrs = @ndOtHours,
-                            remarks = @remarks,
-                            tardiness_undertime = @tardinessUndertime
-                        WHERE employee_id = @employeeID AND date = @date";
+                            UPDATE processedDTR 
+                            SET rate = @rate, 
+                                time_in = IFNULL(@timeIn, time_in), 
+                                time_out = IFNULL(@timeOut, time_out), 
+                                working_hours = @workingHours, 
+                                ot_hrs = @otHours,
+                                shift_code = @shiftCode,
+                                nd_hrs = @ndHours,
+                                ndot_hrs = @ndOtHours,
+                                remarks = @remarks,
+                                tardiness_undertime = @tardinessUndertime,
+                                rest_day = @restDay,
+                                legal_holiday = @legalHoliday,
+                                special_holiday = @specialHoliday,
+                                non_working_day = @nonWorkingDay
+                            WHERE employee_id = @employeeID AND date = @date";
 
                                 using (MySqlCommand updateCmd = new MySqlCommand(updateQuery, conn))
                                 {
                                     updateCmd.Parameters.AddWithValue("@rate", rate);
-                                    updateCmd.Parameters.AddWithValue("@employeeID", employeeID);
-                                    updateCmd.Parameters.AddWithValue("@date", date);
                                     updateCmd.Parameters.AddWithValue("@timeIn", (object)timeIn ?? DBNull.Value);
                                     updateCmd.Parameters.AddWithValue("@timeOut", (object)timeOut ?? DBNull.Value);
                                     updateCmd.Parameters.AddWithValue("@workingHours", workingHours);
@@ -625,15 +672,32 @@ namespace JTI_Payroll_System
                                     updateCmd.Parameters.AddWithValue("@ndOtHours", ndOtHours);
                                     updateCmd.Parameters.AddWithValue("@remarks", remarks);
                                     updateCmd.Parameters.AddWithValue("@tardinessUndertime", tardinessUndertime);
+                                    updateCmd.Parameters.AddWithValue("@restDay", restDay);
+                                    updateCmd.Parameters.AddWithValue("@legalHoliday", legalHoliday);
+                                    updateCmd.Parameters.AddWithValue("@specialHoliday", specialHoliday);
+                                    updateCmd.Parameters.AddWithValue("@nonWorkingDay", nonWorkingDay);
+                                    updateCmd.Parameters.AddWithValue("@employeeID", employeeID);
+                                    updateCmd.Parameters.AddWithValue("@date", date);
+
                                     updateCmd.ExecuteNonQuery();
                                 }
                             }
                             else
                             {
-                                // Insert a new record if it doesn't exist
+                                // Insert a new record
                                 string insertQuery = @"
-                        INSERT INTO processedDTR (employee_id, date, time_in, time_out, rate, working_hours, ot_hrs, shift_code, nd_hrs, ndot_hrs, remarks, tardiness_undertime)
-                        VALUES (@employeeID, @date, @timeIn, @timeOut, @rate, @workingHours, @otHours, @shiftCode, @ndHours, @ndOtHours, @remarks, @tardinessUndertime)";
+                            INSERT INTO processedDTR (
+                                employee_id, date, time_in, time_out, rate, 
+                                working_hours, ot_hrs, shift_code, nd_hrs, ndot_hrs, 
+                                remarks, tardiness_undertime, rest_day, legal_holiday, 
+                                special_holiday, non_working_day
+                            )
+                            VALUES (
+                                @employeeID, @date, @timeIn, @timeOut, @rate,
+                                @workingHours, @otHours, @shiftCode, @ndHours, @ndOtHours,
+                                @remarks, @tardinessUndertime, @restDay, @legalHoliday,
+                                @specialHoliday, @nonWorkingDay
+                            )";
 
                                 using (MySqlCommand insertCmd = new MySqlCommand(insertQuery, conn))
                                 {
@@ -649,6 +713,11 @@ namespace JTI_Payroll_System
                                     insertCmd.Parameters.AddWithValue("@ndOtHours", ndOtHours);
                                     insertCmd.Parameters.AddWithValue("@remarks", remarks);
                                     insertCmd.Parameters.AddWithValue("@tardinessUndertime", tardinessUndertime);
+                                    insertCmd.Parameters.AddWithValue("@restDay", restDay);
+                                    insertCmd.Parameters.AddWithValue("@legalHoliday", legalHoliday);
+                                    insertCmd.Parameters.AddWithValue("@specialHoliday", specialHoliday);
+                                    insertCmd.Parameters.AddWithValue("@nonWorkingDay", nonWorkingDay);
+
                                     insertCmd.ExecuteNonQuery();
                                 }
                             }
@@ -995,6 +1064,32 @@ namespace JTI_Payroll_System
 
             double total = tardiness + undertime;
             row["TardinessUndertime"] = Math.Round((decimal)total, 2);
+        }
+        private void dgvDTR_CurrentCellDirtyStateChanged(object sender, EventArgs e)
+        {
+            if (dgvDTR.IsCurrentCellDirty)
+            {
+                dgvDTR.CommitEdit(DataGridViewDataErrorContexts.Commit);
+            }
+        }
+        private void dgvDTR_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
+            {
+                DataGridViewRow row = dgvDTR.Rows[e.RowIndex];
+                if (dgvDTR.Columns[e.ColumnIndex].Name == "RestDay")
+                {
+                    bool isRestDay = Convert.ToBoolean(row.Cells["RestDay"].Value);
+                    if (isRestDay)
+                    {
+                        row.DefaultCellStyle.ForeColor = System.Drawing.Color.Red; // Specify System.Drawing.Color
+                    }
+                    else
+                    {
+                        row.DefaultCellStyle.ForeColor = System.Drawing.Color.Black; // Specify System.Drawing.Color
+                    }
+                }
+            }
         }
     }
 
