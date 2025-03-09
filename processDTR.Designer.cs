@@ -40,6 +40,7 @@
             btnNext = new Button();
             btnSaveProcessedDTR = new Button();
             btnOpenDeleteDTR = new Button();
+            btnAutoAssignShift = new Button();
             ((System.ComponentModel.ISupportInitialize)dgvDTR).BeginInit();
             SuspendLayout();
             // 
@@ -99,7 +100,7 @@
             // textID
             // 
             textID.AutoSize = true;
-            textID.Location = new Point(1084, 13);
+            textID.Location = new Point(1301, 17);
             textID.Name = "textID";
             textID.Size = new Size(53, 20);
             textID.TabIndex = 6;
@@ -108,7 +109,7 @@
             // textName
             // 
             textName.AutoSize = true;
-            textName.Location = new Point(1159, 13);
+            textName.Location = new Point(1376, 17);
             textName.Name = "textName";
             textName.Size = new Size(119, 20);
             textName.TabIndex = 7;
@@ -136,7 +137,7 @@
             // 
             // btnSaveProcessedDTR
             // 
-            btnSaveProcessedDTR.Location = new Point(930, 13);
+            btnSaveProcessedDTR.Location = new Point(1192, 12);
             btnSaveProcessedDTR.Name = "btnSaveProcessedDTR";
             btnSaveProcessedDTR.Size = new Size(94, 29);
             btnSaveProcessedDTR.TabIndex = 10;
@@ -146,7 +147,7 @@
             // 
             // btnOpenDeleteDTR
             // 
-            btnOpenDeleteDTR.Location = new Point(771, 13);
+            btnOpenDeleteDTR.Location = new Point(1033, 12);
             btnOpenDeleteDTR.Name = "btnOpenDeleteDTR";
             btnOpenDeleteDTR.Size = new Size(153, 29);
             btnOpenDeleteDTR.TabIndex = 11;
@@ -154,11 +155,22 @@
             btnOpenDeleteDTR.UseVisualStyleBackColor = true;
             btnOpenDeleteDTR.Click += btnOpenDeleteDTR_Click;
             // 
+            // btnAutoAssignShift
+            // 
+            btnAutoAssignShift.Location = new Point(820, 13);
+            btnAutoAssignShift.Name = "btnAutoAssignShift";
+            btnAutoAssignShift.Size = new Size(194, 29);
+            btnAutoAssignShift.TabIndex = 12;
+            btnAutoAssignShift.Text = "AUTO ASSIGN SHIFTCODE";
+            btnAutoAssignShift.UseVisualStyleBackColor = true;
+            btnAutoAssignShift.Click += btnAutoAssignShift_Click;
+            // 
             // processDTR
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1762, 582);
+            Controls.Add(btnAutoAssignShift);
             Controls.Add(btnOpenDeleteDTR);
             Controls.Add(btnSaveProcessedDTR);
             Controls.Add(btnNext);
@@ -192,5 +204,6 @@
         private Button btnNext;
         private Button btnSaveProcessedDTR;
         private Button btnOpenDeleteDTR;
+        private Button btnAutoAssignShift;
     }
 }

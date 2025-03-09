@@ -1091,6 +1091,162 @@ namespace JTI_Payroll_System
                 }
             }
         }
+        private void btnAutoAssignShift_Click(object sender, EventArgs e)
+        {
+            AutoAssignShiftCodes();
+        }
+        private void AutoAssignShiftCodes()
+        {
+            // Show progress dialog
+            ProgressForm progressForm = new ProgressForm();
+            progressForm.Show();
+
+            try
+            {
+                // Fetch all shift codes from the database once
+                List<ShiftCodeData> allShiftCodes = GetAllShiftCodes();
+                int totalRows = dgvDTR.Rows.Count - 1; // Exclude new row
+                int processedRows = 0;
+
+                foreach (DataGridViewRow row in dgvDTR.Rows)
+                {
+                    if (row.IsNewRow) continue;
+
+                    if (row.Cells["TimeIn"].Value != DBNull.Value && row.Cells["TimeOut"].Value != DBNull.Value)
+                    {
+                        TimeSpan timeIn = (TimeSpan)row.Cells["TimeIn"].Value;
+                        TimeSpan timeOut = (TimeSpan)row.Cells["TimeOut"].Value;
+
+                        // First try with exact match - time in is after or equal to shift start time and time out is before or equal to shift end time
+                        ShiftCodeData exactMatch = allShiftCodes
+                            .FirstOrDefault(sc =>
+                                timeIn >= sc.StartTime &&
+                                timeOut <= sc.EndTime);
+
+                        if (exactMatch != null)
+                        {
+                            ApplyShiftCode(row, exactMatch);
+                        }
+                        else
+                        {
+                            // If no exact match, find the closest match based on similarity score
+                            // Calculate similarity score as a combination of:
+                            // 1. How close the time in is to the shift start time
+                            // 2. How close the time out is to the shift end time
+                            // 3. Whether the total working hours match the shift regular hours
+
+                            ShiftCodeData bestMatch = allShiftCodes
+                                .OrderBy(sc => {
+                                    double timeInDiff = Math.Abs((timeIn - sc.StartTime).TotalMinutes);
+                                    double timeOutDiff = Math.Abs((timeOut - sc.EndTime).TotalMinutes);
+                                    double hoursDiff = Math.Abs((timeOut - timeIn).TotalHours - (double)sc.RegularHours);
+
+                                    // Weight factors - adjust as needed for your specific business case
+                                    double timeInWeight = 1.0;
+                                    double timeOutWeight = 1.0;
+                                    double hoursWeight = 2.0; // Giving more importance to total hours
+
+                                    return (timeInDiff * timeInWeight) +
+                                           (timeOutDiff * timeOutWeight) +
+                                           (hoursDiff * hoursWeight);
+                                })
+                                .FirstOrDefault();
+
+                            if (bestMatch != null)
+                            {
+                                ApplyShiftCode(row, bestMatch);
+                            }
+                            else
+                            {
+                                ClearShiftData(row);
+                            }
+                        }
+                    }
+
+                    // Update progress
+                    processedRows++;
+                    progressForm.UpdateProgress(processedRows, totalRows,
+                        $"Processing employee records... ({processedRows}/{totalRows})");
+                }
+
+                dgvDTR.Refresh();
+                MessageBox.Show("Auto-assignment of shift codes completed successfully.",
+                    "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error during auto-assignment: {ex.Message}",
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                progressForm.Close();
+            }
+        }
+        private void ApplyShiftCode(DataGridViewRow row, ShiftCodeData shiftData)
+        {
+            row.Cells["ShiftCode"].Value = shiftData.ShiftCode;
+            row.Cells["StartTime"].Value = shiftData.StartTime;
+            row.Cells["EndTime"].Value = shiftData.EndTime;
+            row.Cells["WorkingHours"].Value = shiftData.RegularHours;
+            row.Cells["OTHours"].Value = shiftData.OtHours;
+            row.Cells["NightDifferentialHours"].Value = shiftData.NightDifferentialHours;
+            row.Cells["NightDifferentialOtHours"].Value = shiftData.NightDifferentialOtHours;
+            row.Cells["Remarks"].Value = CalculateRemarks(row);
+        }
+        private void ClearShiftData(DataGridViewRow row)
+        {
+            row.Cells["ShiftCode"].Value = DBNull.Value;
+            row.Cells["StartTime"].Value = DBNull.Value;
+            row.Cells["EndTime"].Value = DBNull.Value;
+            row.Cells["WorkingHours"].Value = DBNull.Value;
+            row.Cells["OTHours"].Value = DBNull.Value;
+            row.Cells["NightDifferentialHours"].Value = DBNull.Value;
+            row.Cells["NightDifferentialOtHours"].Value = DBNull.Value;
+            row.Cells["Remarks"].Value = "No matching shift code";
+        }
+        private List<ShiftCodeData> GetAllShiftCodes()
+        {
+            List<ShiftCodeData> shiftCodes = new List<ShiftCodeData>();
+
+            try
+            {
+                using (MySqlConnection conn = DatabaseHelper.GetConnection())
+                {
+                    conn.Open();
+                    string query = @"
+            SELECT shift_code, start_time, end_time, regular_hours, ot_hours, 
+                night_differential_hours, night_differential_ot_hours
+            FROM ShiftCodes";
+
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    {
+                        using (MySqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                shiftCodes.Add(new ShiftCodeData
+                                {
+                                    ShiftCode = reader["shift_code"].ToString(),
+                                    StartTime = reader.GetTimeSpan("start_time"),
+                                    EndTime = reader.GetTimeSpan("end_time"),
+                                    RegularHours = reader.GetDecimal("regular_hours"),
+                                    OtHours = reader.GetDecimal("ot_hours"),
+                                    NightDifferentialHours = reader.GetDecimal("night_differential_hours"),
+                                    NightDifferentialOtHours = reader.GetDecimal("night_differential_ot_hours")
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error fetching Shift Codes: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
+            return shiftCodes;
+        }
     }
 
 
