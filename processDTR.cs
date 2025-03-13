@@ -251,6 +251,7 @@ namespace JTI_Payroll_System
                         newRow["LegalHoliday"] = false;
                         newRow["SpecialHoliday"] = false;
                         newRow["NonWorkingDay"] = false;
+                        newRow["Reliever"] = false; // Add default value for new column
                         dt.Rows.Add(newRow);
                     }
                 }
@@ -355,6 +356,15 @@ namespace JTI_Payroll_System
                     };
                     dgvDTR.Columns.Add(nonWorkingDayColumn);
                 }
+                if (!dgvDTR.Columns.Contains("Reliever"))
+                {
+                    DataGridViewCheckBoxColumn relieverColumn = new DataGridViewCheckBoxColumn
+                    {
+                        Name = "Reliever",
+                        HeaderText = "Reliever"
+                    };
+                    dgvDTR.Columns.Add(relieverColumn);
+                }
 
                 dgvDTR.Columns["WorkingHours"].DefaultCellStyle.Format = "N2";
                 dgvDTR.Columns["OTHours"].DefaultCellStyle.Format = "N2";
@@ -448,6 +458,7 @@ namespace JTI_Payroll_System
             dt.Columns.Add("LegalHoliday", typeof(bool));
             dt.Columns.Add("SpecialHoliday", typeof(bool));
             dt.Columns.Add("NonWorkingDay", typeof(bool));
+            dt.Columns.Add("Reliever", typeof(bool)); // Add Reliever column
 
             try
             {
@@ -455,51 +466,52 @@ namespace JTI_Payroll_System
                 {
                     conn.Open();
                     string query = @"
-                WITH RECURSIVE DateRange AS (
-                    SELECT @startDate AS Date
-                    UNION ALL
-                    SELECT DATE_ADD(Date, INTERVAL 1 DAY)
-                    FROM DateRange
-                    WHERE Date < @endDate
-                )
-                SELECT
-                    e.id_no AS EmployeeID,
-                    CONCAT(e.fname, ' ', e.lname) AS EmployeeName,
-                    d.Date,
-                    COALESCE(p.time_in, MIN(a.time)) AS TimeIn,
-                    COALESCE(p.time_out, MAX(a.time)) AS TimeOut,
-                    COALESCE(p.rate, 0.00) AS Rate,
-                    COALESCE(sc.regular_hours, 0.00) AS WorkingHours,
-                    COALESCE(p.ot_hrs, sc.ot_hours, 0.00) AS OTHours,
-                    p.shift_code AS ShiftCode,
-                    sc.start_time AS StartTime,
-                    sc.end_time AS EndTime,
-                    sc.night_differential_hours AS NightDifferentialHours,
-                    sc.night_differential_ot_hours AS NightDifferentialOtHours,
-                    p.remarks AS Remarks,
-                    COALESCE(p.tardiness_undertime, 0.00) AS TardinessUndertime,
-                    COALESCE(p.rest_day, false) AS RestDay,
-                    COALESCE(p.legal_holiday, false) AS LegalHoliday,
-                    COALESCE(p.special_holiday, false) AS SpecialHoliday,
-                    COALESCE(p.non_working_day, false) AS NonWorkingDay
-                FROM employee e
-                JOIN DateRange d ON 1=1
-                LEFT JOIN attendance a
-                    ON e.id_no = a.id AND a.date = d.Date
-                LEFT JOIN processedDTR p
-                    ON e.id_no = p.employee_id AND p.date = d.Date
-                LEFT JOIN ShiftCodes sc
-                    ON p.shift_code = sc.shift_code
-                WHERE e.id_no = @employeeID
-                GROUP BY
-                    e.id_no, e.fname, e.lname, d.Date,
-                    p.time_in, p.time_out, p.rate,
-                    p.shift_code, sc.start_time, sc.end_time,
-                    sc.regular_hours, p.ot_hrs, sc.ot_hours,
-                    sc.night_differential_hours, sc.night_differential_ot_hours,
-                    p.remarks, p.tardiness_undertime,
-                    p.rest_day, p.legal_holiday, p.special_holiday, p.non_working_day
-                ORDER BY d.Date ASC;";
+            WITH RECURSIVE DateRange AS (
+                SELECT @startDate AS Date
+                UNION ALL
+                SELECT DATE_ADD(Date, INTERVAL 1 DAY)
+                FROM DateRange
+                WHERE Date < @endDate
+            )
+            SELECT
+                e.id_no AS EmployeeID,
+                CONCAT(e.fname, ' ', e.lname) AS EmployeeName,
+                d.Date,
+                COALESCE(p.time_in, MIN(a.time)) AS TimeIn,
+                COALESCE(p.time_out, MAX(a.time)) AS TimeOut,
+                COALESCE(p.rate, 0.00) AS Rate,
+                COALESCE(sc.regular_hours, 0.00) AS WorkingHours,
+                COALESCE(p.ot_hrs, sc.ot_hours, 0.00) AS OTHours,
+                p.shift_code AS ShiftCode,
+                sc.start_time AS StartTime,
+                sc.end_time AS EndTime,
+                sc.night_differential_hours AS NightDifferentialHours,
+                sc.night_differential_ot_hours AS NightDifferentialOtHours,
+                p.remarks AS Remarks,
+                COALESCE(p.tardiness_undertime, 0.00) AS TardinessUndertime,
+                COALESCE(p.rest_day, false) AS RestDay,
+                COALESCE(p.legal_holiday, false) AS LegalHoliday,
+                COALESCE(p.special_holiday, false) AS SpecialHoliday,
+                COALESCE(p.non_working_day, false) AS NonWorkingDay,
+                COALESCE(p.reliever, false) AS Reliever  -- Include Reliever column
+            FROM employee e
+            JOIN DateRange d ON 1=1
+            LEFT JOIN attendance a
+                ON e.id_no = a.id AND a.date = d.Date
+            LEFT JOIN processedDTR p
+                ON e.id_no = p.employee_id AND p.date = d.Date
+            LEFT JOIN ShiftCodes sc
+                ON p.shift_code = sc.shift_code
+            WHERE e.id_no = @employeeID
+            GROUP BY
+                e.id_no, e.fname, e.lname, d.Date,
+                p.time_in, p.time_out, p.rate,
+                p.shift_code, sc.start_time, sc.end_time,
+                sc.regular_hours, p.ot_hrs, sc.ot_hours,
+                sc.night_differential_hours, sc.night_differential_ot_hours,
+                p.remarks, p.tardiness_undertime,
+                p.rest_day, p.legal_holiday, p.special_holiday, p.non_working_day, p.reliever
+            ORDER BY d.Date ASC;";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
@@ -614,7 +626,7 @@ namespace JTI_Payroll_System
                         string remarks = row.Cells["Remarks"].Value?.ToString();
                         decimal tardinessUndertime = 0.00m;
 
-                        // Retrieve new checkbox columns
+                        // Retrieve checkbox columns
                         bool restDay = row.Cells["RestDay"].Value != DBNull.Value
                             && Convert.ToBoolean(row.Cells["RestDay"].Value);
                         bool legalHoliday = row.Cells["LegalHoliday"].Value != DBNull.Value
@@ -623,6 +635,8 @@ namespace JTI_Payroll_System
                             && Convert.ToBoolean(row.Cells["SpecialHoliday"].Value);
                         bool nonWorkingDay = row.Cells["NonWorkingDay"].Value != DBNull.Value
                             && Convert.ToBoolean(row.Cells["NonWorkingDay"].Value);
+                        bool reliever = row.Cells["Reliever"].Value != DBNull.Value
+                            && Convert.ToBoolean(row.Cells["Reliever"].Value);
 
                         if (!string.IsNullOrEmpty(shiftCode) && shiftCode != "00000")
                         {
@@ -643,22 +657,23 @@ namespace JTI_Payroll_System
                             {
                                 // Update existing record
                                 string updateQuery = @"
-                            UPDATE processedDTR 
-                            SET rate = @rate, 
-                                time_in = IFNULL(@timeIn, time_in), 
-                                time_out = IFNULL(@timeOut, time_out), 
-                                working_hours = @workingHours, 
-                                ot_hrs = @otHours,
-                                shift_code = @shiftCode,
-                                nd_hrs = @ndHours,
-                                ndot_hrs = @ndOtHours,
-                                remarks = @remarks,
-                                tardiness_undertime = @tardinessUndertime,
-                                rest_day = @restDay,
-                                legal_holiday = @legalHoliday,
-                                special_holiday = @specialHoliday,
-                                non_working_day = @nonWorkingDay
-                            WHERE employee_id = @employeeID AND date = @date";
+                    UPDATE processedDTR 
+                    SET rate = @rate, 
+                        time_in = IFNULL(@timeIn, time_in), 
+                        time_out = IFNULL(@timeOut, time_out), 
+                        working_hours = @workingHours, 
+                        ot_hrs = @otHours,
+                        shift_code = @shiftCode,
+                        nd_hrs = @ndHours,
+                        ndot_hrs = @ndOtHours,
+                        remarks = @remarks,
+                        tardiness_undertime = @tardinessUndertime,
+                        rest_day = @restDay,
+                        legal_holiday = @legalHoliday,
+                        special_holiday = @specialHoliday,
+                        non_working_day = @nonWorkingDay,
+                        reliever = @reliever
+                    WHERE employee_id = @employeeID AND date = @date";
 
                                 using (MySqlCommand updateCmd = new MySqlCommand(updateQuery, conn))
                                 {
@@ -676,6 +691,7 @@ namespace JTI_Payroll_System
                                     updateCmd.Parameters.AddWithValue("@legalHoliday", legalHoliday);
                                     updateCmd.Parameters.AddWithValue("@specialHoliday", specialHoliday);
                                     updateCmd.Parameters.AddWithValue("@nonWorkingDay", nonWorkingDay);
+                                    updateCmd.Parameters.AddWithValue("@reliever", reliever);
                                     updateCmd.Parameters.AddWithValue("@employeeID", employeeID);
                                     updateCmd.Parameters.AddWithValue("@date", date);
 
@@ -686,18 +702,18 @@ namespace JTI_Payroll_System
                             {
                                 // Insert a new record
                                 string insertQuery = @"
-                            INSERT INTO processedDTR (
-                                employee_id, date, time_in, time_out, rate, 
-                                working_hours, ot_hrs, shift_code, nd_hrs, ndot_hrs, 
-                                remarks, tardiness_undertime, rest_day, legal_holiday, 
-                                special_holiday, non_working_day
-                            )
-                            VALUES (
-                                @employeeID, @date, @timeIn, @timeOut, @rate,
-                                @workingHours, @otHours, @shiftCode, @ndHours, @ndOtHours,
-                                @remarks, @tardinessUndertime, @restDay, @legalHoliday,
-                                @specialHoliday, @nonWorkingDay
-                            )";
+                    INSERT INTO processedDTR (
+                        employee_id, date, time_in, time_out, rate, 
+                        working_hours, ot_hrs, shift_code, nd_hrs, ndot_hrs, 
+                        remarks, tardiness_undertime, rest_day, legal_holiday, 
+                        special_holiday, non_working_day, reliever
+                    )
+                    VALUES (
+                        @employeeID, @date, @timeIn, @timeOut, @rate,
+                        @workingHours, @otHours, @shiftCode, @ndHours, @ndOtHours,
+                        @remarks, @tardinessUndertime, @restDay, @legalHoliday,
+                        @specialHoliday, @nonWorkingDay, @reliever
+                    )";
 
                                 using (MySqlCommand insertCmd = new MySqlCommand(insertQuery, conn))
                                 {
@@ -717,6 +733,7 @@ namespace JTI_Payroll_System
                                     insertCmd.Parameters.AddWithValue("@legalHoliday", legalHoliday);
                                     insertCmd.Parameters.AddWithValue("@specialHoliday", specialHoliday);
                                     insertCmd.Parameters.AddWithValue("@nonWorkingDay", nonWorkingDay);
+                                    insertCmd.Parameters.AddWithValue("@reliever", reliever);
 
                                     insertCmd.ExecuteNonQuery();
                                 }
@@ -1112,54 +1129,22 @@ namespace JTI_Payroll_System
                 {
                     if (row.IsNewRow) continue;
 
-                    if (row.Cells["TimeIn"].Value != DBNull.Value && row.Cells["TimeOut"].Value != DBNull.Value)
+                    if (row.Cells["TimeOut"].Value != DBNull.Value)
                     {
-                        TimeSpan timeIn = (TimeSpan)row.Cells["TimeIn"].Value;
                         TimeSpan timeOut = (TimeSpan)row.Cells["TimeOut"].Value;
 
-                        // First try with exact match - time in is after or equal to shift start time and time out is before or equal to shift end time
-                        ShiftCodeData exactMatch = allShiftCodes
-                            .FirstOrDefault(sc =>
-                                timeIn >= sc.StartTime &&
-                                timeOut <= sc.EndTime);
+                        // Find the closest match based on TimeOut only
+                        ShiftCodeData bestMatch = allShiftCodes
+                            .OrderBy(sc => Math.Abs((timeOut - sc.EndTime).TotalMinutes))
+                            .FirstOrDefault();
 
-                        if (exactMatch != null)
+                        if (bestMatch != null)
                         {
-                            ApplyShiftCode(row, exactMatch);
+                            ApplyShiftCode(row, bestMatch);
                         }
                         else
                         {
-                            // If no exact match, find the closest match based on similarity score
-                            // Calculate similarity score as a combination of:
-                            // 1. How close the time in is to the shift start time
-                            // 2. How close the time out is to the shift end time
-                            // 3. Whether the total working hours match the shift regular hours
-
-                            ShiftCodeData bestMatch = allShiftCodes
-                                .OrderBy(sc => {
-                                    double timeInDiff = Math.Abs((timeIn - sc.StartTime).TotalMinutes);
-                                    double timeOutDiff = Math.Abs((timeOut - sc.EndTime).TotalMinutes);
-                                    double hoursDiff = Math.Abs((timeOut - timeIn).TotalHours - (double)sc.RegularHours);
-
-                                    // Weight factors - adjust as needed for your specific business case
-                                    double timeInWeight = 1.0;
-                                    double timeOutWeight = 1.0;
-                                    double hoursWeight = 2.0; // Giving more importance to total hours
-
-                                    return (timeInDiff * timeInWeight) +
-                                           (timeOutDiff * timeOutWeight) +
-                                           (hoursDiff * hoursWeight);
-                                })
-                                .FirstOrDefault();
-
-                            if (bestMatch != null)
-                            {
-                                ApplyShiftCode(row, bestMatch);
-                            }
-                            else
-                            {
-                                ClearShiftData(row);
-                            }
+                            ClearShiftData(row);
                         }
                     }
 
