@@ -833,21 +833,21 @@ namespace JTI_Payroll_System
             else if (e.ColumnIndex == dgvDTR.Columns["Rate"].Index)
             {
                 // Handle changes to the Rate column
-                if (row.Cells["Rate"].Value != null)
+                if (row.Cells["Rate"].Value != null && row.Cells["Rate"].Value != DBNull.Value)
                 {
                     decimal rate = Convert.ToDecimal(row.Cells["Rate"].Value);
                     UpdateProcessedDTR(row.Cells["EmployeeID"].Value.ToString(),
                                        Convert.ToDateTime(row.Cells["Date"].Value),
-                                       row.Cells["ShiftCode"].Value.ToString(),
-                                       Convert.ToDecimal(row.Cells["WorkingHours"].Value),
-                                       Convert.ToDecimal(row.Cells["OTHours"].Value),
+                                       row.Cells["ShiftCode"].Value?.ToString(),
+                                       row.Cells["WorkingHours"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["WorkingHours"].Value) : 0.00m,
+                                       row.Cells["OTHours"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["OTHours"].Value) : 0.00m,
                                        rate,
-                                       row.Cells["TimeIn"].Value == DBNull.Value ? (TimeSpan?)null : TimeSpan.Parse(row.Cells["TimeIn"].Value.ToString()),
-                                       row.Cells["TimeOut"].Value == DBNull.Value ? (TimeSpan?)null : TimeSpan.Parse(row.Cells["TimeOut"].Value.ToString()),
-                                       Convert.ToDecimal(row.Cells["NightDifferentialHours"].Value),
-                                       Convert.ToDecimal(row.Cells["NightDifferentialOtHours"].Value),
+                                       row.Cells["TimeIn"].Value != DBNull.Value ? (TimeSpan?)TimeSpan.Parse(row.Cells["TimeIn"].Value.ToString()) : null,
+                                       row.Cells["TimeOut"].Value != DBNull.Value ? (TimeSpan?)TimeSpan.Parse(row.Cells["TimeOut"].Value.ToString()) : null,
+                                       row.Cells["NightDifferentialHours"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["NightDifferentialHours"].Value) : 0.00m,
+                                       row.Cells["NightDifferentialOtHours"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["NightDifferentialOtHours"].Value) : 0.00m,
                                        row.Cells["Remarks"].Value?.ToString(),
-                                       Convert.ToDecimal(row.Cells["TardinessUndertime"].Value));
+                                       row.Cells["TardinessUndertime"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["TardinessUndertime"].Value) : 0.00m);
                 }
             }
             else if (e.ColumnIndex == dgvDTR.Columns["TimeIn"].Index || e.ColumnIndex == dgvDTR.Columns["TimeOut"].Index)
@@ -869,16 +869,16 @@ namespace JTI_Payroll_System
 
                 UpdateProcessedDTR(row.Cells["EmployeeID"].Value.ToString(),
                                    Convert.ToDateTime(row.Cells["Date"].Value),
-                                   row.Cells["ShiftCode"].Value.ToString(),
-                                   Convert.ToDecimal(row.Cells["WorkingHours"].Value),
-                                   Convert.ToDecimal(row.Cells["OTHours"].Value),
-                                   Convert.ToDecimal(row.Cells["Rate"].Value),
-                                   row.Cells["TimeIn"].Value == DBNull.Value ? (TimeSpan?)null : TimeSpan.Parse(row.Cells["TimeIn"].Value.ToString()),
-                                   row.Cells["TimeOut"].Value == DBNull.Value ? (TimeSpan?)null : TimeSpan.Parse(row.Cells["TimeOut"].Value.ToString()),
-                                   Convert.ToDecimal(row.Cells["NightDifferentialHours"].Value),
-                                   Convert.ToDecimal(row.Cells["NightDifferentialOtHours"].Value),
+                                   row.Cells["ShiftCode"].Value?.ToString(),
+                                   row.Cells["WorkingHours"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["WorkingHours"].Value) : 0.00m,
+                                   row.Cells["OTHours"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["OTHours"].Value) : 0.00m,
+                                   row.Cells["Rate"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["Rate"].Value) : 0.00m,
+                                   row.Cells["TimeIn"].Value != DBNull.Value ? (TimeSpan?)TimeSpan.Parse(row.Cells["TimeIn"].Value.ToString()) : null,
+                                   row.Cells["TimeOut"].Value != DBNull.Value ? (TimeSpan?)TimeSpan.Parse(row.Cells["TimeOut"].Value.ToString()) : null,
+                                   row.Cells["NightDifferentialHours"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["NightDifferentialHours"].Value) : 0.00m,
+                                   row.Cells["NightDifferentialOtHours"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["NightDifferentialOtHours"].Value) : 0.00m,
                                    row.Cells["Remarks"].Value?.ToString(),
-                                   Convert.ToDecimal(row.Cells["TardinessUndertime"].Value));
+                                   row.Cells["TardinessUndertime"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["TardinessUndertime"].Value) : 0.00m);
             }
 
             // Refresh the DataGridView to reflect changes
