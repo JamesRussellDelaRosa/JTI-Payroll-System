@@ -88,36 +88,13 @@ namespace JTI_Payroll_System
                         decimal totalHours = 0;
                         decimal overtimeHours = 0;
                         decimal totalEarnings = 0;
-                        decimal? totalDays = null;
-                        decimal regularHours = 8; // Default value if shiftcode is not found
+                        decimal totalDays = 0;
 
-                        // Fetch regular hours for the employee's shiftcode from processedDTR
                         query = @"
-                SELECT s.regular_hours
+                SELECT p.working_hours, p.ot_hrs, p.rate, s.regular_hours
                 FROM processedDTR p
                 JOIN ShiftCodes s ON p.shift_code = s.shift_code
-                WHERE p.employee_id = @employeeID AND p.date BETWEEN @startDate AND @endDate
-                LIMIT 1"; // Assuming the shiftcode is the same for the entire period
-
-                        using (MySqlCommand cmd = new MySqlCommand(query, conn))
-                        {
-                            cmd.Parameters.AddWithValue("@employeeID", employeeID);
-                            cmd.Parameters.AddWithValue("@startDate", startDate);
-                            cmd.Parameters.AddWithValue("@endDate", endDate);
-
-                            using (MySqlDataReader reader = cmd.ExecuteReader())
-                            {
-                                if (reader.Read())
-                                {
-                                    regularHours = reader.GetDecimal("regular_hours");
-                                }
-                            }
-                        }
-
-                        query = @"
-                SELECT working_hours, ot_hrs, rate
-                FROM processedDTR
-                WHERE employee_id = @employeeID AND date BETWEEN @startDate AND @endDate";
+                WHERE p.employee_id = @employeeID AND p.date BETWEEN @startDate AND @endDate";
 
                         using (MySqlCommand cmd = new MySqlCommand(query, conn))
                         {
@@ -132,31 +109,32 @@ namespace JTI_Payroll_System
                                     decimal workingHours = reader.GetDecimal("working_hours");
                                     decimal otHours = reader.GetDecimal("ot_hrs");
                                     decimal rate = reader.GetDecimal("rate");
+                                    decimal regularHours = reader.GetDecimal("regular_hours");
 
                                     totalHours += workingHours;
                                     overtimeHours += otHours;
                                     totalEarnings += (workingHours + otHours) * rate;
+
+                                    // Convert working hours to days based on regular hours for each day
+                                    if (regularHours > 0)
+                                    {
+                                        totalDays += workingHours / regularHours;
+                                    }
                                 }
                             }
-                        }
-
-                        // Convert total hours to total days based on regular hours
-                        if (regularHours > 0)
-                        {
-                            totalDays = totalHours / regularHours;
                         }
 
                         // Insert payroll data into payroll table
                         string insertQuery = @"
                 INSERT INTO payroll (employee_id, pay_period_start, pay_period_end, total_days, overtime_hours, total_earnings, month, payrollyear, control_period)
-                VALUES (@employeeID, @startDate, @endDate, IFNULL(@totalDays, 0), @overtimeHours, @totalEarnings, @month, @payrollyear, @controlPeriod)";
+                VALUES (@employeeID, @startDate, @endDate, @totalDays, @overtimeHours, @totalEarnings, @month, @payrollyear, @controlPeriod)";
 
                         using (MySqlCommand insertCmd = new MySqlCommand(insertQuery, conn))
                         {
                             insertCmd.Parameters.AddWithValue("@employeeID", employeeID);
                             insertCmd.Parameters.AddWithValue("@startDate", startDate);
                             insertCmd.Parameters.AddWithValue("@endDate", endDate);
-                            insertCmd.Parameters.AddWithValue("@totalDays", (object)totalDays ?? DBNull.Value);
+                            insertCmd.Parameters.AddWithValue("@totalDays", totalDays);
                             insertCmd.Parameters.AddWithValue("@overtimeHours", overtimeHours);
                             insertCmd.Parameters.AddWithValue("@totalEarnings", totalEarnings);
                             insertCmd.Parameters.AddWithValue("@month", month);
