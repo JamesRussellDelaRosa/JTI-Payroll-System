@@ -33,11 +33,12 @@
             label2 = new Label();
             payrollyear = new TextBox();
             label3 = new Label();
-            textBox1 = new TextBox();
+            controlPeriod = new TextBox();
             label4 = new Label();
             fromdate = new TextBox();
             label5 = new Label();
             todate = new TextBox();
+            btnSavePayroll = new Button();
             SuspendLayout();
             // 
             // month
@@ -81,12 +82,12 @@
             label3.TabIndex = 5;
             label3.Text = "Control Period";
             // 
-            // textBox1
+            // controlPeriod
             // 
-            textBox1.Location = new Point(311, 81);
-            textBox1.Name = "textBox1";
-            textBox1.Size = new Size(32, 27);
-            textBox1.TabIndex = 4;
+            controlPeriod.Location = new Point(311, 81);
+            controlPeriod.Name = "controlPeriod";
+            controlPeriod.Size = new Size(32, 27);
+            controlPeriod.TabIndex = 4;
             // 
             // label4
             // 
@@ -120,17 +121,28 @@
             todate.Size = new Size(125, 27);
             todate.TabIndex = 8;
             // 
+            // btnSavePayroll
+            // 
+            btnSavePayroll.Location = new Point(201, 307);
+            btnSavePayroll.Name = "btnSavePayroll";
+            btnSavePayroll.Size = new Size(193, 29);
+            btnSavePayroll.TabIndex = 10;
+            btnSavePayroll.Text = "POST PAYROLL";
+            btnSavePayroll.UseVisualStyleBackColor = true;
+            btnSavePayroll.Click += btnSavePayroll_Click_1;
+            // 
             // PayrollPost
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(btnSavePayroll);
             Controls.Add(label5);
             Controls.Add(todate);
             Controls.Add(label4);
             Controls.Add(fromdate);
             Controls.Add(label3);
-            Controls.Add(textBox1);
+            Controls.Add(controlPeriod);
             Controls.Add(label2);
             Controls.Add(payrollyear);
             Controls.Add(label1);
@@ -148,10 +160,11 @@
         private Label label2;
         private TextBox payrollyear;
         private Label label3;
-        private TextBox textBox1;
+        private TextBox controlPeriod;
         private Label label4;
         private TextBox fromdate;
         private Label label5;
         private TextBox todate;
+        private Button btnSavePayroll;
     }
 }
