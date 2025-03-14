@@ -41,6 +41,7 @@
             employee = new Button();
             uploadattlog = new Button();
             processDtr = new Button();
+            btnpayrollpost = new Button();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             SuspendLayout();
             // 
@@ -167,11 +168,22 @@
             processDtr.UseVisualStyleBackColor = true;
             processDtr.Click += processDtr_Click;
             // 
+            // btnpayrollpost
+            // 
+            btnpayrollpost.Location = new Point(152, 380);
+            btnpayrollpost.Name = "btnpayrollpost";
+            btnpayrollpost.Size = new Size(139, 29);
+            btnpayrollpost.TabIndex = 14;
+            btnpayrollpost.Text = "PAYROLL POSTING";
+            btnpayrollpost.UseVisualStyleBackColor = true;
+            btnpayrollpost.Click += btnpayrollpost_Click;
+            // 
             // Admin
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(btnpayrollpost);
             Controls.Add(processDtr);
             Controls.Add(uploadattlog);
             Controls.Add(employee);
@@ -206,5 +218,6 @@
         private Button employee;
         private Button uploadattlog;
         private Button processDtr;
+        private Button btnpayrollpost;
     }
 }

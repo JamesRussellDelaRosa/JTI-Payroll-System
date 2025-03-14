@@ -311,5 +311,12 @@ namespace JTI_Payroll_System
             processDTR processDTRForm = new processDTR();
             processDTRForm.Show();
         }
+
+        private void btnpayrollpost_Click(object sender, EventArgs e)
+        {
+            // Redirect to PayrollPost form
+            PayrollPost payrollPostForm = new PayrollPost();
+            payrollPostForm.Show();
+        }
     }
 }

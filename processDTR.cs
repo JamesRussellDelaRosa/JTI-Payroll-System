@@ -376,6 +376,9 @@ namespace JTI_Payroll_System
                 dgvDTR.Columns["EmployeeID"].Visible = false;
                 dgvDTR.Columns["EmployeeName"].Visible = false;
 
+                // Highlight rest days and update remarks
+                HighlightRestDaysAndUpdateRemarks(dgvDTR);
+
                 dgvDTR.Refresh();
             }
             catch (Exception ex)
@@ -531,6 +534,9 @@ namespace JTI_Payroll_System
                 {
                     CalculateTardinessUndertime(row);
                 }
+
+                // Highlight rest days and update remarks
+                HighlightRestDaysAndUpdateRemarks(dt);
             }
             catch (Exception ex)
             {
@@ -538,7 +544,7 @@ namespace JTI_Payroll_System
             }
 
             return dt;
-        }
+        }   
         private void btnNext_Click(object sender, EventArgs e)
         {
             if (employeeIDs.Count == 0) return;
@@ -1231,6 +1237,39 @@ namespace JTI_Payroll_System
             }
 
             return shiftCodes;
+        }
+        private void HighlightRestDaysAndUpdateRemarks(DataGridView dgv)
+        {
+            foreach (DataGridViewRow row in dgv.Rows)
+            {
+                if (row.IsNewRow) continue;
+
+                DateTime date = Convert.ToDateTime(row.Cells["Date"].Value);
+                DayOfWeek dayOfWeek = date.DayOfWeek;
+
+                // Highlight Sundays as rest days
+                if (dayOfWeek == DayOfWeek.Sunday)
+                {
+                    row.DefaultCellStyle.BackColor = System.Drawing.Color.Red; // Highlight rest day in red
+                    row.Cells["RestDay"].Value = true; // Mark as rest day
+                    row.Cells["Remarks"].Value = "Rest Day"; // Indicate rest day in remarks
+                }
+            }
+        }
+        private void HighlightRestDaysAndUpdateRemarks(DataTable dt)
+        {
+            foreach (DataRow row in dt.Rows)
+            {
+                DateTime date = Convert.ToDateTime(row["Date"]);
+                DayOfWeek dayOfWeek = date.DayOfWeek;
+
+                // Highlight Sundays as rest days
+                if (dayOfWeek == DayOfWeek.Sunday)
+                {
+                    row["RestDay"] = true; // Mark as rest day
+                    row["Remarks"] = "Rest Day"; // Indicate rest day in remarks
+                }
+            }
         }
     }
 
