@@ -21,6 +21,16 @@ namespace JTI_Payroll_System
             dgvDTR.EditingControlShowing += dgvDTR_EditingControlShowing;
             dgvDTR.CellValueChanged += dgvDTR_CellValueChanged; // Add this line
             dgvDTR.CurrentCellDirtyStateChanged += dgvDTR_CurrentCellDirtyStateChanged; // Add this line
+
+            // Add event handlers for placeholder text
+            textStartDate.Enter += TextBox_Enter;
+            textStartDate.Leave += TextBox_Leave;
+            textEndDate.Enter += TextBox_Enter;
+            textEndDate.Leave += TextBox_Leave;
+
+            // Set initial placeholder text
+            SetPlaceholderText(textStartDate, "MM/DD/YYYY");
+            SetPlaceholderText(textEndDate, "MM/DD/YYYY");
         }
 
         private void SetupRateDropdown()
@@ -152,11 +162,11 @@ namespace JTI_Payroll_System
         }
         private void filter_Click(object sender, EventArgs e)
         {
-            // ✅ Convert TextBox values to DateTime
-            if (!DateTime.TryParse(textStartDate.Text, out DateTime startDate) ||
-                !DateTime.TryParse(textEndDate.Text, out DateTime endDate))
+            // ✅ Convert TextBox values to DateTime in MM/DD/YYYY format
+            if (!DateTime.TryParseExact(textStartDate.Text, "MM/dd/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime startDate) ||
+                !DateTime.TryParseExact(textEndDate.Text, "MM/dd/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime endDate))
             {
-                MessageBox.Show("Invalid date format. Please enter a valid date (YYYY-MM-DD).",
+                MessageBox.Show("Invalid date format. Please enter a valid date (MM/DD/YYYY).",
                     "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
@@ -544,7 +554,7 @@ namespace JTI_Payroll_System
             }
 
             return dt;
-        }   
+        }
         private void btnNext_Click(object sender, EventArgs e)
         {
             if (employeeIDs.Count == 0) return;
@@ -554,10 +564,10 @@ namespace JTI_Payroll_System
                 currentEmployeeIndex++;
 
                 // ✅ Parse StartDate and EndDate before passing
-                if (!DateTime.TryParse(textStartDate.Text, out DateTime startDate) ||
-                    !DateTime.TryParse(textEndDate.Text, out DateTime endDate))
+                if (!DateTime.TryParseExact(textStartDate.Text, "MM/dd/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime startDate) ||
+                    !DateTime.TryParseExact(textEndDate.Text, "MM/dd/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime endDate))
                 {
-                    MessageBox.Show("Invalid date format. Please enter a valid date (YYYY-MM-DD).",
+                    MessageBox.Show("Invalid date format. Please enter a valid date (MM/DD/YYYY).",
                         "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
@@ -578,10 +588,10 @@ namespace JTI_Payroll_System
                 currentEmployeeIndex--;
 
                 // ✅ Parse StartDate and EndDate before passing
-                if (!DateTime.TryParse(textStartDate.Text, out DateTime startDate) ||
-                    !DateTime.TryParse(textEndDate.Text, out DateTime endDate))
+                if (!DateTime.TryParseExact(textStartDate.Text, "MM/dd/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime startDate) ||
+                    !DateTime.TryParseExact(textEndDate.Text, "MM/dd/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime endDate))
                 {
-                    MessageBox.Show("Invalid date format. Please enter a valid date (YYYY-MM-DD).",
+                    MessageBox.Show("Invalid date format. Please enter a valid date (MM/DD/YYYY).",
                         "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
@@ -1270,6 +1280,28 @@ namespace JTI_Payroll_System
                     row["Remarks"] = "Rest Day"; // Indicate rest day in remarks
                 }
             }
+        }
+        private void TextBox_Enter(object sender, EventArgs e)
+        {
+            TextBox textBox = sender as TextBox;
+            if (textBox != null && textBox.Text == "MM/DD/YYYY")
+            {
+                textBox.Text = "";
+                textBox.ForeColor = SystemColors.WindowText;
+            }
+        }
+        private void TextBox_Leave(object sender, EventArgs e)
+        {
+            TextBox textBox = sender as TextBox;
+            if (textBox != null && string.IsNullOrWhiteSpace(textBox.Text))
+            {
+                SetPlaceholderText(textBox, "MM/DD/YYYY");
+            }
+        }
+        private void SetPlaceholderText(TextBox textBox, string placeholderText)
+        {
+            textBox.Text = placeholderText;
+            textBox.ForeColor = SystemColors.GrayText;
         }
     }
 

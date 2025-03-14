@@ -50,7 +50,6 @@
             textStartDate.Name = "textStartDate";
             textStartDate.Size = new Size(125, 27);
             textStartDate.TabIndex = 0;
-            textStartDate.Text = "YYYY-MM-DD";
             // 
             // textEndDate
             // 
@@ -58,7 +57,6 @@
             textEndDate.Name = "textEndDate";
             textEndDate.Size = new Size(125, 27);
             textEndDate.TabIndex = 1;
-            textEndDate.Text = "YYYY-MM-DD";
             // 
             // label1
             // 
