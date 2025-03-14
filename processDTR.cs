@@ -25,8 +25,13 @@ namespace JTI_Payroll_System
             // Add event handlers for placeholder text
             textStartDate.Enter += TextBox_Enter;
             textStartDate.Leave += TextBox_Leave;
+            textStartDate.TextChanged += TextBox_TextChanged; // Add this line
             textEndDate.Enter += TextBox_Enter;
             textEndDate.Leave += TextBox_Leave;
+
+            // Add Paint event handlers for custom drawing
+            textStartDate.Paint += TextBox_Paint;
+            textEndDate.Paint += TextBox_Paint;
 
             // Set initial placeholder text
             SetPlaceholderText(textStartDate, "MM/DD/YYYY");
@@ -1289,6 +1294,7 @@ namespace JTI_Payroll_System
                 textBox.Text = "";
                 textBox.ForeColor = SystemColors.WindowText;
             }
+            textBox.Invalidate(); // Force repaint to remove placeholder text
         }
         private void TextBox_Leave(object sender, EventArgs e)
         {
@@ -1297,11 +1303,28 @@ namespace JTI_Payroll_System
             {
                 SetPlaceholderText(textBox, "MM/DD/YYYY");
             }
+            textBox.Invalidate(); // Force repaint to show placeholder text
+        }
+        private void TextBox_TextChanged(object sender, EventArgs e)
+        {
+            TextBox textBox = sender as TextBox;
+            textBox.Invalidate(); // Force repaint to show or hide placeholder text
         }
         private void SetPlaceholderText(TextBox textBox, string placeholderText)
         {
             textBox.Text = placeholderText;
             textBox.ForeColor = SystemColors.GrayText;
+        }
+        private void TextBox_Paint(object sender, PaintEventArgs e)
+        {
+            TextBox textBox = sender as TextBox;
+            if (textBox != null && string.IsNullOrWhiteSpace(textBox.Text))
+            {
+                using (Brush brush = new SolidBrush(SystemColors.GrayText))
+                {
+                    e.Graphics.DrawString("MM/DD/YYYY", textBox.Font, brush, new PointF(0, 0));
+                }
+            }
         }
     }
 
