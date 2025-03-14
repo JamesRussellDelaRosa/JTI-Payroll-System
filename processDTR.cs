@@ -1259,15 +1259,16 @@ namespace JTI_Payroll_System
             {
                 if (row.IsNewRow) continue;
 
-                DateTime date = Convert.ToDateTime(row.Cells["Date"].Value);
-                DayOfWeek dayOfWeek = date.DayOfWeek;
+                bool isRestDay = Convert.ToBoolean(row.Cells["RestDay"].Value);
 
-                // Highlight Sundays as rest days
-                if (dayOfWeek == DayOfWeek.Sunday)
+                // Set text color to red for rest days
+                if (isRestDay)
                 {
-                    row.DefaultCellStyle.BackColor = System.Drawing.Color.Red; // Highlight rest day in red
-                    row.Cells["RestDay"].Value = true; // Mark as rest day
-                    row.Cells["Remarks"].Value = "Rest Day"; // Indicate rest day in remarks
+                    row.DefaultCellStyle.ForeColor = System.Drawing.Color.Red; // Set text color to red
+                }
+                else
+                {
+                    row.DefaultCellStyle.ForeColor = System.Drawing.Color.Black; // Set text color to black for non-rest days
                 }
             }
         }
@@ -1278,7 +1279,7 @@ namespace JTI_Payroll_System
                 DateTime date = Convert.ToDateTime(row["Date"]);
                 DayOfWeek dayOfWeek = date.DayOfWeek;
 
-                // Highlight Sundays as rest days
+                // Mark Sundays as rest days
                 if (dayOfWeek == DayOfWeek.Sunday)
                 {
                     row["RestDay"] = true; // Mark as rest day
