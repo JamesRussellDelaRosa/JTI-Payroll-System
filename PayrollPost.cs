@@ -29,7 +29,6 @@ namespace JTI_Payroll_System
             AddHint(fromdate, null);
             AddHint(todate, null);
         }
-
         private void RemoveHint(object sender, EventArgs e)
         {
             TextBox textBox = sender as TextBox;
@@ -39,7 +38,6 @@ namespace JTI_Payroll_System
                 textBox.ForeColor = Color.Black;
             }
         }
-
         private void AddHint(object sender, EventArgs e)
         {
             TextBox textBox = sender as TextBox;
@@ -49,7 +47,6 @@ namespace JTI_Payroll_System
                 textBox.ForeColor = Color.Gray;
             }
         }
-
         private void CalculateAndSavePayroll(DateTime startDate, DateTime endDate, int month, int payrollyear, int controlPeriod)
         {
             try
@@ -61,12 +58,12 @@ namespace JTI_Payroll_System
                     // Fetch employee IDs with attendance in the given date range
                     List<string> employeeIDs = new List<string>();
                     string query = @"
-            SELECT DISTINCT e.id_no
-            FROM employee e
-            LEFT JOIN processedDTR p ON e.id_no = p.employee_id AND p.date BETWEEN @startDate AND @endDate
-            LEFT JOIN attendance a ON e.id_no = a.id AND a.date BETWEEN @startDate AND @endDate
-            WHERE p.employee_id IS NOT NULL OR a.id IS NOT NULL
-            ORDER BY e.id_no ASC;";
+                SELECT DISTINCT e.id_no
+                FROM employee e
+                LEFT JOIN processedDTR p ON e.id_no = p.employee_id AND p.date BETWEEN @startDate AND @endDate
+                LEFT JOIN attendance a ON e.id_no = a.id AND a.date BETWEEN @startDate AND @endDate
+                WHERE p.employee_id IS NOT NULL OR a.id IS NOT NULL
+                ORDER BY e.id_no ASC;";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
@@ -84,17 +81,21 @@ namespace JTI_Payroll_System
 
                     foreach (string employeeID in employeeIDs)
                     {
-                        // Calculate total hours, overtime hours, and earnings
+                        // Calculate total hours, overtime hours, earnings, rest day hours, legal holiday hours, and their respective overtime hours
                         decimal totalHours = 0;
                         decimal overtimeHours = 0;
                         decimal totalEarnings = 0;
                         decimal totalDays = 0;
+                        decimal restdayHours = 0;
+                        decimal restdayOvertimeHours = 0;
+                        decimal legalHolidayHours = 0;
+                        decimal legalHolidayOvertimeHours = 0;
 
                         query = @"
-                SELECT p.working_hours, p.ot_hrs, p.rate, s.regular_hours
-                FROM processedDTR p
-                JOIN ShiftCodes s ON p.shift_code = s.shift_code
-                WHERE p.employee_id = @employeeID AND p.date BETWEEN @startDate AND @endDate";
+                    SELECT p.working_hours, p.ot_hrs, p.rate, s.regular_hours, p.rest_day, p.legal_holiday
+                    FROM processedDTR p
+                    JOIN ShiftCodes s ON p.shift_code = s.shift_code
+                    WHERE p.employee_id = @employeeID AND p.date BETWEEN @startDate AND @endDate";
 
                         using (MySqlCommand cmd = new MySqlCommand(query, conn))
                         {
@@ -110,13 +111,24 @@ namespace JTI_Payroll_System
                                     decimal otHours = reader.GetDecimal("ot_hrs");
                                     decimal rate = reader.GetDecimal("rate");
                                     decimal regularHours = reader.GetDecimal("regular_hours");
+                                    bool isRestDay = reader.GetBoolean("rest_day");
+                                    bool isLegalHoliday = reader.GetBoolean("legal_holiday");
 
                                     totalHours += workingHours;
                                     overtimeHours += otHours;
                                     totalEarnings += (workingHours + otHours) * rate;
 
-                                    // Convert working hours to days based on regular hours for each day
-                                    if (regularHours > 0)
+                                    if (isRestDay)
+                                    {
+                                        restdayHours += workingHours;
+                                        restdayOvertimeHours += otHours;
+                                    }
+                                    else if (isLegalHoliday)
+                                    {
+                                        legalHolidayHours += workingHours;
+                                        legalHolidayOvertimeHours += otHours;
+                                    }
+                                    else if (regularHours > 0)
                                     {
                                         totalDays += workingHours / regularHours;
                                     }
@@ -126,8 +138,8 @@ namespace JTI_Payroll_System
 
                         // Insert payroll data into payroll table
                         string insertQuery = @"
-                INSERT INTO payroll (employee_id, pay_period_start, pay_period_end, total_days, overtime_hours, total_earnings, month, payrollyear, control_period)
-                VALUES (@employeeID, @startDate, @endDate, @totalDays, @overtimeHours, @totalEarnings, @month, @payrollyear, @controlPeriod)";
+                    INSERT INTO payroll (employee_id, pay_period_start, pay_period_end, total_days, overtime_hours, total_earnings, restday_hours, restday_overtime_hours, legal_holiday_hours, legal_holiday_overtime_hours, month, payrollyear, control_period)
+                    VALUES (@employeeID, @startDate, @endDate, @totalDays, @overtimeHours, @totalEarnings, @restdayHours, @restdayOvertimeHours, @legalHolidayHours, @legalHolidayOvertimeHours, @month, @payrollyear, @controlPeriod)";
 
                         using (MySqlCommand insertCmd = new MySqlCommand(insertQuery, conn))
                         {
@@ -137,6 +149,10 @@ namespace JTI_Payroll_System
                             insertCmd.Parameters.AddWithValue("@totalDays", totalDays);
                             insertCmd.Parameters.AddWithValue("@overtimeHours", overtimeHours);
                             insertCmd.Parameters.AddWithValue("@totalEarnings", totalEarnings);
+                            insertCmd.Parameters.AddWithValue("@restdayHours", restdayHours);
+                            insertCmd.Parameters.AddWithValue("@restdayOvertimeHours", restdayOvertimeHours);
+                            insertCmd.Parameters.AddWithValue("@legalHolidayHours", legalHolidayHours);
+                            insertCmd.Parameters.AddWithValue("@legalHolidayOvertimeHours", legalHolidayOvertimeHours);
                             insertCmd.Parameters.AddWithValue("@month", month);
                             insertCmd.Parameters.AddWithValue("@payrollyear", payrollyear);
                             insertCmd.Parameters.AddWithValue("@controlPeriod", controlPeriod);
