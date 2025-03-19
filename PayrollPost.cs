@@ -58,12 +58,12 @@ namespace JTI_Payroll_System
                     // Fetch employee IDs with attendance in the given date range
                     List<string> employeeIDs = new List<string>();
                     string query = @"
-                SELECT DISTINCT e.id_no
-                FROM employee e
-                LEFT JOIN processedDTR p ON e.id_no = p.employee_id AND p.date BETWEEN @startDate AND @endDate
-                LEFT JOIN attendance a ON e.id_no = a.id AND a.date BETWEEN @startDate AND @endDate
-                WHERE p.employee_id IS NOT NULL OR a.id IS NOT NULL
-                ORDER BY e.id_no ASC;";
+            SELECT DISTINCT e.id_no
+            FROM employee e
+            LEFT JOIN processedDTR p ON e.id_no = p.employee_id AND p.date BETWEEN @startDate AND @endDate
+            LEFT JOIN attendance a ON e.id_no = a.id AND a.date BETWEEN @startDate AND @endDate
+            WHERE p.employee_id IS NOT NULL OR a.id IS NOT NULL
+            ORDER BY e.id_no ASC;";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
@@ -81,7 +81,7 @@ namespace JTI_Payroll_System
 
                     foreach (string employeeID in employeeIDs)
                     {
-                        // Calculate total hours, overtime hours, earnings, rest day hours, legal holiday hours, and their respective overtime hours
+                        // Calculate total hours, overtime hours, earnings, rest day hours, legal holiday hours, special holiday hours, and their respective overtime hours
                         decimal totalHours = 0;
                         decimal overtimeHours = 0;
                         decimal totalEarnings = 0;
@@ -92,12 +92,14 @@ namespace JTI_Payroll_System
                         decimal legalHolidayOvertimeHours = 0;
                         decimal lhrdHours = 0;
                         decimal lhrdOvertimeHours = 0;
+                        decimal specialHolidayHours = 0;
+                        decimal specialHolidayOvertimeHours = 0;
 
                         query = @"
-                    SELECT p.working_hours, p.ot_hrs, p.rate, s.regular_hours, p.rest_day, p.legal_holiday
-                    FROM processedDTR p
-                    JOIN ShiftCodes s ON p.shift_code = s.shift_code
-                    WHERE p.employee_id = @employeeID AND p.date BETWEEN @startDate AND @endDate";
+                SELECT p.working_hours, p.ot_hrs, p.rate, s.regular_hours, p.rest_day, p.legal_holiday, p.special_holiday
+                FROM processedDTR p
+                JOIN ShiftCodes s ON p.shift_code = s.shift_code
+                WHERE p.employee_id = @employeeID AND p.date BETWEEN @startDate AND @endDate";
 
                         using (MySqlCommand cmd = new MySqlCommand(query, conn))
                         {
@@ -115,6 +117,7 @@ namespace JTI_Payroll_System
                                     decimal regularHours = reader.GetDecimal("regular_hours");
                                     bool isRestDay = reader.GetBoolean("rest_day");
                                     bool isLegalHoliday = reader.GetBoolean("legal_holiday");
+                                    bool isSpecialHoliday = reader.GetBoolean("special_holiday");
 
                                     totalHours += workingHours;
                                     overtimeHours += otHours;
@@ -135,6 +138,11 @@ namespace JTI_Payroll_System
                                         legalHolidayHours += workingHours;
                                         legalHolidayOvertimeHours += otHours;
                                     }
+                                    else if (isSpecialHoliday)
+                                    {
+                                        specialHolidayHours += workingHours;
+                                        specialHolidayOvertimeHours += otHours;
+                                    }
                                     else if (regularHours > 0)
                                     {
                                         totalDays += workingHours / regularHours;
@@ -145,8 +153,8 @@ namespace JTI_Payroll_System
 
                         // Insert payroll data into payroll table
                         string insertQuery = @"
-                    INSERT INTO payroll (employee_id, pay_period_start, pay_period_end, total_days, overtime_hours, total_earnings, restday_hours, restday_overtime_hours, legal_holiday_hours, legal_holiday_overtime_hours, lhrd_hours, lhrd_overtime_hours, month, payrollyear, control_period)
-                    VALUES (@employeeID, @startDate, @endDate, @totalDays, @overtimeHours, @totalEarnings, @restdayHours, @restdayOvertimeHours, @legalHolidayHours, @legalHolidayOvertimeHours, @lhrdHours, @lhrdOvertimeHours, @month, @payrollyear, @controlPeriod)";
+                INSERT INTO payroll (employee_id, pay_period_start, pay_period_end, total_days, overtime_hours, total_earnings, restday_hours, restday_overtime_hours, legal_holiday_hours, legal_holiday_overtime_hours, lhrd_hours, lhrd_overtime_hours, special_holiday_hours, special_holiday_overtime_hours, month, payrollyear, control_period)
+                VALUES (@employeeID, @startDate, @endDate, @totalDays, @overtimeHours, @totalEarnings, @restdayHours, @restdayOvertimeHours, @legalHolidayHours, @legalHolidayOvertimeHours, @lhrdHours, @lhrdOvertimeHours, @specialHolidayHours, @specialHolidayOvertimeHours, @month, @payrollyear, @controlPeriod)";
 
                         using (MySqlCommand insertCmd = new MySqlCommand(insertQuery, conn))
                         {
@@ -162,6 +170,8 @@ namespace JTI_Payroll_System
                             insertCmd.Parameters.AddWithValue("@legalHolidayOvertimeHours", legalHolidayOvertimeHours);
                             insertCmd.Parameters.AddWithValue("@lhrdHours", lhrdHours);
                             insertCmd.Parameters.AddWithValue("@lhrdOvertimeHours", lhrdOvertimeHours);
+                            insertCmd.Parameters.AddWithValue("@specialHolidayHours", specialHolidayHours);
+                            insertCmd.Parameters.AddWithValue("@specialHolidayOvertimeHours", specialHolidayOvertimeHours);
                             insertCmd.Parameters.AddWithValue("@month", month);
                             insertCmd.Parameters.AddWithValue("@payrollyear", payrollyear);
                             insertCmd.Parameters.AddWithValue("@controlPeriod", controlPeriod);
