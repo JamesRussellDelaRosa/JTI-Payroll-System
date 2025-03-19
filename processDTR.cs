@@ -266,7 +266,7 @@ namespace JTI_Payroll_System
                         newRow["LegalHoliday"] = false;
                         newRow["SpecialHoliday"] = false;
                         newRow["NonWorkingDay"] = false;
-                        newRow["Reliever"] = false; // Add default value for new column
+                        newRow["Reliever"] = false;
                         dt.Rows.Add(newRow);
                     }
                 }
@@ -276,110 +276,20 @@ namespace JTI_Payroll_System
                 SetupRateDropdown();
                 SetupShiftCodeDropdown();
 
-                if (!dgvDTR.Columns.Contains("WorkingHours"))
-                {
-                    dgvDTR.Columns.Add(new DataGridViewTextBoxColumn { Name = "WorkingHours", HeaderText = "Working Hours", ReadOnly = true });
-                }
-                if (!dgvDTR.Columns.Contains("OTHours"))
-                {
-                    dgvDTR.Columns.Add(new DataGridViewTextBoxColumn { Name = "OTHours", HeaderText = "OT Hours", ReadOnly = true });
-                }
-                if (!dgvDTR.Columns.Contains("StartTime"))
-                {
-                    dgvDTR.Columns.Add(new DataGridViewTextBoxColumn { Name = "StartTime", HeaderText = "Start Time", ReadOnly = true });
-                }
-                if (!dgvDTR.Columns.Contains("EndTime"))
-                {
-                    dgvDTR.Columns.Add(new DataGridViewTextBoxColumn { Name = "EndTime", HeaderText = "End Time", ReadOnly = true });
-                }
-                if (!dgvDTR.Columns.Contains("NightDifferentialHours"))
-                {
-                    DataGridViewTextBoxColumn nightDifferentialColumn = new DataGridViewTextBoxColumn
-                    {
-                        Name = "NightDifferentialHours",
-                        HeaderText = "Night Differential Hours",
-                        ReadOnly = true
-                    };
-                    dgvDTR.Columns.Add(nightDifferentialColumn);
-                }
-                if (!dgvDTR.Columns.Contains("NightDifferentialOtHours"))
-                {
-                    DataGridViewTextBoxColumn nightDifferentialOTColumn = new DataGridViewTextBoxColumn
-                    {
-                        Name = "NightDifferentialOtHours",
-                        HeaderText = "Night Differential OT Hours",
-                        ReadOnly = true
-                    };
-                    dgvDTR.Columns.Add(nightDifferentialOTColumn);
-                }
-                if (!dgvDTR.Columns.Contains("Remarks"))
-                {
-                    DataGridViewTextBoxColumn remarksColumn = new DataGridViewTextBoxColumn
-                    {
-                        Name = "Remarks",
-                        HeaderText = "Remarks",
-                        ReadOnly = true
-                    };
-                    dgvDTR.Columns.Add(remarksColumn);
-                }
-                if (!dgvDTR.Columns.Contains("TardinessUndertime"))
-                {
-                    DataGridViewTextBoxColumn tardinessUndertimeColumn = new DataGridViewTextBoxColumn
-                    {
-                        Name = "TardinessUndertime",
-                        HeaderText = "Tardiness/Undertime",
-                        ReadOnly = true,
-                        DefaultCellStyle = { Format = "N2" }
-                    };
-                    dgvDTR.Columns.Add(tardinessUndertimeColumn);
-                }
-
-                // Add new checkbox columns to DataGridView
-                if (!dgvDTR.Columns.Contains("RestDay"))
-                {
-                    DataGridViewCheckBoxColumn restDayColumn = new DataGridViewCheckBoxColumn
-                    {
-                        Name = "RestDay",
-                        HeaderText = "Rest Day"
-                    };
-                    dgvDTR.Columns.Add(restDayColumn);
-                }
-                if (!dgvDTR.Columns.Contains("LegalHoliday"))
-                {
-                    DataGridViewCheckBoxColumn legalHolidayColumn = new DataGridViewCheckBoxColumn
-                    {
-                        Name = "LegalHoliday",
-                        HeaderText = "Legal Holiday"
-                    };
-                    dgvDTR.Columns.Add(legalHolidayColumn);
-                }
-                if (!dgvDTR.Columns.Contains("SpecialHoliday"))
-                {
-                    DataGridViewCheckBoxColumn specialHolidayColumn = new DataGridViewCheckBoxColumn
-                    {
-                        Name = "SpecialHoliday",
-                        HeaderText = "Special Holiday"
-                    };
-                    dgvDTR.Columns.Add(specialHolidayColumn);
-                }
-                if (!dgvDTR.Columns.Contains("NonWorkingDay"))
-                {
-                    DataGridViewCheckBoxColumn nonWorkingDayColumn = new DataGridViewCheckBoxColumn
-                    {
-                        Name = "NonWorkingDay",
-                        HeaderText = "Non-Working Day"
-                    };
-                    dgvDTR.Columns.Add(nonWorkingDayColumn);
-                }
-                if (!dgvDTR.Columns.Contains("Reliever"))
-                {
-                    DataGridViewCheckBoxColumn relieverColumn = new DataGridViewCheckBoxColumn
-                    {
-                        Name = "Reliever",
-                        HeaderText = "Reliever"
-                    };
-                    dgvDTR.Columns.Add(relieverColumn);
-                }
+                // Update column headers
+                dgvDTR.Columns["WorkingHours"].HeaderText = "WorkHrs";
+                dgvDTR.Columns["OTHours"].HeaderText = "OTHrs";
+                dgvDTR.Columns["StartTime"].HeaderText = "Start";
+                dgvDTR.Columns["EndTime"].HeaderText = "End";
+                dgvDTR.Columns["NightDifferentialHours"].HeaderText = "NDHrs";
+                dgvDTR.Columns["NightDifferentialOtHours"].HeaderText = "NDOTHrs";
+                dgvDTR.Columns["Remarks"].HeaderText = "Rmrks";
+                dgvDTR.Columns["TardinessUndertime"].HeaderText = "Tard/UT";
+                dgvDTR.Columns["RestDay"].HeaderText = "RD";
+                dgvDTR.Columns["LegalHoliday"].HeaderText = "LH";
+                dgvDTR.Columns["SpecialHoliday"].HeaderText = "SH";
+                dgvDTR.Columns["NonWorkingDay"].HeaderText = "NWS";
+                dgvDTR.Columns["Reliever"].HeaderText = "RLVR";
 
                 dgvDTR.Columns["WorkingHours"].DefaultCellStyle.Format = "N2";
                 dgvDTR.Columns["OTHours"].DefaultCellStyle.Format = "N2";
@@ -391,7 +301,6 @@ namespace JTI_Payroll_System
                 dgvDTR.Columns["EmployeeID"].Visible = false;
                 dgvDTR.Columns["EmployeeName"].Visible = false;
 
-                // Highlight rest days and update remarks
                 HighlightRestDaysAndUpdateRemarks(dgvDTR);
 
                 dgvDTR.Refresh();
