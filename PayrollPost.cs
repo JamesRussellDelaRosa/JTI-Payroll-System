@@ -58,12 +58,12 @@ namespace JTI_Payroll_System
                     // Fetch employee IDs with attendance in the given date range
                     List<string> employeeIDs = new List<string>();
                     string query = @"
-            SELECT DISTINCT e.id_no
-            FROM employee e
-            LEFT JOIN processedDTR p ON e.id_no = p.employee_id AND p.date BETWEEN @startDate AND @endDate
-            LEFT JOIN attendance a ON e.id_no = a.id AND a.date BETWEEN @startDate AND @endDate
-            WHERE p.employee_id IS NOT NULL OR a.id IS NOT NULL
-            ORDER BY e.id_no ASC;";
+                SELECT DISTINCT e.id_no
+                FROM employee e
+                LEFT JOIN processedDTR p ON e.id_no = p.employee_id AND p.date BETWEEN @startDate AND @endDate
+                LEFT JOIN attendance a ON e.id_no = a.id AND a.date BETWEEN @startDate AND @endDate
+                WHERE p.employee_id IS NOT NULL OR a.id IS NOT NULL
+                ORDER BY e.id_no ASC;";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
@@ -110,10 +110,10 @@ namespace JTI_Payroll_System
                         decimal nightDifferentialLegalHolidayRestDayOtHours = 0;
 
                         query = @"
-                SELECT p.working_hours, p.ot_hrs, p.rate, s.regular_hours, p.rest_day, p.legal_holiday, p.special_holiday, p.nd_hrs, p.ndot_hrs
-                FROM processedDTR p
-                JOIN ShiftCodes s ON p.shift_code = s.shift_code
-                WHERE p.employee_id = @employeeID AND p.date BETWEEN @startDate AND @endDate";
+                    SELECT p.working_hours, p.ot_hrs, p.rate, s.regular_hours, p.rest_day, p.legal_holiday, p.special_holiday, p.nd_hrs, p.ndot_hrs
+                    FROM processedDTR p
+                    JOIN ShiftCodes s ON p.shift_code = s.shift_code
+                    WHERE p.employee_id = @employeeID AND p.date BETWEEN @startDate AND @endDate";
 
                         using (MySqlCommand cmd = new MySqlCommand(query, conn))
                         {
@@ -201,10 +201,30 @@ namespace JTI_Payroll_System
                             }
                         }
 
+                        // Check if payroll data already exists for the employee and pay period
+                        string checkQuery = @"
+                    SELECT COUNT(*) 
+                    FROM payroll 
+                    WHERE employee_id = @employeeID AND pay_period_start = @startDate AND pay_period_end = @endDate";
+
+                        using (MySqlCommand checkCmd = new MySqlCommand(checkQuery, conn))
+                        {
+                            checkCmd.Parameters.AddWithValue("@employeeID", employeeID);
+                            checkCmd.Parameters.AddWithValue("@startDate", startDate);
+                            checkCmd.Parameters.AddWithValue("@endDate", endDate);
+
+                            int count = Convert.ToInt32(checkCmd.ExecuteScalar());
+                            if (count > 0)
+                            {
+                                // Record already exists, skip insertion
+                                continue;
+                            }
+                        }
+
                         // Insert payroll data into payroll table
                         string insertQuery = @"
-                INSERT INTO payroll (employee_id, pay_period_start, pay_period_end, total_days, overtime_hours, total_earnings, restday_hours, restday_overtime_hours, legal_holiday_hours, legal_holiday_overtime_hours, lhrd_hours, lhrd_overtime_hours, special_holiday_hours, special_holiday_overtime_hours, special_holiday_restday_hours, special_holiday_restday_overtime_hours, nd_hrs, ndot_hrs, ndrd_hrs, ndrdot_hrs, ndsh_hrs, ndshot_hrs, ndshrd_hrs, ndshrdot_hrs, ndlh_hrs, ndlhot_hrs, ndlhrd_hrs, ndlhrdot_hrs, month, payrollyear, control_period)
-                VALUES (@employeeID, @startDate, @endDate, @totalDays, @overtimeHours, @totalEarnings, @restdayHours, @restdayOvertimeHours, @legalHolidayHours, @legalHolidayOvertimeHours, @lhrdHours, @lhrdOvertimeHours, @specialHolidayHours, @specialHolidayOvertimeHours, @specialHolidayRestDayHours, @specialHolidayRestDayOvertimeHours, @nightDifferentialHours, @nightDifferentialOtHours, @nightDifferentialRestDayHours, @nightDifferentialRestDayOtHours, @nightDifferentialSpecialHolidayHours, @nightDifferentialSpecialHolidayOtHours, @nightDifferentialSpecialHolidayRestDayHours, @nightDifferentialSpecialHolidayRestDayOtHours, @nightDifferentialLegalHolidayHours, @nightDifferentialLegalHolidayOtHours, @nightDifferentialLegalHolidayRestDayHours, @nightDifferentialLegalHolidayRestDayOtHours, @month, @payrollyear, @controlPeriod)";
+                    INSERT INTO payroll (employee_id, pay_period_start, pay_period_end, total_days, overtime_hours, total_earnings, restday_hours, restday_overtime_hours, legal_holiday_hours, legal_holiday_overtime_hours, lhrd_hours, lhrd_overtime_hours, special_holiday_hours, special_holiday_overtime_hours, special_holiday_restday_hours, special_holiday_restday_overtime_hours, nd_hrs, ndot_hrs, ndrd_hrs, ndrdot_hrs, ndsh_hrs, ndshot_hrs, ndshrd_hrs, ndshrdot_hrs, ndlh_hrs, ndlhot_hrs, ndlhrd_hrs, ndlhrdot_hrs, month, payrollyear, control_period)
+                    VALUES (@employeeID, @startDate, @endDate, @totalDays, @overtimeHours, @totalEarnings, @restdayHours, @restdayOvertimeHours, @legalHolidayHours, @legalHolidayOvertimeHours, @lhrdHours, @lhrdOvertimeHours, @specialHolidayHours, @specialHolidayOvertimeHours, @specialHolidayRestDayHours, @specialHolidayRestDayOvertimeHours, @nightDifferentialHours, @nightDifferentialOtHours, @nightDifferentialRestDayHours, @nightDifferentialRestDayOtHours, @nightDifferentialSpecialHolidayHours, @nightDifferentialSpecialHolidayOtHours, @nightDifferentialSpecialHolidayRestDayHours, @nightDifferentialSpecialHolidayRestDayOtHours, @nightDifferentialLegalHolidayHours, @nightDifferentialLegalHolidayOtHours, @nightDifferentialLegalHolidayRestDayHours, @nightDifferentialLegalHolidayRestDayOtHours, @month, @payrollyear, @controlPeriod)";
 
                         using (MySqlCommand insertCmd = new MySqlCommand(insertQuery, conn))
                         {
