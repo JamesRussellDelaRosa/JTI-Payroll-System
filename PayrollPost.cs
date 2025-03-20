@@ -94,6 +94,8 @@ namespace JTI_Payroll_System
                         decimal lhrdOvertimeHours = 0;
                         decimal specialHolidayHours = 0;
                         decimal specialHolidayOvertimeHours = 0;
+                        decimal specialHolidayRestDayHours = 0;
+                        decimal specialHolidayRestDayOvertimeHours = 0;
 
                         query = @"
                 SELECT p.working_hours, p.ot_hrs, p.rate, s.regular_hours, p.rest_day, p.legal_holiday, p.special_holiday
@@ -128,6 +130,11 @@ namespace JTI_Payroll_System
                                         lhrdHours += workingHours;
                                         lhrdOvertimeHours += otHours;
                                     }
+                                    else if (isRestDay && isSpecialHoliday)
+                                    {
+                                        specialHolidayRestDayHours += workingHours;
+                                        specialHolidayRestDayOvertimeHours += otHours;
+                                    }
                                     else if (isRestDay)
                                     {
                                         restdayHours += workingHours;
@@ -153,8 +160,8 @@ namespace JTI_Payroll_System
 
                         // Insert payroll data into payroll table
                         string insertQuery = @"
-                INSERT INTO payroll (employee_id, pay_period_start, pay_period_end, total_days, overtime_hours, total_earnings, restday_hours, restday_overtime_hours, legal_holiday_hours, legal_holiday_overtime_hours, lhrd_hours, lhrd_overtime_hours, special_holiday_hours, special_holiday_overtime_hours, month, payrollyear, control_period)
-                VALUES (@employeeID, @startDate, @endDate, @totalDays, @overtimeHours, @totalEarnings, @restdayHours, @restdayOvertimeHours, @legalHolidayHours, @legalHolidayOvertimeHours, @lhrdHours, @lhrdOvertimeHours, @specialHolidayHours, @specialHolidayOvertimeHours, @month, @payrollyear, @controlPeriod)";
+                INSERT INTO payroll (employee_id, pay_period_start, pay_period_end, total_days, overtime_hours, total_earnings, restday_hours, restday_overtime_hours, legal_holiday_hours, legal_holiday_overtime_hours, lhrd_hours, lhrd_overtime_hours, special_holiday_hours, special_holiday_overtime_hours, special_holiday_restday_hours, special_holiday_restday_overtime_hours, month, payrollyear, control_period)
+                VALUES (@employeeID, @startDate, @endDate, @totalDays, @overtimeHours, @totalEarnings, @restdayHours, @restdayOvertimeHours, @legalHolidayHours, @legalHolidayOvertimeHours, @lhrdHours, @lhrdOvertimeHours, @specialHolidayHours, @specialHolidayOvertimeHours, @specialHolidayRestDayHours, @specialHolidayRestDayOvertimeHours, @month, @payrollyear, @controlPeriod)";
 
                         using (MySqlCommand insertCmd = new MySqlCommand(insertQuery, conn))
                         {
@@ -172,6 +179,8 @@ namespace JTI_Payroll_System
                             insertCmd.Parameters.AddWithValue("@lhrdOvertimeHours", lhrdOvertimeHours);
                             insertCmd.Parameters.AddWithValue("@specialHolidayHours", specialHolidayHours);
                             insertCmd.Parameters.AddWithValue("@specialHolidayOvertimeHours", specialHolidayOvertimeHours);
+                            insertCmd.Parameters.AddWithValue("@specialHolidayRestDayHours", specialHolidayRestDayHours);
+                            insertCmd.Parameters.AddWithValue("@specialHolidayRestDayOvertimeHours", specialHolidayRestDayOvertimeHours);
                             insertCmd.Parameters.AddWithValue("@month", month);
                             insertCmd.Parameters.AddWithValue("@payrollyear", payrollyear);
                             insertCmd.Parameters.AddWithValue("@controlPeriod", controlPeriod);
