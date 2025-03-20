@@ -81,7 +81,7 @@ namespace JTI_Payroll_System
 
                     foreach (string employeeID in employeeIDs)
                     {
-                        // Calculate total hours, overtime hours, earnings, rest day hours, legal holiday hours, special holiday hours, and their respective overtime hours
+                        // Initialize variables for different types of hours
                         decimal totalHours = 0;
                         decimal overtimeHours = 0;
                         decimal totalEarnings = 0;
@@ -96,9 +96,21 @@ namespace JTI_Payroll_System
                         decimal specialHolidayOvertimeHours = 0;
                         decimal specialHolidayRestDayHours = 0;
                         decimal specialHolidayRestDayOvertimeHours = 0;
+                        decimal nightDifferentialHours = 0;
+                        decimal nightDifferentialOtHours = 0;
+                        decimal nightDifferentialRestDayHours = 0;
+                        decimal nightDifferentialRestDayOtHours = 0;
+                        decimal nightDifferentialSpecialHolidayHours = 0;
+                        decimal nightDifferentialSpecialHolidayOtHours = 0;
+                        decimal nightDifferentialSpecialHolidayRestDayHours = 0;
+                        decimal nightDifferentialSpecialHolidayRestDayOtHours = 0;
+                        decimal nightDifferentialLegalHolidayHours = 0;
+                        decimal nightDifferentialLegalHolidayOtHours = 0;
+                        decimal nightDifferentialLegalHolidayRestDayHours = 0;
+                        decimal nightDifferentialLegalHolidayRestDayOtHours = 0;
 
                         query = @"
-                SELECT p.working_hours, p.ot_hrs, p.rate, s.regular_hours, p.rest_day, p.legal_holiday, p.special_holiday
+                SELECT p.working_hours, p.ot_hrs, p.rate, s.regular_hours, p.rest_day, p.legal_holiday, p.special_holiday, p.nd_hrs, p.ndot_hrs
                 FROM processedDTR p
                 JOIN ShiftCodes s ON p.shift_code = s.shift_code
                 WHERE p.employee_id = @employeeID AND p.date BETWEEN @startDate AND @endDate";
@@ -120,39 +132,70 @@ namespace JTI_Payroll_System
                                     bool isRestDay = reader.GetBoolean("rest_day");
                                     bool isLegalHoliday = reader.GetBoolean("legal_holiday");
                                     bool isSpecialHoliday = reader.GetBoolean("special_holiday");
+                                    decimal ndHours = reader.GetDecimal("nd_hrs");
+                                    decimal ndOtHours = reader.GetDecimal("ndot_hrs");
 
-                                    totalHours += workingHours;
-                                    overtimeHours += otHours;
+                                    // Always add to total earnings
                                     totalEarnings += (workingHours + otHours) * rate;
 
                                     if (isRestDay && isLegalHoliday)
                                     {
+                                        // Legal Holiday Rest Day
                                         lhrdHours += workingHours;
                                         lhrdOvertimeHours += otHours;
+                                        nightDifferentialLegalHolidayRestDayHours += ndHours;
+                                        nightDifferentialLegalHolidayRestDayOtHours += ndOtHours;
                                     }
                                     else if (isRestDay && isSpecialHoliday)
                                     {
+                                        // Special Holiday Rest Day
                                         specialHolidayRestDayHours += workingHours;
                                         specialHolidayRestDayOvertimeHours += otHours;
+                                        nightDifferentialSpecialHolidayRestDayHours += ndHours;
+                                        nightDifferentialSpecialHolidayRestDayOtHours += ndOtHours;
                                     }
                                     else if (isRestDay)
                                     {
+                                        // Rest Day
                                         restdayHours += workingHours;
                                         restdayOvertimeHours += otHours;
+                                        nightDifferentialRestDayHours += ndHours;
+                                        nightDifferentialRestDayOtHours += ndOtHours;
                                     }
                                     else if (isLegalHoliday)
                                     {
+                                        // Legal Holiday
                                         legalHolidayHours += workingHours;
                                         legalHolidayOvertimeHours += otHours;
+                                        nightDifferentialLegalHolidayHours += ndHours;
+                                        nightDifferentialLegalHolidayOtHours += ndOtHours;
                                     }
                                     else if (isSpecialHoliday)
                                     {
+                                        // Special Holiday
                                         specialHolidayHours += workingHours;
                                         specialHolidayOvertimeHours += otHours;
+                                        nightDifferentialSpecialHolidayHours += ndHours;
+                                        nightDifferentialSpecialHolidayOtHours += ndOtHours;
                                     }
-                                    else if (regularHours > 0)
+                                    else
                                     {
-                                        totalDays += workingHours / regularHours;
+                                        // Regular day (no special flags)
+                                        totalHours += workingHours;
+                                        overtimeHours += otHours;
+
+                                        // For regular days, include ND hours in the total hours
+                                        totalHours += ndHours;
+                                        overtimeHours += ndOtHours;
+
+                                        // Also track ND hours separately
+                                        nightDifferentialHours += ndHours;
+                                        nightDifferentialOtHours += ndOtHours;
+
+                                        if (regularHours > 0)
+                                        {
+                                            totalDays += workingHours / regularHours;
+                                        }
                                     }
                                 }
                             }
@@ -160,8 +203,8 @@ namespace JTI_Payroll_System
 
                         // Insert payroll data into payroll table
                         string insertQuery = @"
-                INSERT INTO payroll (employee_id, pay_period_start, pay_period_end, total_days, overtime_hours, total_earnings, restday_hours, restday_overtime_hours, legal_holiday_hours, legal_holiday_overtime_hours, lhrd_hours, lhrd_overtime_hours, special_holiday_hours, special_holiday_overtime_hours, special_holiday_restday_hours, special_holiday_restday_overtime_hours, month, payrollyear, control_period)
-                VALUES (@employeeID, @startDate, @endDate, @totalDays, @overtimeHours, @totalEarnings, @restdayHours, @restdayOvertimeHours, @legalHolidayHours, @legalHolidayOvertimeHours, @lhrdHours, @lhrdOvertimeHours, @specialHolidayHours, @specialHolidayOvertimeHours, @specialHolidayRestDayHours, @specialHolidayRestDayOvertimeHours, @month, @payrollyear, @controlPeriod)";
+                INSERT INTO payroll (employee_id, pay_period_start, pay_period_end, total_days, overtime_hours, total_earnings, restday_hours, restday_overtime_hours, legal_holiday_hours, legal_holiday_overtime_hours, lhrd_hours, lhrd_overtime_hours, special_holiday_hours, special_holiday_overtime_hours, special_holiday_restday_hours, special_holiday_restday_overtime_hours, nd_hrs, ndot_hrs, ndrd_hrs, ndrdot_hrs, ndsh_hrs, ndshot_hrs, ndshrd_hrs, ndshrdot_hrs, ndlh_hrs, ndlhot_hrs, ndlhrd_hrs, ndlhrdot_hrs, month, payrollyear, control_period)
+                VALUES (@employeeID, @startDate, @endDate, @totalDays, @overtimeHours, @totalEarnings, @restdayHours, @restdayOvertimeHours, @legalHolidayHours, @legalHolidayOvertimeHours, @lhrdHours, @lhrdOvertimeHours, @specialHolidayHours, @specialHolidayOvertimeHours, @specialHolidayRestDayHours, @specialHolidayRestDayOvertimeHours, @nightDifferentialHours, @nightDifferentialOtHours, @nightDifferentialRestDayHours, @nightDifferentialRestDayOtHours, @nightDifferentialSpecialHolidayHours, @nightDifferentialSpecialHolidayOtHours, @nightDifferentialSpecialHolidayRestDayHours, @nightDifferentialSpecialHolidayRestDayOtHours, @nightDifferentialLegalHolidayHours, @nightDifferentialLegalHolidayOtHours, @nightDifferentialLegalHolidayRestDayHours, @nightDifferentialLegalHolidayRestDayOtHours, @month, @payrollyear, @controlPeriod)";
 
                         using (MySqlCommand insertCmd = new MySqlCommand(insertQuery, conn))
                         {
@@ -181,6 +224,18 @@ namespace JTI_Payroll_System
                             insertCmd.Parameters.AddWithValue("@specialHolidayOvertimeHours", specialHolidayOvertimeHours);
                             insertCmd.Parameters.AddWithValue("@specialHolidayRestDayHours", specialHolidayRestDayHours);
                             insertCmd.Parameters.AddWithValue("@specialHolidayRestDayOvertimeHours", specialHolidayRestDayOvertimeHours);
+                            insertCmd.Parameters.AddWithValue("@nightDifferentialHours", nightDifferentialHours);
+                            insertCmd.Parameters.AddWithValue("@nightDifferentialOtHours", nightDifferentialOtHours);
+                            insertCmd.Parameters.AddWithValue("@nightDifferentialRestDayHours", nightDifferentialRestDayHours);
+                            insertCmd.Parameters.AddWithValue("@nightDifferentialRestDayOtHours", nightDifferentialRestDayOtHours);
+                            insertCmd.Parameters.AddWithValue("@nightDifferentialSpecialHolidayHours", nightDifferentialSpecialHolidayHours);
+                            insertCmd.Parameters.AddWithValue("@nightDifferentialSpecialHolidayOtHours", nightDifferentialSpecialHolidayOtHours);
+                            insertCmd.Parameters.AddWithValue("@nightDifferentialSpecialHolidayRestDayHours", nightDifferentialSpecialHolidayRestDayHours);
+                            insertCmd.Parameters.AddWithValue("@nightDifferentialSpecialHolidayRestDayOtHours", nightDifferentialSpecialHolidayRestDayOtHours);
+                            insertCmd.Parameters.AddWithValue("@nightDifferentialLegalHolidayHours", nightDifferentialLegalHolidayHours);
+                            insertCmd.Parameters.AddWithValue("@nightDifferentialLegalHolidayOtHours", nightDifferentialLegalHolidayOtHours);
+                            insertCmd.Parameters.AddWithValue("@nightDifferentialLegalHolidayRestDayHours", nightDifferentialLegalHolidayRestDayHours);
+                            insertCmd.Parameters.AddWithValue("@nightDifferentialLegalHolidayRestDayOtHours", nightDifferentialLegalHolidayRestDayOtHours);
                             insertCmd.Parameters.AddWithValue("@month", month);
                             insertCmd.Parameters.AddWithValue("@payrollyear", payrollyear);
                             insertCmd.Parameters.AddWithValue("@controlPeriod", controlPeriod);

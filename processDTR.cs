@@ -393,52 +393,52 @@ namespace JTI_Payroll_System
                 {
                     conn.Open();
                     string query = @"
-            WITH RECURSIVE DateRange AS (
-                SELECT @startDate AS Date
-                UNION ALL
-                SELECT DATE_ADD(Date, INTERVAL 1 DAY)
-                FROM DateRange
-                WHERE Date < @endDate
-            )
-            SELECT
-                e.id_no AS EmployeeID,
-                CONCAT(e.fname, ' ', e.lname) AS EmployeeName,
-                d.Date,
-                COALESCE(p.time_in, MIN(a.time)) AS TimeIn,
-                COALESCE(p.time_out, MAX(a.time)) AS TimeOut,
-                COALESCE(p.rate, 0.00) AS Rate,
-                COALESCE(sc.regular_hours, 0.00) AS WorkingHours,
-                COALESCE(p.ot_hrs, sc.ot_hours, 0.00) AS OTHours,
-                p.shift_code AS ShiftCode,
-                sc.start_time AS StartTime,
-                sc.end_time AS EndTime,
-                sc.night_differential_hours AS NightDifferentialHours,
-                sc.night_differential_ot_hours AS NightDifferentialOtHours,
-                p.remarks AS Remarks,
-                COALESCE(p.tardiness_undertime, 0.00) AS TardinessUndertime,
-                COALESCE(p.rest_day, false) AS RestDay,
-                COALESCE(p.legal_holiday, false) AS LegalHoliday,
-                COALESCE(p.special_holiday, false) AS SpecialHoliday,
-                COALESCE(p.non_working_day, false) AS NonWorkingDay,
-                COALESCE(p.reliever, false) AS Reliever  -- Include Reliever column
-            FROM employee e
-            JOIN DateRange d ON 1=1
-            LEFT JOIN attendance a
-                ON e.id_no = a.id AND a.date = d.Date
-            LEFT JOIN processedDTR p
-                ON e.id_no = p.employee_id AND p.date = d.Date
-            LEFT JOIN ShiftCodes sc
-                ON p.shift_code = sc.shift_code
-            WHERE e.id_no = @employeeID
-            GROUP BY
-                e.id_no, e.fname, e.lname, d.Date,
-                p.time_in, p.time_out, p.rate,
-                p.shift_code, sc.start_time, sc.end_time,
-                sc.regular_hours, p.ot_hrs, sc.ot_hours,
-                sc.night_differential_hours, sc.night_differential_ot_hours,
-                p.remarks, p.tardiness_undertime,
-                p.rest_day, p.legal_holiday, p.special_holiday, p.non_working_day, p.reliever
-            ORDER BY d.Date ASC;";
+        WITH RECURSIVE DateRange AS (
+            SELECT @startDate AS Date
+            UNION ALL
+            SELECT DATE_ADD(Date, INTERVAL 1 DAY)
+            FROM DateRange
+            WHERE Date < @endDate
+        )
+        SELECT
+            e.id_no AS EmployeeID,
+            CONCAT(e.fname, ' ', e.lname) AS EmployeeName,
+            d.Date,
+            COALESCE(p.time_in, MIN(a.time)) AS TimeIn,
+            COALESCE(p.time_out, MAX(a.time)) AS TimeOut,
+            COALESCE(p.rate, 0.00) AS Rate,
+            COALESCE(sc.regular_hours, 0.00) AS WorkingHours,
+            COALESCE(p.ot_hrs, sc.ot_hours, 0.00) AS OTHours,
+            p.shift_code AS ShiftCode,
+            sc.start_time AS StartTime,
+            sc.end_time AS EndTime,
+            COALESCE(p.nd_hrs, sc.night_differential_hours, 0.00) AS NightDifferentialHours,
+            COALESCE(p.ndot_hrs, sc.night_differential_ot_hours, 0.00) AS NightDifferentialOtHours,
+            p.remarks AS Remarks,
+            COALESCE(p.tardiness_undertime, 0.00) AS TardinessUndertime,
+            COALESCE(p.rest_day, false) AS RestDay,
+            COALESCE(p.legal_holiday, false) AS LegalHoliday,
+            COALESCE(p.special_holiday, false) AS SpecialHoliday,
+            COALESCE(p.non_working_day, false) AS NonWorkingDay,
+            COALESCE(p.reliever, false) AS Reliever  -- Include Reliever column
+        FROM employee e
+        JOIN DateRange d ON 1=1
+        LEFT JOIN attendance a
+            ON e.id_no = a.id AND a.date = d.Date
+        LEFT JOIN processedDTR p
+            ON e.id_no = p.employee_id AND p.date = d.Date
+        LEFT JOIN ShiftCodes sc
+            ON p.shift_code = sc.shift_code
+        WHERE e.id_no = @employeeID
+        GROUP BY
+            e.id_no, e.fname, e.lname, d.Date,
+            p.time_in, p.time_out, p.rate,
+            p.shift_code, sc.start_time, sc.end_time,
+            sc.regular_hours, p.ot_hrs, sc.ot_hours,
+            p.nd_hrs, sc.night_differential_hours, p.ndot_hrs, sc.night_differential_ot_hours,
+            p.remarks, p.tardiness_undertime,
+            p.rest_day, p.legal_holiday, p.special_holiday, p.non_working_day, p.reliever
+        ORDER BY d.Date ASC;";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
