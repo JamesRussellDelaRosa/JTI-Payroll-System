@@ -42,14 +42,16 @@
             uploadattlog = new Button();
             processDtr = new Button();
             btnpayrollpost = new Button();
+            rateConfig = new Button();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             SuspendLayout();
             // 
             // add
             // 
-            add.Location = new Point(15, 314);
+            add.Location = new Point(13, 236);
+            add.Margin = new Padding(3, 2, 3, 2);
             add.Name = "add";
-            add.Size = new Size(94, 29);
+            add.Size = new Size(82, 22);
             add.TabIndex = 1;
             add.Text = "ADD USER";
             add.UseVisualStyleBackColor = true;
@@ -57,9 +59,10 @@
             // 
             // search
             // 
-            search.Location = new Point(115, 314);
+            search.Location = new Point(101, 236);
+            search.Margin = new Padding(3, 2, 3, 2);
             search.Name = "search";
-            search.Size = new Size(94, 29);
+            search.Size = new Size(82, 22);
             search.TabIndex = 2;
             search.Text = "SEARCH";
             search.UseVisualStyleBackColor = true;
@@ -67,9 +70,10 @@
             // 
             // delete
             // 
-            delete.Location = new Point(215, 314);
+            delete.Location = new Point(188, 236);
+            delete.Margin = new Padding(3, 2, 3, 2);
             delete.Name = "delete";
-            delete.Size = new Size(94, 29);
+            delete.Size = new Size(82, 22);
             delete.TabIndex = 3;
             delete.Text = "DELETE";
             delete.UseVisualStyleBackColor = true;
@@ -77,9 +81,10 @@
             // 
             // update
             // 
-            update.Location = new Point(315, 314);
+            update.Location = new Point(276, 236);
+            update.Margin = new Padding(3, 2, 3, 2);
             update.Name = "update";
-            update.Size = new Size(94, 29);
+            update.Size = new Size(82, 22);
             update.TabIndex = 4;
             update.Text = "UPDATE";
             update.UseVisualStyleBackColor = true;
@@ -89,9 +94,9 @@
             // 
             label1.AutoSize = true;
             label1.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label1.Location = new Point(31, 187);
+            label1.Location = new Point(27, 140);
             label1.Name = "label1";
-            label1.Size = new Size(115, 28);
+            label1.Size = new Size(92, 21);
             label1.TabIndex = 5;
             label1.Text = "USERNAME";
             // 
@@ -99,31 +104,34 @@
             // 
             label2.AutoSize = true;
             label2.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label2.Location = new Point(34, 243);
+            label2.Location = new Point(30, 182);
             label2.Name = "label2";
-            label2.Size = new Size(117, 28);
+            label2.Size = new Size(94, 21);
             label2.TabIndex = 6;
             label2.Text = "PASSWORD";
             // 
             // username
             // 
-            username.Location = new Point(184, 188);
+            username.Location = new Point(161, 141);
+            username.Margin = new Padding(3, 2, 3, 2);
             username.Name = "username";
-            username.Size = new Size(125, 27);
+            username.Size = new Size(110, 23);
             username.TabIndex = 7;
             // 
             // password
             // 
-            password.Location = new Point(184, 247);
+            password.Location = new Point(161, 185);
+            password.Margin = new Padding(3, 2, 3, 2);
             password.Name = "password";
-            password.Size = new Size(125, 27);
+            password.Size = new Size(110, 23);
             password.TabIndex = 8;
             // 
             // view
             // 
-            view.Location = new Point(415, 314);
+            view.Location = new Point(363, 236);
+            view.Margin = new Padding(3, 2, 3, 2);
             view.Name = "view";
-            view.Size = new Size(94, 29);
+            view.Size = new Size(82, 22);
             view.TabIndex = 9;
             view.Text = "VIEW";
             view.UseVisualStyleBackColor = true;
@@ -132,17 +140,19 @@
             // dataGridView1
             // 
             dataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridView1.Location = new Point(449, 99);
+            dataGridView1.Location = new Point(393, 74);
+            dataGridView1.Margin = new Padding(3, 2, 3, 2);
             dataGridView1.Name = "dataGridView1";
             dataGridView1.RowHeadersWidth = 51;
-            dataGridView1.Size = new Size(300, 188);
+            dataGridView1.Size = new Size(262, 141);
             dataGridView1.TabIndex = 10;
             // 
             // employee
             // 
-            employee.Location = new Point(515, 314);
+            employee.Location = new Point(451, 236);
+            employee.Margin = new Padding(3, 2, 3, 2);
             employee.Name = "employee";
-            employee.Size = new Size(94, 29);
+            employee.Size = new Size(82, 22);
             employee.TabIndex = 11;
             employee.Text = "EMPLOYEE";
             employee.UseVisualStyleBackColor = true;
@@ -150,9 +160,10 @@
             // 
             // uploadattlog
             // 
-            uploadattlog.Location = new Point(615, 314);
+            uploadattlog.Location = new Point(538, 236);
+            uploadattlog.Margin = new Padding(3, 2, 3, 2);
             uploadattlog.Name = "uploadattlog";
-            uploadattlog.Size = new Size(94, 29);
+            uploadattlog.Size = new Size(82, 22);
             uploadattlog.TabIndex = 12;
             uploadattlog.Text = "UploadATT";
             uploadattlog.UseVisualStyleBackColor = true;
@@ -160,9 +171,10 @@
             // 
             // processDtr
             // 
-            processDtr.Location = new Point(15, 380);
+            processDtr.Location = new Point(13, 285);
+            processDtr.Margin = new Padding(3, 2, 3, 2);
             processDtr.Name = "processDtr";
-            processDtr.Size = new Size(131, 29);
+            processDtr.Size = new Size(115, 22);
             processDtr.TabIndex = 13;
             processDtr.Text = "PROCESS DTR";
             processDtr.UseVisualStyleBackColor = true;
@@ -170,19 +182,31 @@
             // 
             // btnpayrollpost
             // 
-            btnpayrollpost.Location = new Point(152, 380);
+            btnpayrollpost.Location = new Point(133, 285);
+            btnpayrollpost.Margin = new Padding(3, 2, 3, 2);
             btnpayrollpost.Name = "btnpayrollpost";
-            btnpayrollpost.Size = new Size(139, 29);
+            btnpayrollpost.Size = new Size(122, 22);
             btnpayrollpost.TabIndex = 14;
             btnpayrollpost.Text = "PAYROLL POSTING";
             btnpayrollpost.UseVisualStyleBackColor = true;
             btnpayrollpost.Click += btnpayrollpost_Click;
             // 
+            // rateConfig
+            // 
+            rateConfig.Location = new Point(261, 285);
+            rateConfig.Name = "rateConfig";
+            rateConfig.Size = new Size(108, 23);
+            rateConfig.TabIndex = 15;
+            rateConfig.Text = "RATECONFIG";
+            rateConfig.UseVisualStyleBackColor = true;
+            rateConfig.Click += rateConfig_Click;
+            // 
             // Admin
             // 
-            AutoScaleDimensions = new SizeF(8F, 20F);
+            AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(800, 450);
+            ClientSize = new Size(700, 338);
+            Controls.Add(rateConfig);
             Controls.Add(btnpayrollpost);
             Controls.Add(processDtr);
             Controls.Add(uploadattlog);
@@ -197,6 +221,7 @@
             Controls.Add(delete);
             Controls.Add(search);
             Controls.Add(add);
+            Margin = new Padding(3, 2, 3, 2);
             Name = "Admin";
             Text = "Admin";
             ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
@@ -219,5 +244,6 @@
         private Button uploadattlog;
         private Button processDtr;
         private Button btnpayrollpost;
+        private Button rateConfig;
     }
 }

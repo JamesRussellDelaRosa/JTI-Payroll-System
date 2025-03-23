@@ -318,5 +318,11 @@ namespace JTI_Payroll_System
             PayrollPost payrollPostForm = new PayrollPost();
             payrollPostForm.Show();
         }
+
+        private void rateConfig_Click(object sender, EventArgs e)
+        {
+            RateConfig rateConfigForm = new RateConfig();
+            rateConfigForm.Show();
+        }
     }
 }
