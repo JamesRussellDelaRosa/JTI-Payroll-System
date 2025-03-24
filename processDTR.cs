@@ -86,7 +86,7 @@ namespace JTI_Payroll_System
 
             using (MySqlConnection conn = DatabaseHelper.GetConnection())
             {
-                string query = "SELECT rate_value FROM Rate ORDER BY rate_value ASC";
+                string query = "SELECT defaultrate FROM Rate ORDER BY defaultrate ASC";
 
                 using (MySqlCommand cmd = new MySqlCommand(query, conn))
                 {
