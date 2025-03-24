@@ -1,11 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace JTI_Payroll_System
@@ -24,6 +17,8 @@ namespace JTI_Payroll_System
 
         private void autoCompute_Click_1(object sender, EventArgs e)
         {
+            basicpay.Text = defaultrate.Text;
+
             if (decimal.TryParse(ratecompute.Text, out decimal rate))
             {
                 rdpay.Text = (rate / 8 * 1.3m).ToString("F2");
