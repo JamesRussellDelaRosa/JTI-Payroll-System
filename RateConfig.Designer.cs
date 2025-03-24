@@ -473,6 +473,7 @@
             saveRate.TabIndex = 49;
             saveRate.Text = "Save";
             saveRate.UseVisualStyleBackColor = true;
+            saveRate.Click += saveRate_Click_1;
             // 
             // label23
             // 
