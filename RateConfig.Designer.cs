@@ -315,7 +315,6 @@
             shrdpay.Name = "shrdpay";
             shrdpay.Size = new Size(114, 27);
             shrdpay.TabIndex = 26;
-            shrdpay.TextChanged += textBox1_TextChanged;
             // 
             // label15
             // 

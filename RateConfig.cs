@@ -13,11 +13,6 @@ namespace JTI_Payroll_System
             InitializeComponent();
         }
 
-        private void textBox1_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
         private void autoCompute_Click_1(object sender, EventArgs e)
         {
             basicpay.Text = defaultrate.Text;
