@@ -7,10 +7,120 @@ namespace JTI_Payroll_System
 {
     public partial class RateConfig : Form
     {
-
         public RateConfig()
         {
             InitializeComponent();
+            LoadRatesIntoDropdown();
+            dropdownRate.SelectedIndexChanged += dropdownRate_SelectedIndexChanged;
+        }
+
+        private void LoadRatesIntoDropdown()
+        {
+            string query = "SELECT id, defaultrate FROM rate ORDER BY id DESC";
+
+            using (MySqlConnection connection = DatabaseHelper.GetConnection())
+            {
+                try
+                {
+                    connection.Open();
+                    using (MySqlCommand command = new MySqlCommand(query, connection))
+                    {
+                        using (MySqlDataReader reader = command.ExecuteReader())
+                        {
+                            dropdownRate.Items.Clear();
+                            while (reader.Read())
+                            {
+                                int id = reader.GetInt32("id");
+                                string rate = reader.GetDecimal("defaultrate").ToString("F2");
+                                dropdownRate.Items.Add(new RateItem(id, rate));
+                            }
+
+                            if (dropdownRate.Items.Count > 0)
+                                dropdownRate.SelectedIndex = 0;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error loading rates: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        private void dropdownRate_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (dropdownRate.SelectedItem is RateItem selectedRate)
+            {
+                LoadRateDetails(selectedRate.Id);
+            }
+        }
+
+        private void LoadRateDetails(int rateId)
+        {
+            string query = "SELECT * FROM rate WHERE id = @id";
+
+            using (MySqlConnection connection = DatabaseHelper.GetConnection())
+            {
+                try
+                {
+                    connection.Open();
+                    using (MySqlCommand command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@id", rateId);
+
+                        using (MySqlDataReader reader = command.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                defaultrate.Text = reader["defaultrate"].ToString();
+                                ratecompute.Text = reader["ratecompute"].ToString();
+                                basicpay.Text = reader["basicpay"].ToString();
+                                rdpay.Text = reader["rdpay"].ToString();
+                                rdotpay.Text = reader["rdotpay"].ToString();
+                                lhpay.Text = reader["lhpay"].ToString();
+                                regotpay.Text = reader["regotpay"].ToString();
+                                trdypay.Text = reader["trdypay"].ToString();
+                                lhhrspay.Text = reader["lhhrspay"].ToString();
+                                lhothrspay.Text = reader["lhothrspay"].ToString();
+                                lhrdpay.Text = reader["lhrdpay"].ToString();
+                                lhrdotpay.Text = reader["lhrdotpay"].ToString();
+                                shpay.Text = reader["shpay"].ToString();
+                                shotpay.Text = reader["shotpay"].ToString();
+                                shrdpay.Text = reader["shrdpay"].ToString();
+                                shrdotpay.Text = reader["shrdotpay"].ToString();
+                                ndpay.Text = reader["ndpay"].ToString();
+                                ndotpay.Text = reader["ndotpay"].ToString();
+                                ndrdpay.Text = reader["ndrdpay"].ToString();
+                                ndshpay.Text = reader["ndshpay"].ToString();
+                                ndshrdpay.Text = reader["ndshrdpay"].ToString();
+                                ndlhpay.Text = reader["ndlhpay"].ToString();
+                                ndlhrdpay.Text = reader["ndlhrdpay"].ToString();
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error loading rate details: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        private class RateItem
+        {
+            public int Id { get; set; }
+            public string Rate { get; set; }
+
+            public RateItem(int id, string rate)
+            {
+                Id = id;
+                Rate = rate;
+            }
+
+            public override string ToString()
+            {
+                return Rate;
+            }
         }
 
         private void autoCompute_Click_1(object sender, EventArgs e)
@@ -46,14 +156,10 @@ namespace JTI_Payroll_System
             }
         }
 
-        private void textBox1_TextChanged_1(object sender, EventArgs e)
-        {
-
-        }
-
         private void saveRate_Click_1(object sender, EventArgs e)
         {
             SaveRateToDatabase();
+            LoadRatesIntoDropdown(); // Refresh the dropdown after saving
         }
 
         private void SaveRateToDatabase()
@@ -115,4 +221,3 @@ namespace JTI_Payroll_System
         }
     }
 }
-

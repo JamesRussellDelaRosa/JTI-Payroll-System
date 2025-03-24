@@ -76,6 +76,7 @@
             saveRate = new Button();
             label23 = new Label();
             regotpay = new TextBox();
+            dropdownRate = new ComboBox();
             SuspendLayout();
             // 
             // defaultrate
@@ -490,13 +491,21 @@
             regotpay.Name = "regotpay";
             regotpay.Size = new Size(114, 27);
             regotpay.TabIndex = 50;
-            regotpay.TextChanged += textBox1_TextChanged_1;
+            // 
+            // dropdownRate
+            // 
+            dropdownRate.FormattingEnabled = true;
+            dropdownRate.Location = new Point(307, 16);
+            dropdownRate.Name = "dropdownRate";
+            dropdownRate.Size = new Size(151, 28);
+            dropdownRate.TabIndex = 52;
             // 
             // RateConfig
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(914, 600);
+            Controls.Add(dropdownRate);
             Controls.Add(label23);
             Controls.Add(regotpay);
             Controls.Add(saveRate);
@@ -602,5 +611,6 @@
         private Button saveRate;
         private Label label23;
         private TextBox regotpay;
+        private ComboBox dropdownRate;
     }
 }
