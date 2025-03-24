@@ -51,6 +51,9 @@ namespace JTI_Payroll_System
             // ✅ Fetch rate values from database
             List<decimal> rateValues = GetRateValuesFromDatabase();
 
+            // ✅ Add default value 0.00 at the beginning
+            rateValues.Insert(0, 0.00m);
+
             // ✅ Create ComboBox Column with database rates
             DataGridViewComboBoxColumn rateColumn = new DataGridViewComboBoxColumn
             {
