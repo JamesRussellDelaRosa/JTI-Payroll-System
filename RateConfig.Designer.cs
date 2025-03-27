@@ -77,6 +77,7 @@
             label23 = new Label();
             regotpay = new TextBox();
             dropdownRate = new ComboBox();
+            deleteRateButton = new Button();
             SuspendLayout();
             // 
             // defaultrate
@@ -455,7 +456,7 @@
             // 
             // autoCompute
             // 
-            autoCompute.Location = new Point(297, 55);
+            autoCompute.Location = new Point(288, 66);
             autoCompute.Margin = new Padding(3, 4, 3, 4);
             autoCompute.Name = "autoCompute";
             autoCompute.Size = new Size(86, 31);
@@ -466,7 +467,7 @@
             // 
             // saveRate
             // 
-            saveRate.Location = new Point(401, 55);
+            saveRate.Location = new Point(380, 66);
             saveRate.Margin = new Padding(3, 4, 3, 4);
             saveRate.Name = "saveRate";
             saveRate.Size = new Size(86, 31);
@@ -500,11 +501,22 @@
             dropdownRate.Size = new Size(151, 28);
             dropdownRate.TabIndex = 52;
             // 
+            // deleteRateButton
+            // 
+            deleteRateButton.Location = new Point(472, 68);
+            deleteRateButton.Name = "deleteRateButton";
+            deleteRateButton.Size = new Size(94, 29);
+            deleteRateButton.TabIndex = 53;
+            deleteRateButton.Text = "Delete";
+            deleteRateButton.UseVisualStyleBackColor = true;
+            deleteRateButton.Click += deleteRateButton_Click;
+            // 
             // RateConfig
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(914, 600);
+            Controls.Add(deleteRateButton);
             Controls.Add(dropdownRate);
             Controls.Add(label23);
             Controls.Add(regotpay);
@@ -612,5 +624,6 @@
         private Label label23;
         private TextBox regotpay;
         private ComboBox dropdownRate;
+        private Button deleteRateButton;
     }
 }

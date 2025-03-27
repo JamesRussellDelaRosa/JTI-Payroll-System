@@ -7,11 +7,23 @@ namespace JTI_Payroll_System
 {
     public partial class RateConfig : Form
     {
+        // Use a static field to ensure event handlers are only attached once across all instances
+        private static bool eventHandlersInitialized = false;
+
         public RateConfig()
         {
             InitializeComponent();
-            LoadRatesIntoDropdown();
+
+            // First, remove any existing handlers to prevent duplicates
+            deleteRateButton.Click -= deleteRateButton_Click;
+            dropdownRate.SelectedIndexChanged -= dropdownRate_SelectedIndexChanged;
+
+            // Then add the handlers
+            deleteRateButton.Click += deleteRateButton_Click;
             dropdownRate.SelectedIndexChanged += dropdownRate_SelectedIndexChanged;
+
+            // Load the data
+            LoadRatesIntoDropdown();
         }
 
         private void LoadRatesIntoDropdown()
@@ -57,7 +69,7 @@ namespace JTI_Payroll_System
 
         private void LoadRateDetails(int rateId)
         {
-            string query = "SELECT * FROM rate WHERE id = @id";
+            string query = "SELECT * FROM rate WHERE id = @id LIMIT 1";
 
             using (MySqlConnection connection = DatabaseHelper.GetConnection())
             {
@@ -103,23 +115,6 @@ namespace JTI_Payroll_System
                 {
                     MessageBox.Show($"Error loading rate details: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
-            }
-        }
-
-        private class RateItem
-        {
-            public int Id { get; set; }
-            public string Rate { get; set; }
-
-            public RateItem(int id, string rate)
-            {
-                Id = id;
-                Rate = rate;
-            }
-
-            public override string ToString()
-            {
-                return Rate;
             }
         }
 
@@ -217,6 +212,96 @@ namespace JTI_Payroll_System
                 {
                     MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
+            }
+        }
+
+        private void deleteRateButton_Click(object sender, EventArgs e)
+        {
+            // Prevent the handler from being called multiple times
+            deleteRateButton.Click -= deleteRateButton_Click;
+
+            try
+            {
+                // Disable the button to prevent multiple clicks
+                deleteRateButton.Enabled = false;
+
+                if (dropdownRate.SelectedItem is RateItem selectedRate)
+                {
+                    // Store the ID locally to ensure it doesn't change during the operation
+                    int rateIdToDelete = selectedRate.Id;
+
+                    // Add confirmation dialog
+                    DialogResult result = MessageBox.Show(
+                        $"Are you sure you want to delete rate {selectedRate.Rate}?",
+                        "Confirm Deletion",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Question);
+
+                    if (result == DialogResult.Yes)
+                    {
+                        DeleteRateFromDatabase(rateIdToDelete);
+                        LoadRatesIntoDropdown(); // Refresh the dropdown after deleting
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("Please select a rate to delete.", "No Selection", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+            finally
+            {
+                // Re-enable the button and re-attach the handler
+                deleteRateButton.Enabled = true;
+                deleteRateButton.Click += deleteRateButton_Click;
+            }
+        }
+
+        private void DeleteRateFromDatabase(int rateId)
+        {
+            // Use LIMIT 1 to ensure only one record is deleted
+            string query = "DELETE FROM rate WHERE id = @id LIMIT 1";
+
+            using (MySqlConnection connection = DatabaseHelper.GetConnection())
+            {
+                try
+                {
+                    connection.Open();
+                    using (MySqlCommand command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@id", rateId);
+
+                        int result = command.ExecuteNonQuery();
+                        if (result > 0)
+                        {
+                            MessageBox.Show("Rate deleted successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                        else
+                        {
+                            MessageBox.Show("Failed to delete rate.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        private class RateItem
+        {
+            public int Id { get; set; }
+            public string Rate { get; set; }
+
+            public RateItem(int id, string rate)
+            {
+                Id = id;
+                Rate = rate;
+            }
+
+            public override string ToString()
+            {
+                return Rate;
             }
         }
     }
