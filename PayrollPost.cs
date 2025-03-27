@@ -58,12 +58,12 @@ namespace JTI_Payroll_System
                     // Fetch employee IDs with attendance in the given date range
                     List<string> employeeIDs = new List<string>();
                     string query = @"
-                SELECT DISTINCT e.id_no
-                FROM employee e
-                LEFT JOIN processedDTR p ON e.id_no = p.employee_id AND p.date BETWEEN @startDate AND @endDate
-                LEFT JOIN attendance a ON e.id_no = a.id AND a.date BETWEEN @startDate AND @endDate
-                WHERE p.employee_id IS NOT NULL OR a.id IS NOT NULL
-                ORDER BY e.id_no ASC;";
+        SELECT DISTINCT e.id_no
+        FROM employee e
+        LEFT JOIN processedDTR p ON e.id_no = p.employee_id AND p.date BETWEEN @startDate AND @endDate
+        LEFT JOIN attendance a ON e.id_no = a.id AND a.date BETWEEN @startDate AND @endDate
+        WHERE p.employee_id IS NOT NULL OR a.id IS NOT NULL
+        ORDER BY e.id_no ASC;";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
@@ -111,12 +111,13 @@ namespace JTI_Payroll_System
                         decimal totalTardinessUndertime = 0;
                         decimal totalWorkingHours = 0; // New variable for total working hours
                         int legalHolidayCount = 0; // New variable for counting legal holidays
+                        int nonWorkingDayCount = 0; // New variable for counting non-working days
 
                         query = @"
-                    SELECT p.working_hours, p.ot_hrs, p.rate, s.regular_hours, p.rest_day, p.legal_holiday, p.special_holiday, p.nd_hrs, p.ndot_hrs, p.tardiness_undertime
-                    FROM processedDTR p
-                    JOIN ShiftCodes s ON p.shift_code = s.shift_code
-                    WHERE p.employee_id = @employeeID AND p.date BETWEEN @startDate AND @endDate";
+            SELECT p.working_hours, p.ot_hrs, p.rate, s.regular_hours, p.rest_day, p.legal_holiday, p.special_holiday, p.non_working_day, p.nd_hrs, p.ndot_hrs, p.tardiness_undertime
+            FROM processedDTR p
+            JOIN ShiftCodes s ON p.shift_code = s.shift_code
+            WHERE p.employee_id = @employeeID AND p.date BETWEEN @startDate AND @endDate";
 
                         using (MySqlCommand cmd = new MySqlCommand(query, conn))
                         {
@@ -135,6 +136,7 @@ namespace JTI_Payroll_System
                                     bool isRestDay = reader.GetBoolean("rest_day");
                                     bool isLegalHoliday = reader.GetBoolean("legal_holiday");
                                     bool isSpecialHoliday = reader.GetBoolean("special_holiday");
+                                    bool isNonWorkingDay = reader.GetBoolean("non_working_day");
                                     decimal ndHours = reader.GetDecimal("nd_hrs");
                                     decimal ndOtHours = reader.GetDecimal("ndot_hrs");
                                     decimal tardinessUndertime = reader.GetDecimal("tardiness_undertime"); // Fetch tardiness/undertime
@@ -147,6 +149,12 @@ namespace JTI_Payroll_System
 
                                     // Add working hours to total
                                     totalWorkingHours += workingHours;
+
+                                    if (isNonWorkingDay)
+                                    {
+                                        // Count non-working days
+                                        nonWorkingDayCount++;
+                                    }
 
                                     if (isRestDay && isLegalHoliday)
                                     {
@@ -214,9 +222,9 @@ namespace JTI_Payroll_System
 
                         // Check if payroll data already exists for the employee and pay period
                         string checkQuery = @"
-                    SELECT COUNT(*) 
-                    FROM payroll 
-                    WHERE employee_id = @employeeID AND pay_period_start = @startDate AND pay_period_end = @endDate";
+            SELECT COUNT(*) 
+            FROM payroll 
+            WHERE employee_id = @employeeID AND pay_period_start = @startDate AND pay_period_end = @endDate";
 
                         using (MySqlCommand checkCmd = new MySqlCommand(checkQuery, conn))
                         {
@@ -229,39 +237,40 @@ namespace JTI_Payroll_System
                             {
                                 // Record already exists, perform update
                                 string updateQuery = @"
-                            UPDATE payroll 
-                            SET total_days = @totalDays, 
-                                overtime_hours = @overtimeHours, 
-                                total_earnings = @totalEarnings, 
-                                restday_hours = @restdayHours, 
-                                restday_overtime_hours = @restdayOvertimeHours, 
-                                legal_holiday_hours = @legalHolidayHours, 
-                                legal_holiday_overtime_hours = @legalHolidayOvertimeHours, 
-                                lhrd_hours = @lhrdHours, 
-                                lhrd_overtime_hours = @lhrdOvertimeHours, 
-                                special_holiday_hours = @specialHolidayHours, 
-                                special_holiday_overtime_hours = @specialHolidayOvertimeHours, 
-                                special_holiday_restday_hours = @specialHolidayRestDayHours, 
-                                special_holiday_restday_overtime_hours = @specialHolidayRestDayOvertimeHours, 
-                                nd_hrs = @nightDifferentialHours, 
-                                ndot_hrs = @nightDifferentialOtHours, 
-                                ndrd_hrs = @nightDifferentialRestDayHours, 
-                                ndrdot_hrs = @nightDifferentialRestDayOtHours, 
-                                ndsh_hrs = @nightDifferentialSpecialHolidayHours, 
-                                ndshot_hrs = @nightDifferentialSpecialHolidayOtHours, 
-                                ndshrd_hrs = @nightDifferentialSpecialHolidayRestDayHours, 
-                                ndshrdot_hrs = @nightDifferentialSpecialHolidayRestDayOtHours, 
-                                ndlh_hrs = @nightDifferentialLegalHolidayHours, 
-                                ndlhot_hrs = @nightDifferentialLegalHolidayOtHours, 
-                                ndlhrd_hrs = @nightDifferentialLegalHolidayRestDayHours, 
-                                ndlhrdot_hrs = @nightDifferentialLegalHolidayRestDayOtHours, 
-                                month = @month, 
-                                payrollyear = @payrollyear, 
-                                control_period = @controlPeriod, 
-                                td_ut = @totalTardinessUndertime, 
-                                working_hours = @totalWorkingHours,
-                                legal_holiday_count = @legalHolidayCount
-                            WHERE employee_id = @employeeID AND pay_period_start = @startDate AND pay_period_end = @endDate";
+                    UPDATE payroll 
+                    SET total_days = @totalDays, 
+                        overtime_hours = @overtimeHours, 
+                        total_earnings = @totalEarnings, 
+                        restday_hours = @restdayHours, 
+                        restday_overtime_hours = @restdayOvertimeHours, 
+                        legal_holiday_hours = @legalHolidayHours, 
+                        legal_holiday_overtime_hours = @legalHolidayOvertimeHours, 
+                        lhrd_hours = @lhrdHours, 
+                        lhrd_overtime_hours = @lhrdOvertimeHours, 
+                        special_holiday_hours = @specialHolidayHours, 
+                        special_holiday_overtime_hours = @specialHolidayOvertimeHours, 
+                        special_holiday_restday_hours = @specialHolidayRestDayHours, 
+                        special_holiday_restday_overtime_hours = @specialHolidayRestDayOvertimeHours, 
+                        nd_hrs = @nightDifferentialHours, 
+                        ndot_hrs = @nightDifferentialOtHours, 
+                        ndrd_hrs = @nightDifferentialRestDayHours, 
+                        ndrdot_hrs = @nightDifferentialRestDayOtHours, 
+                        ndsh_hrs = @nightDifferentialSpecialHolidayHours, 
+                        ndshot_hrs = @nightDifferentialSpecialHolidayOtHours, 
+                        ndshrd_hrs = @nightDifferentialSpecialHolidayRestDayHours, 
+                        ndshrdot_hrs = @nightDifferentialSpecialHolidayRestDayOtHours, 
+                        ndlh_hrs = @nightDifferentialLegalHolidayHours, 
+                        ndlhot_hrs = @nightDifferentialLegalHolidayOtHours, 
+                        ndlhrd_hrs = @nightDifferentialLegalHolidayRestDayHours, 
+                        ndlhrdot_hrs = @nightDifferentialLegalHolidayRestDayOtHours, 
+                        month = @month, 
+                        payrollyear = @payrollyear, 
+                        control_period = @controlPeriod, 
+                        td_ut = @totalTardinessUndertime, 
+                        working_hours = @totalWorkingHours,
+                        legal_holiday_count = @legalHolidayCount,
+                        non_working_day_count = @nonWorkingDayCount
+                    WHERE employee_id = @employeeID AND pay_period_start = @startDate AND pay_period_end = @endDate";
 
                                 using (MySqlCommand updateCmd = new MySqlCommand(updateQuery, conn))
                                 {
@@ -296,6 +305,7 @@ namespace JTI_Payroll_System
                                     updateCmd.Parameters.AddWithValue("@totalTardinessUndertime", totalTardinessUndertime);
                                     updateCmd.Parameters.AddWithValue("@totalWorkingHours", totalWorkingHours);
                                     updateCmd.Parameters.AddWithValue("@legalHolidayCount", legalHolidayCount);
+                                    updateCmd.Parameters.AddWithValue("@nonWorkingDayCount", nonWorkingDayCount);
                                     updateCmd.Parameters.AddWithValue("@employeeID", employeeID);
                                     updateCmd.Parameters.AddWithValue("@startDate", startDate);
                                     updateCmd.Parameters.AddWithValue("@endDate", endDate);
@@ -307,8 +317,8 @@ namespace JTI_Payroll_System
                             {
                                 // Record does not exist, perform insert
                                 string insertQuery = @"
-                            INSERT INTO payroll (employee_id, pay_period_start, pay_period_end, total_days, overtime_hours, total_earnings, restday_hours, restday_overtime_hours, legal_holiday_hours, legal_holiday_overtime_hours, lhrd_hours, lhrd_overtime_hours, special_holiday_hours, special_holiday_overtime_hours, special_holiday_restday_hours, special_holiday_restday_overtime_hours, nd_hrs, ndot_hrs, ndrd_hrs, ndrdot_hrs, ndsh_hrs, ndshot_hrs, ndshrd_hrs, ndshrdot_hrs, ndlh_hrs, ndlhot_hrs, ndlhrd_hrs, ndlhrdot_hrs, month, payrollyear, control_period, td_ut, working_hours, legal_holiday_count)
-                            VALUES (@employeeID, @startDate, @endDate, @totalDays, @overtimeHours, @totalEarnings, @restdayHours, @restdayOvertimeHours, @legalHolidayHours, @legalHolidayOvertimeHours, @lhrdHours, @lhrdOvertimeHours, @specialHolidayHours, @specialHolidayOvertimeHours, @specialHolidayRestDayHours, @specialHolidayRestDayOvertimeHours, @nightDifferentialHours, @nightDifferentialOtHours, @nightDifferentialRestDayHours, @nightDifferentialRestDayOtHours, @nightDifferentialSpecialHolidayHours, @nightDifferentialSpecialHolidayOtHours, @nightDifferentialSpecialHolidayRestDayHours, @nightDifferentialSpecialHolidayRestDayOtHours, @nightDifferentialLegalHolidayHours, @nightDifferentialLegalHolidayOtHours, @nightDifferentialLegalHolidayRestDayHours, @nightDifferentialLegalHolidayRestDayOtHours, @month, @payrollyear, @controlPeriod, @totalTardinessUndertime, @totalWorkingHours, @legalHolidayCount)";
+                    INSERT INTO payroll (employee_id, pay_period_start, pay_period_end, total_days, overtime_hours, total_earnings, restday_hours, restday_overtime_hours, legal_holiday_hours, legal_holiday_overtime_hours, lhrd_hours, lhrd_overtime_hours, special_holiday_hours, special_holiday_overtime_hours, special_holiday_restday_hours, special_holiday_restday_overtime_hours, nd_hrs, ndot_hrs, ndrd_hrs, ndrdot_hrs, ndsh_hrs, ndshot_hrs, ndshrd_hrs, ndshrdot_hrs, ndlh_hrs, ndlhot_hrs, ndlhrd_hrs, ndlhrdot_hrs, month, payrollyear, control_period, td_ut, working_hours, legal_holiday_count, non_working_day_count)
+                    VALUES (@employeeID, @startDate, @endDate, @totalDays, @overtimeHours, @totalEarnings, @restdayHours, @restdayOvertimeHours, @legalHolidayHours, @legalHolidayOvertimeHours, @lhrdHours, @lhrdOvertimeHours, @specialHolidayHours, @specialHolidayOvertimeHours, @specialHolidayRestDayHours, @specialHolidayRestDayOvertimeHours, @nightDifferentialHours, @nightDifferentialOtHours, @nightDifferentialRestDayHours, @nightDifferentialRestDayOtHours, @nightDifferentialSpecialHolidayHours, @nightDifferentialSpecialHolidayOtHours, @nightDifferentialSpecialHolidayRestDayHours, @nightDifferentialSpecialHolidayRestDayOtHours, @nightDifferentialLegalHolidayHours, @nightDifferentialLegalHolidayOtHours, @nightDifferentialLegalHolidayRestDayHours, @nightDifferentialLegalHolidayRestDayOtHours, @month, @payrollyear, @controlPeriod, @totalTardinessUndertime, @totalWorkingHours, @legalHolidayCount, @nonWorkingDayCount)";
 
                                 using (MySqlCommand insertCmd = new MySqlCommand(insertQuery, conn))
                                 {
@@ -346,6 +356,7 @@ namespace JTI_Payroll_System
                                     insertCmd.Parameters.AddWithValue("@totalTardinessUndertime", totalTardinessUndertime);
                                     insertCmd.Parameters.AddWithValue("@totalWorkingHours", totalWorkingHours);
                                     insertCmd.Parameters.AddWithValue("@legalHolidayCount", legalHolidayCount);
+                                    insertCmd.Parameters.AddWithValue("@nonWorkingDayCount", nonWorkingDayCount);
 
                                     insertCmd.ExecuteNonQuery();
                                 }
