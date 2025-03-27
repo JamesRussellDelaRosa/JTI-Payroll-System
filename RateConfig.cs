@@ -86,27 +86,27 @@ namespace JTI_Payroll_System
                             {
                                 defaultrate.Text = reader["defaultrate"].ToString();
                                 ratecompute.Text = reader["ratecompute"].ToString();
-                                basicpay.Text = reader["basicpay"].ToString();
-                                rdpay.Text = reader["rdpay"].ToString();
-                                rdotpay.Text = reader["rdotpay"].ToString();
-                                lhpay.Text = reader["lhpay"].ToString();
-                                regotpay.Text = reader["regotpay"].ToString();
-                                trdypay.Text = reader["trdypay"].ToString();
-                                lhhrspay.Text = reader["lhhrspay"].ToString();
-                                lhothrspay.Text = reader["lhothrspay"].ToString();
-                                lhrdpay.Text = reader["lhrdpay"].ToString();
-                                lhrdotpay.Text = reader["lhrdotpay"].ToString();
-                                shpay.Text = reader["shpay"].ToString();
-                                shotpay.Text = reader["shotpay"].ToString();
-                                shrdpay.Text = reader["shrdpay"].ToString();
-                                shrdotpay.Text = reader["shrdotpay"].ToString();
-                                ndpay.Text = reader["ndpay"].ToString();
-                                ndotpay.Text = reader["ndotpay"].ToString();
-                                ndrdpay.Text = reader["ndrdpay"].ToString();
-                                ndshpay.Text = reader["ndshpay"].ToString();
-                                ndshrdpay.Text = reader["ndshrdpay"].ToString();
-                                ndlhpay.Text = reader["ndlhpay"].ToString();
-                                ndlhrdpay.Text = reader["ndlhrdpay"].ToString();
+                                basicpay.Text = reader["basic"].ToString();
+                                rdpay.Text = reader["rd"].ToString();
+                                rdotpay.Text = reader["rdot"].ToString();
+                                lhpay.Text = reader["lh"].ToString();
+                                regotpay.Text = reader["regot"].ToString();
+                                trdypay.Text = reader["trdy"].ToString();
+                                lhhrspay.Text = reader["lhhrs"].ToString();
+                                lhothrspay.Text = reader["lhothrs"].ToString();
+                                lhrdpay.Text = reader["lhrd"].ToString();
+                                lhrdotpay.Text = reader["lhrdot"].ToString();
+                                shpay.Text = reader["sh"].ToString();
+                                shotpay.Text = reader["shot"].ToString();
+                                shrdpay.Text = reader["shrd"].ToString();
+                                shrdotpay.Text = reader["shrdot"].ToString();
+                                ndpay.Text = reader["nd"].ToString();
+                                ndotpay.Text = reader["ndot"].ToString();
+                                ndrdpay.Text = reader["ndrd"].ToString();
+                                ndshpay.Text = reader["ndsh"].ToString();
+                                ndshrdpay.Text = reader["ndshrd"].ToString();
+                                ndlhpay.Text = reader["ndlh"].ToString();
+                                ndlhrdpay.Text = reader["ndlhrd"].ToString();
                             }
                         }
                     }
@@ -161,9 +161,9 @@ namespace JTI_Payroll_System
         {
             string query = @"
                 INSERT INTO rate (
-                    defaultrate, ratecompute, basicpay, rdpay, rdotpay, lhpay, regotpay, trdypay, lhhrspay, lhothrspay, lhrdpay, lhrdotpay, shpay, shotpay, shrdpay, shrdotpay, ndpay, ndotpay, ndrdpay, ndshpay, ndshrdpay, ndlhpay, ndlhrdpay
+                    defaultrate, ratecompute, basic, rd, rdot, lh, regot, trdy, lhhrs, lhothrs, lhrd, lhrdot, sh, shot, shrd, shrdot, nd, ndot, ndrd, ndsh, ndshrd, ndlh, ndlhrd
                 ) VALUES (
-                    @defaultrate, @ratecompute, @basicpay, @rdpay, @rdotpay, @lhpay, @regotpay, @trdypay, @lhhrspay, @lhothrspay, @lhrdpay, @lhrdotpay, @shpay, @shotpay, @shrdpay, @shrdotpay, @ndpay, @ndotpay, @ndrdpay, @ndshpay, @ndshrdpay, @ndlhpay, @ndlhrdpay
+                    @defaultrate, @ratecompute, @basic, @rd, @rdot, @lh, @regot, @trdy, @lhhrs, @lhothrs, @lhrd, @lhrdot, @sh, @shot, @shrd, @shrdot, @nd, @ndot, @ndrd, @ndsh, @ndshrd, @ndlh, @ndlhrd
                 )";
 
             using (MySqlConnection connection = DatabaseHelper.GetConnection())
@@ -175,27 +175,27 @@ namespace JTI_Payroll_System
                     {
                         command.Parameters.AddWithValue("@defaultrate", defaultrate.Text);
                         command.Parameters.AddWithValue("@ratecompute", ratecompute.Text);
-                        command.Parameters.AddWithValue("@basicpay", basicpay.Text);
-                        command.Parameters.AddWithValue("@rdpay", rdpay.Text);
-                        command.Parameters.AddWithValue("@rdotpay", rdotpay.Text);
-                        command.Parameters.AddWithValue("@lhpay", lhpay.Text);
-                        command.Parameters.AddWithValue("@regotpay", regotpay.Text);
-                        command.Parameters.AddWithValue("@trdypay", trdypay.Text);
-                        command.Parameters.AddWithValue("@lhhrspay", lhhrspay.Text);
-                        command.Parameters.AddWithValue("@lhothrspay", lhothrspay.Text);
-                        command.Parameters.AddWithValue("@lhrdpay", lhrdpay.Text);
-                        command.Parameters.AddWithValue("@lhrdotpay", lhrdotpay.Text);
-                        command.Parameters.AddWithValue("@shpay", shpay.Text);
-                        command.Parameters.AddWithValue("@shotpay", shotpay.Text);
-                        command.Parameters.AddWithValue("@shrdpay", shrdpay.Text);
-                        command.Parameters.AddWithValue("@shrdotpay", shrdotpay.Text);
-                        command.Parameters.AddWithValue("@ndpay", ndpay.Text);
-                        command.Parameters.AddWithValue("@ndotpay", ndotpay.Text);
-                        command.Parameters.AddWithValue("@ndrdpay", ndrdpay.Text);
-                        command.Parameters.AddWithValue("@ndshpay", ndshpay.Text);
-                        command.Parameters.AddWithValue("@ndshrdpay", ndshrdpay.Text);
-                        command.Parameters.AddWithValue("@ndlhpay", ndlhpay.Text);
-                        command.Parameters.AddWithValue("@ndlhrdpay", ndlhrdpay.Text);
+                        command.Parameters.AddWithValue("@basic", basicpay.Text);
+                        command.Parameters.AddWithValue("@rd", rdpay.Text);
+                        command.Parameters.AddWithValue("@rdot", rdotpay.Text);
+                        command.Parameters.AddWithValue("@lh", lhpay.Text);
+                        command.Parameters.AddWithValue("@regot", regotpay.Text);
+                        command.Parameters.AddWithValue("@trdy", trdypay.Text);
+                        command.Parameters.AddWithValue("@lhhrs", lhhrspay.Text);
+                        command.Parameters.AddWithValue("@lhothrs", lhothrspay.Text);
+                        command.Parameters.AddWithValue("@lhrd", lhrdpay.Text);
+                        command.Parameters.AddWithValue("@lhrdot", lhrdotpay.Text);
+                        command.Parameters.AddWithValue("@sh", shpay.Text);
+                        command.Parameters.AddWithValue("@shot", shotpay.Text);
+                        command.Parameters.AddWithValue("@shrd", shrdpay.Text);
+                        command.Parameters.AddWithValue("@shrdot", shrdotpay.Text);
+                        command.Parameters.AddWithValue("@nd", ndpay.Text);
+                        command.Parameters.AddWithValue("@ndot", ndotpay.Text);
+                        command.Parameters.AddWithValue("@ndrd", ndrdpay.Text);
+                        command.Parameters.AddWithValue("@ndsh", ndshpay.Text);
+                        command.Parameters.AddWithValue("@ndshrd", ndshrdpay.Text);
+                        command.Parameters.AddWithValue("@ndlh", ndlhpay.Text);
+                        command.Parameters.AddWithValue("@ndlhrd", ndlhrdpay.Text);
 
                         int result = command.ExecuteNonQuery();
                         if (result > 0)
