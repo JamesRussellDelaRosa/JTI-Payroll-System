@@ -494,7 +494,7 @@ namespace JTI_Payroll_System
                     decimal shpay = 0, shotpay = 0, shrdpay = 0, shrdotpay = 0;
                     decimal ndpay = 0, ndotpay = 0, ndrdpay = 0, ndshpay = 0, ndshrdpay = 0;
                     decimal ndlhpay = 0, ndlhrdpay = 0;
-                    decimal totalPay = 0;
+                    decimal totalBasicPay = 0, totalOTPay = 0, grossPay = 0;
 
                     using (MySqlDataReader rateReader = rateCmd.ExecuteReader())
                     {
@@ -576,12 +576,14 @@ namespace JTI_Payroll_System
                                     ndlhpay = ndlh * ndlh_hrs;
                                     ndlhrdpay = ndlhrd * ndlhrd_hrs;
 
-                                    // Calculate total pay
-                                    totalPay = basicpay + rdpay + rdotpay + lhpay + regotpay + trdypay +
-                                              lhhrspay + lhothrspay + lhrdpay + lhrdotpay +
-                                              shpay + shotpay + shrdpay + shrdotpay +
-                                              ndpay + ndotpay + ndrdpay + ndshpay + ndshrdpay +
-                                              ndlhpay + ndlhrdpay;
+                                    // Calculate total pay components as specified
+                                    totalBasicPay = basicpay + trdypay + lhpay;
+
+                                    totalOTPay = rdpay + rdotpay + regotpay + lhhrspay + lhothrspay +
+                                                lhrdpay + lhrdotpay + shpay + shotpay + shrdpay + shrdotpay +
+                                                ndpay + ndotpay + ndrdpay + ndshpay + ndshrdpay + ndlhpay + ndlhrdpay;
+
+                                    grossPay = totalBasicPay + totalOTPay;
                                 }
                             }
 
@@ -609,7 +611,9 @@ namespace JTI_Payroll_System
                             ndshrdpay = @ndshrdpay,
                             ndlhpay = @ndlhpay,
                             ndlhrdpay = @ndlhrdpay,
-                            total_pay = @totalPay
+                            total_basic_pay = @totalBasicPay,
+                            total_ot_pay = @totalOTPay,
+                            gross_pay = @grossPay
                         WHERE employee_id = @employeeID 
                         AND pay_period_start = @startDate 
                         AND pay_period_end = @endDate
@@ -638,7 +642,9 @@ namespace JTI_Payroll_System
                             updateCmd.Parameters.AddWithValue("@ndshrdpay", ndshrdpay);
                             updateCmd.Parameters.AddWithValue("@ndlhpay", ndlhpay);
                             updateCmd.Parameters.AddWithValue("@ndlhrdpay", ndlhrdpay);
-                            updateCmd.Parameters.AddWithValue("@totalPay", totalPay);
+                            updateCmd.Parameters.AddWithValue("@totalBasicPay", totalBasicPay);
+                            updateCmd.Parameters.AddWithValue("@totalOTPay", totalOTPay);
+                            updateCmd.Parameters.AddWithValue("@grossPay", grossPay);
                             updateCmd.Parameters.AddWithValue("@employeeID", employeeID);
                             updateCmd.Parameters.AddWithValue("@startDate", startDate);
                             updateCmd.Parameters.AddWithValue("@endDate", endDate);
@@ -660,6 +666,7 @@ namespace JTI_Payroll_System
                 MessageBox.Show("Error calculating payroll amounts: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
         private void btnSavePayroll_Click_1(object sender, EventArgs e)
         {
             if (!DateTime.TryParseExact(fromdate.Text, "MM/dd/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime startDate) ||
