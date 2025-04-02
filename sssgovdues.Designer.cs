@@ -28,12 +28,56 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 450);
-            this.Text = "sssgovdues";
+            load = new Button();
+            save = new Button();
+            dataGridView = new DataGridView();
+            ((System.ComponentModel.ISupportInitialize)dataGridView).BeginInit();
+            SuspendLayout();
+            // 
+            // load
+            // 
+            load.Location = new Point(12, 12);
+            load.Name = "load";
+            load.Size = new Size(94, 29);
+            load.TabIndex = 1;
+            load.Text = "LOAD";
+            load.UseVisualStyleBackColor = true;
+            // 
+            // save
+            // 
+            save.Location = new Point(112, 12);
+            save.Name = "save";
+            save.Size = new Size(94, 29);
+            save.TabIndex = 2;
+            save.Text = "SAVE";
+            save.UseVisualStyleBackColor = true;
+            // 
+            // dataGridView
+            // 
+            dataGridView.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dataGridView.Location = new Point(12, 65);
+            dataGridView.Name = "dataGridView";
+            dataGridView.RowHeadersWidth = 51;
+            dataGridView.Size = new Size(1656, 785);
+            dataGridView.TabIndex = 3;
+            // 
+            // sssgovdues
+            // 
+            AutoScaleDimensions = new SizeF(8F, 20F);
+            AutoScaleMode = AutoScaleMode.Font;
+            ClientSize = new Size(1680, 862);
+            Controls.Add(dataGridView);
+            Controls.Add(save);
+            Controls.Add(load);
+            Name = "sssgovdues";
+            Text = "sssgovdues";
+            ((System.ComponentModel.ISupportInitialize)dataGridView).EndInit();
+            ResumeLayout(false);
         }
 
         #endregion
+        private Button load;
+        private Button save;
+        private DataGridView dataGridView;
     }
 }
