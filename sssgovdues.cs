@@ -166,6 +166,36 @@ namespace JTI_Payroll_System
 
             throw new FormatException($"Invalid decimal value: {value}");
         }
+
+        private void load_Click(object sender, EventArgs e)
+        {
+            using (MySqlConnection conn = DatabaseHelper.GetConnection())
+            {
+                conn.Open();
+                string query = "SELECT * FROM sssgovdues";
+                using (MySqlCommand command = new MySqlCommand(query, conn))
+                {
+                    using (MySqlDataReader reader = command.ExecuteReader())
+                    {
+                        dataGridView.Rows.Clear();
+                        while (reader.Read())
+                        {
+                            int rowIndex = dataGridView.Rows.Add();
+                            DataGridViewRow row = dataGridView.Rows[rowIndex];
+                            row.Cells["salary1"].Value = reader["salary1"];
+                            row.Cells["salary2"].Value = reader["salary2"];
+                            row.Cells["salarycredit"].Value = reader["salarycredit"];
+                            row.Cells["ERShare"].Value = reader["ERShare"];
+                            row.Cells["ERMPF"].Value = reader["ERMPF"];
+                            row.Cells["ERECC"].Value = reader["ERECC"];
+                            row.Cells["EEShare"].Value = reader["EEShare"];
+                            row.Cells["EEMPF"].Value = reader["EEMPF"];
+                        }
+                    }
+                }
+            }
+        }
     }
 }
+
 

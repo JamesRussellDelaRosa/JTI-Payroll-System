@@ -42,6 +42,7 @@
             load.TabIndex = 1;
             load.Text = "LOAD";
             load.UseVisualStyleBackColor = true;
+            load.Click += load_Click;
             // 
             // save
             // 
