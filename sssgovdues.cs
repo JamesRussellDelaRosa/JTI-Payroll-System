@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using MySql.Data.MySqlClient; // Add this for MySQL connection
 
 namespace JTI_Payroll_System
 {
@@ -92,5 +93,79 @@ namespace JTI_Payroll_System
                 MessageBox.Show("Error pasting data: " + ex.Message);
             }
         }
+
+        private void save_Click(object sender, EventArgs e)
+        {
+            // Check if the DataGridView is empty
+            bool hasData = dataGridView.Rows.Cast<DataGridViewRow>()
+                .Any(row => !row.IsNewRow && row.Cells.Cast<DataGridViewCell>().Any(cell => cell.Value != null && cell.Value.ToString().Trim() != ""));
+
+            if (!hasData)
+            {
+                MessageBox.Show("Cannot save data because the grid is empty.");
+                return;
+            }
+
+            using (MySqlConnection conn = DatabaseHelper.GetConnection())
+            {
+                conn.Open();
+                using (MySqlTransaction transaction = conn.BeginTransaction())
+                {
+                    try
+                    {
+                        foreach (DataGridViewRow row in dataGridView.Rows)
+                        {
+                            if (row.IsNewRow) continue;
+
+                            string query = @"
+                                INSERT INTO sssgovdues (salary1, salary2, salarycredit, ERShare, ERMPF, ERECC, EEShare, EEMPF)
+                                VALUES (@salary1, @salary2, @salarycredit, @ERShare, @ERMPF, @ERECC, @EEShare, @EEMPF)
+                                ON DUPLICATE KEY UPDATE
+                                    salary2 = VALUES(salary2),
+                                    salarycredit = VALUES(salarycredit),
+                                    ERShare = VALUES(ERShare),
+                                    ERMPF = VALUES(ERMPF),
+                                    ERECC = VALUES(ERECC),
+                                    EEShare = VALUES(EEShare),
+                                    EEMPF = VALUES(EEMPF)";
+
+                            using (MySqlCommand command = new MySqlCommand(query, conn, transaction))
+                            {
+                                command.Parameters.AddWithValue("@salary1", ConvertToDecimal(row.Cells["salary1"].Value));
+                                command.Parameters.AddWithValue("@salary2", ConvertToDecimal(row.Cells["salary2"].Value));
+                                command.Parameters.AddWithValue("@salarycredit", ConvertToDecimal(row.Cells["salarycredit"].Value));
+                                command.Parameters.AddWithValue("@ERShare", ConvertToDecimal(row.Cells["ERShare"].Value));
+                                command.Parameters.AddWithValue("@ERMPF", ConvertToDecimal(row.Cells["ERMPF"].Value));
+                                command.Parameters.AddWithValue("@ERECC", ConvertToDecimal(row.Cells["ERECC"].Value));
+                                command.Parameters.AddWithValue("@EEShare", ConvertToDecimal(row.Cells["EEShare"].Value));
+                                command.Parameters.AddWithValue("@EEMPF", ConvertToDecimal(row.Cells["EEMPF"].Value));
+
+                                command.ExecuteNonQuery();
+                            }
+                        }
+                        transaction.Commit();
+                        MessageBox.Show("Data saved successfully.");
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback();
+                        MessageBox.Show("Error saving data: " + ex.Message);
+                    }
+                }
+            }
+        }
+
+        private decimal ConvertToDecimal(object value)
+        {
+            if (value == null || value == DBNull.Value)
+                return 0;
+
+            string stringValue = value.ToString().Replace(",", "");
+            if (decimal.TryParse(stringValue, out decimal result))
+                return result;
+
+            throw new FormatException($"Invalid decimal value: {value}");
+        }
     }
 }
+

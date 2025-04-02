@@ -51,6 +51,7 @@
             save.TabIndex = 2;
             save.Text = "SAVE";
             save.UseVisualStyleBackColor = true;
+            save.Click += save_Click;
             // 
             // dataGridView
             // 
