@@ -38,6 +38,13 @@ namespace JTI_Payroll_System
             }
 
             dataGridView.KeyDown += DataGridView_KeyDown;
+
+            // Add context menu for right-click paste
+            ContextMenuStrip contextMenu = new ContextMenuStrip();
+            ToolStripMenuItem pasteMenuItem = new ToolStripMenuItem("Paste");
+            pasteMenuItem.Click += PasteMenuItem_Click;
+            contextMenu.Items.Add(pasteMenuItem);
+            dataGridView.ContextMenuStrip = contextMenu;
         }
 
         private void DataGridView_KeyDown(object sender, KeyEventArgs e)
@@ -46,6 +53,11 @@ namespace JTI_Payroll_System
             {
                 PasteClipboardData();
             }
+        }
+
+        private void PasteMenuItem_Click(object sender, EventArgs e)
+        {
+            PasteClipboardData();
         }
 
         private void PasteClipboardData()
@@ -82,4 +94,3 @@ namespace JTI_Payroll_System
         }
     }
 }
-
