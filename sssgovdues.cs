@@ -32,8 +32,8 @@ namespace JTI_Payroll_System
             dataGridView.Columns.Add("EEShare", "EE Share");
             dataGridView.Columns.Add("EEMPF", "EE MPF");
 
-            // Add 61 rows to the DataGridView
-            for (int i = 0; i < 61; i++)
+            //Remove the code that adds 61 rows to the DataGridView
+            for (int i = 0; i < 62; i++)
             {
                 dataGridView.Rows.Add();
             }
@@ -115,19 +115,26 @@ namespace JTI_Payroll_System
                     {
                         foreach (DataGridViewRow row in dataGridView.Rows)
                         {
+                            // Skip new row placeholder
                             if (row.IsNewRow) continue;
 
+                            // Check if the row has data
+                            bool rowHasData = row.Cells.Cast<DataGridViewCell>()
+                                .Any(cell => cell.Value != null && cell.Value.ToString().Trim() != "");
+
+                            if (!rowHasData) continue;
+
                             string query = @"
-                                INSERT INTO sssgovdues (salary1, salary2, salarycredit, ERShare, ERMPF, ERECC, EEShare, EEMPF)
-                                VALUES (@salary1, @salary2, @salarycredit, @ERShare, @ERMPF, @ERECC, @EEShare, @EEMPF)
-                                ON DUPLICATE KEY UPDATE
-                                    salary2 = VALUES(salary2),
-                                    salarycredit = VALUES(salarycredit),
-                                    ERShare = VALUES(ERShare),
-                                    ERMPF = VALUES(ERMPF),
-                                    ERECC = VALUES(ERECC),
-                                    EEShare = VALUES(EEShare),
-                                    EEMPF = VALUES(EEMPF)";
+                        INSERT INTO sssgovdues (salary1, salary2, salarycredit, ERShare, ERMPF, ERECC, EEShare, EEMPF)
+                        VALUES (@salary1, @salary2, @salarycredit, @ERShare, @ERMPF, @ERECC, @EEShare, @EEMPF)
+                        ON DUPLICATE KEY UPDATE
+                            salary2 = VALUES(salary2),
+                            salarycredit = VALUES(salarycredit),
+                            ERShare = VALUES(ERShare),
+                            ERMPF = VALUES(ERMPF),
+                            ERECC = VALUES(ERECC),
+                            EEShare = VALUES(EEShare),
+                            EEMPF = VALUES(EEMPF)";
 
                             using (MySqlCommand command = new MySqlCommand(query, conn, transaction))
                             {
@@ -195,6 +202,7 @@ namespace JTI_Payroll_System
                 }
             }
         }
+
     }
 }
 
