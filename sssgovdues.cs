@@ -29,10 +29,11 @@ namespace JTI_Payroll_System
             dataGridView.Columns.Add("ERShare", "ER Share");
             dataGridView.Columns.Add("ERMPF", "ER MPF");
             dataGridView.Columns.Add("ERECC", "ER ECC");
+            dataGridView.Columns.Add("ERTotal", "ER TOTAL");
             dataGridView.Columns.Add("EEShare", "EE Share");
             dataGridView.Columns.Add("EEMPF", "EE MPF");
+            dataGridView.Columns.Add("EETotal", "EE TOTAL");
 
-            //Remove the code that adds 61 rows to the DataGridView
             for (int i = 0; i < 62; i++)
             {
                 dataGridView.Rows.Add();
@@ -40,11 +41,16 @@ namespace JTI_Payroll_System
 
             dataGridView.KeyDown += DataGridView_KeyDown;
 
-            // Add context menu for right-click paste
+            // Add context menu for right-click paste and delete
             ContextMenuStrip contextMenu = new ContextMenuStrip();
             ToolStripMenuItem pasteMenuItem = new ToolStripMenuItem("Paste");
             pasteMenuItem.Click += PasteMenuItem_Click;
             contextMenu.Items.Add(pasteMenuItem);
+
+            ToolStripMenuItem deleteMenuItem = new ToolStripMenuItem("Delete Row");
+            deleteMenuItem.Click += DeleteMenuItem_Click;
+            contextMenu.Items.Add(deleteMenuItem);
+
             dataGridView.ContextMenuStrip = contextMenu;
         }
 
@@ -54,11 +60,27 @@ namespace JTI_Payroll_System
             {
                 PasteClipboardData();
             }
+            else if (e.KeyCode == Keys.Delete)
+            {
+                if (dataGridView.SelectedCells.Count > 0)
+                {
+                    DeleteSelectedCells();
+                }
+                else if (dataGridView.SelectedRows.Count > 0)
+                {
+                    DeleteSelectedRows();
+                }
+            }
         }
 
         private void PasteMenuItem_Click(object sender, EventArgs e)
         {
             PasteClipboardData();
+        }
+
+        private void DeleteMenuItem_Click(object sender, EventArgs e)
+        {
+            DeleteSelectedRows();
         }
 
         private void PasteClipboardData()
@@ -94,6 +116,66 @@ namespace JTI_Payroll_System
             }
         }
 
+        private void DeleteSelectedCells()
+        {
+            HashSet<int> rowsToDelete = new HashSet<int>();
+            HashSet<int> columnsToDelete = new HashSet<int>();
+
+            foreach (DataGridViewCell cell in dataGridView.SelectedCells)
+            {
+                rowsToDelete.Add(cell.RowIndex);
+                columnsToDelete.Add(cell.ColumnIndex);
+            }
+
+            foreach (int rowIndex in rowsToDelete.OrderByDescending(i => i))
+            {
+                if (!dataGridView.Rows[rowIndex].IsNewRow)
+                {
+                    DeleteRowFromDatabase(dataGridView.Rows[rowIndex]);
+                    dataGridView.Rows.RemoveAt(rowIndex);
+                }
+            }
+
+            foreach (int columnIndex in columnsToDelete.OrderByDescending(i => i))
+            {
+                dataGridView.Columns.RemoveAt(columnIndex);
+            }
+        }
+
+        private void DeleteSelectedRows()
+        {
+            List<DataGridViewRow> rowsToDelete = new List<DataGridViewRow>();
+
+            foreach (DataGridViewRow row in dataGridView.SelectedRows)
+            {
+                if (!row.IsNewRow)
+                {
+                    rowsToDelete.Add(row);
+                }
+            }
+
+            foreach (DataGridViewRow row in rowsToDelete)
+            {
+                DeleteRowFromDatabase(row);
+                dataGridView.Rows.Remove(row);
+            }
+        }
+
+        private void DeleteRowFromDatabase(DataGridViewRow row)
+        {
+            using (MySqlConnection conn = DatabaseHelper.GetConnection())
+            {
+                conn.Open();
+                string query = "DELETE FROM sssgovdues WHERE salary1 = @salary1 AND salary2 = @salary2";
+                using (MySqlCommand command = new MySqlCommand(query, conn))
+                {
+                    command.Parameters.AddWithValue("@salary1", ConvertToDecimal(row.Cells["salary1"].Value));
+                    command.Parameters.AddWithValue("@salary2", ConvertToDecimal(row.Cells["salary2"].Value));
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
         private void save_Click(object sender, EventArgs e)
         {
             // Check if the DataGridView is empty
@@ -125,8 +207,8 @@ namespace JTI_Payroll_System
                             if (!rowHasData) continue;
 
                             string query = @"
-                        INSERT INTO sssgovdues (salary1, salary2, salarycredit, ERShare, ERMPF, ERECC, EEShare, EEMPF)
-                        VALUES (@salary1, @salary2, @salarycredit, @ERShare, @ERMPF, @ERECC, @EEShare, @EEMPF)
+                        INSERT INTO sssgovdues (salary1, salary2, salarycredit, ERShare, ERMPF, ERECC, EEShare, EEMPF, ERTotal, EETotal)
+                        VALUES (@salary1, @salary2, @salarycredit, @ERShare, @ERMPF, @ERECC, @EEShare, @EEMPF, @ERTotal, @EETotal)
                         ON DUPLICATE KEY UPDATE
                             salary2 = VALUES(salary2),
                             salarycredit = VALUES(salarycredit),
@@ -134,7 +216,9 @@ namespace JTI_Payroll_System
                             ERMPF = VALUES(ERMPF),
                             ERECC = VALUES(ERECC),
                             EEShare = VALUES(EEShare),
-                            EEMPF = VALUES(EEMPF)";
+                            EEMPF = VALUES(EEMPF),
+                            ERTotal = VALUES(ERTotal),
+                            EETotal = VALUES(EETotal)";
 
                             using (MySqlCommand command = new MySqlCommand(query, conn, transaction))
                             {
@@ -146,6 +230,8 @@ namespace JTI_Payroll_System
                                 command.Parameters.AddWithValue("@ERECC", ConvertToDecimal(row.Cells["ERECC"].Value));
                                 command.Parameters.AddWithValue("@EEShare", ConvertToDecimal(row.Cells["EEShare"].Value));
                                 command.Parameters.AddWithValue("@EEMPF", ConvertToDecimal(row.Cells["EEMPF"].Value));
+                                command.Parameters.AddWithValue("@ERTotal", ConvertToDecimal(row.Cells["ERTotal"].Value));
+                                command.Parameters.AddWithValue("@EETotal", ConvertToDecimal(row.Cells["EETotal"].Value));
 
                                 command.ExecuteNonQuery();
                             }
@@ -197,13 +283,13 @@ namespace JTI_Payroll_System
                             row.Cells["ERECC"].Value = reader["ERECC"];
                             row.Cells["EEShare"].Value = reader["EEShare"];
                             row.Cells["EEMPF"].Value = reader["EEMPF"];
+                            row.Cells["ERTotal"].Value = reader["ERTotal"];
+                            row.Cells["EETotal"].Value = reader["EETotal"];
                         }
                     }
                 }
             }
         }
-
     }
 }
-
 
