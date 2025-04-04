@@ -483,9 +483,9 @@ namespace JTI_Payroll_System
 
                     // Get the rate configuration for this rate
                     string rateQuery = @"
-                        SELECT * FROM rate 
-                        WHERE defaultrate = @rate 
-                        ORDER BY id DESC LIMIT 1";
+                SELECT * FROM rate 
+                WHERE defaultrate = @rate 
+                ORDER BY id DESC LIMIT 1";
 
                     MySqlCommand rateCmd = new MySqlCommand(rateQuery, conn);
                     rateCmd.Parameters.AddWithValue("@rate", rate);
@@ -659,6 +659,38 @@ namespace JTI_Payroll_System
                             updateCmd.Parameters.AddWithValue("@reliever", isReliever);
 
                             updateCmd.ExecuteNonQuery();
+
+                            // Sum gross pay for reliever and non-reliever days
+                            string sumGrossPayQuery = @"
+                        SELECT SUM(gross_pay) AS total_gross_pay
+                        FROM payroll
+                        WHERE employee_id = @employeeID
+                        AND pay_period_start = @startDate
+                        AND pay_period_end = @endDate";
+
+                            MySqlCommand sumGrossPayCmd = new MySqlCommand(sumGrossPayQuery, conn);
+                            sumGrossPayCmd.Parameters.AddWithValue("@employeeID", employeeID);
+                            sumGrossPayCmd.Parameters.AddWithValue("@startDate", startDate);
+                            sumGrossPayCmd.Parameters.AddWithValue("@endDate", endDate);
+
+                            decimal totalGrossPay = Convert.ToDecimal(sumGrossPayCmd.ExecuteScalar());
+
+                            // Update netpay for non-reliever day
+                            string updateNetPayQuery = @"
+                        UPDATE payroll
+                        SET netpay = @totalGrossPay
+                        WHERE employee_id = @employeeID
+                        AND pay_period_start = @startDate
+                        AND pay_period_end = @endDate
+                        AND reliever = 0";
+
+                            MySqlCommand updateNetPayCmd = new MySqlCommand(updateNetPayQuery, conn);
+                            updateNetPayCmd.Parameters.AddWithValue("@totalGrossPay", totalGrossPay);
+                            updateNetPayCmd.Parameters.AddWithValue("@employeeID", employeeID);
+                            updateNetPayCmd.Parameters.AddWithValue("@startDate", startDate);
+                            updateNetPayCmd.Parameters.AddWithValue("@endDate", endDate);
+
+                            updateNetPayCmd.ExecuteNonQuery();
                         }
                         else
                         {
@@ -673,6 +705,7 @@ namespace JTI_Payroll_System
                 MessageBox.Show("Error calculating payroll amounts: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
 
         private decimal CalculateSSS(decimal grossPay)
         {
