@@ -587,8 +587,11 @@ namespace JTI_Payroll_System
 
                                     grossPay = totalBasicPay + totalOTPay;
 
-                                    // Calculate SSS based on the gross pay
-                                    sss = CalculateSSS(grossPay);
+                                    // Calculate SSS based on the gross pay only if not a reliever
+                                    if (!isReliever)
+                                    {
+                                        sss = CalculateSSS(grossPay);
+                                    }
                                 }
                             }
 
@@ -705,8 +708,6 @@ namespace JTI_Payroll_System
                 MessageBox.Show("Error calculating payroll amounts: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
-
         private decimal CalculateSSS(decimal grossPay)
         {
             decimal sss = 0;
@@ -737,7 +738,6 @@ namespace JTI_Payroll_System
 
             return sss;
         }
-
         private void btnSavePayroll_Click_1(object sender, EventArgs e)
         {
             if (!DateTime.TryParseExact(fromdate.Text, "MM/dd/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime startDate) ||
