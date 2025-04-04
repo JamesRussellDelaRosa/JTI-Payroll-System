@@ -58,12 +58,12 @@ namespace JTI_Payroll_System
                     // Fetch employee IDs with attendance in the given date range
                     List<string> employeeIDs = new List<string>();
                     string query = @"
-        SELECT DISTINCT e.id_no
-        FROM employee e
-        LEFT JOIN processedDTR p ON e.id_no = p.employee_id AND p.date BETWEEN @startDate AND @endDate
-        LEFT JOIN attendance a ON e.id_no = a.id AND a.date BETWEEN @startDate AND @endDate
-        WHERE p.employee_id IS NOT NULL OR a.id IS NOT NULL
-        ORDER BY e.id_no ASC;";
+                        SELECT DISTINCT e.id_no
+                        FROM employee e
+                        LEFT JOIN processedDTR p ON e.id_no = p.employee_id AND p.date BETWEEN @startDate AND @endDate
+                        LEFT JOIN attendance a ON e.id_no = a.id AND a.date BETWEEN @startDate AND @endDate
+                        WHERE p.employee_id IS NOT NULL OR a.id IS NOT NULL
+                        ORDER BY e.id_no ASC;";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
@@ -375,28 +375,28 @@ namespace JTI_Payroll_System
                                 {
                                     // Record does not exist, perform insert
                                     string insertQuery = @"
-                        INSERT INTO payroll (
-                            employee_id, pay_period_start, pay_period_end, total_days, overtime_hours, 
-                            total_earnings, restday_hours, restday_overtime_hours, legal_holiday_hours, 
-                            legal_holiday_overtime_hours, lhrd_hours, lhrd_overtime_hours, special_holiday_hours, 
-                            special_holiday_overtime_hours, special_holiday_restday_hours, special_holiday_restday_overtime_hours, 
-                            nd_hrs, ndot_hrs, ndrd_hrs, ndrdot_hrs, ndsh_hrs, ndshot_hrs, ndshrd_hrs, ndshrdot_hrs, 
-                            ndlh_hrs, ndlhot_hrs, ndlhrd_hrs, ndlhrdot_hrs, month, payrollyear, control_period, 
-                            td_ut, working_hours, legal_holiday_count, non_working_day_count, rate, reliever
-                        )
-                        VALUES (
-                            @employeeID, @startDate, @endDate, @totalDays, @overtimeHours, 
-                            @totalEarnings, @restdayHours, @restdayOvertimeHours, @legalHolidayHours, 
-                            @legalHolidayOvertimeHours, @lhrdHours, @lhrdOvertimeHours, @specialHolidayHours, 
-                            @specialHolidayOvertimeHours, @specialHolidayRestDayHours, @specialHolidayRestDayOvertimeHours, 
-                            @nightDifferentialHours, @nightDifferentialOtHours, @nightDifferentialRestDayHours, @nightDifferentialRestDayOtHours, 
-                            @nightDifferentialSpecialHolidayHours, @nightDifferentialSpecialHolidayOtHours, 
-                            @nightDifferentialSpecialHolidayRestDayHours, @nightDifferentialSpecialHolidayRestDayOtHours, 
-                            @nightDifferentialLegalHolidayHours, @nightDifferentialLegalHolidayOtHours, 
-                            @nightDifferentialLegalHolidayRestDayHours, @nightDifferentialLegalHolidayRestDayOtHours, 
-                            @month, @payrollyear, @controlPeriod, @totalTardinessUndertime, @totalWorkingHours,
-                            @legalHolidayCount, @nonWorkingDayCount, @rate, @reliever
-                        )";
+                                        INSERT INTO payroll (
+                                            employee_id, pay_period_start, pay_period_end, total_days, overtime_hours, 
+                                            total_earnings, restday_hours, restday_overtime_hours, legal_holiday_hours, 
+                                            legal_holiday_overtime_hours, lhrd_hours, lhrd_overtime_hours, special_holiday_hours, 
+                                            special_holiday_overtime_hours, special_holiday_restday_hours, special_holiday_restday_overtime_hours, 
+                                            nd_hrs, ndot_hrs, ndrd_hrs, ndrdot_hrs, ndsh_hrs, ndshot_hrs, ndshrd_hrs, ndshrdot_hrs, 
+                                            ndlh_hrs, ndlhot_hrs, ndlhrd_hrs, ndlhrdot_hrs, month, payrollyear, control_period, 
+                                            td_ut, working_hours, legal_holiday_count, non_working_day_count, rate, reliever, SSS
+                                        )
+                                        VALUES (
+                                            @employeeID, @startDate, @endDate, @totalDays, @overtimeHours, 
+                                            @totalEarnings, @restdayHours, @restdayOvertimeHours, @legalHolidayHours, 
+                                            @legalHolidayOvertimeHours, @lhrdHours, @lhrdOvertimeHours, @specialHolidayHours, 
+                                            @specialHolidayOvertimeHours, @specialHolidayRestDayHours, @specialHolidayRestDayOvertimeHours, 
+                                            @nightDifferentialHours, @nightDifferentialOtHours, @nightDifferentialRestDayHours, @nightDifferentialRestDayOtHours, 
+                                            @nightDifferentialSpecialHolidayHours, @nightDifferentialSpecialHolidayOtHours, 
+                                            @nightDifferentialSpecialHolidayRestDayHours, @nightDifferentialSpecialHolidayRestDayOtHours, 
+                                            @nightDifferentialLegalHolidayHours, @nightDifferentialLegalHolidayOtHours, 
+                                            @nightDifferentialLegalHolidayRestDayHours, @nightDifferentialLegalHolidayRestDayOtHours, 
+                                            @month, @payrollyear, @controlPeriod, @totalTardinessUndertime, @totalWorkingHours,
+                                            @legalHolidayCount, @nonWorkingDayCount, @rate, @reliever, @sss
+                                        )";
 
                                     using (MySqlCommand insertCmd = new MySqlCommand(insertQuery, conn))
                                     {
@@ -437,6 +437,7 @@ namespace JTI_Payroll_System
                                         insertCmd.Parameters.AddWithValue("@nonWorkingDayCount", nonWorkingDayCount);
                                         insertCmd.Parameters.AddWithValue("@rate", rate);
                                         insertCmd.Parameters.AddWithValue("@reliever", isReliever);
+                                        insertCmd.Parameters.AddWithValue("@sss", 0); // Initial value, will be updated by CalculatePayrollAmounts
 
                                         insertCmd.ExecuteNonQuery();
                                     }
@@ -482,9 +483,9 @@ namespace JTI_Payroll_System
 
                     // Get the rate configuration for this rate
                     string rateQuery = @"
-                SELECT * FROM rate 
-                WHERE defaultrate = @rate 
-                ORDER BY id DESC LIMIT 1";
+                        SELECT * FROM rate 
+                        WHERE defaultrate = @rate 
+                        ORDER BY id DESC LIMIT 1";
 
                     MySqlCommand rateCmd = new MySqlCommand(rateQuery, conn);
                     rateCmd.Parameters.AddWithValue("@rate", rate);
@@ -495,6 +496,7 @@ namespace JTI_Payroll_System
                     decimal ndpay = 0, ndotpay = 0, ndrdpay = 0, ndshpay = 0, ndshrdpay = 0;
                     decimal ndlhpay = 0, ndlhrdpay = 0;
                     decimal totalBasicPay = 0, totalOTPay = 0, grossPay = 0;
+                    decimal sss = 0;
 
                     using (MySqlDataReader rateReader = rateCmd.ExecuteReader())
                     {
@@ -584,6 +586,9 @@ namespace JTI_Payroll_System
                                                 ndpay + ndotpay + ndrdpay + ndshpay + ndshrdpay + ndlhpay + ndlhrdpay;
 
                                     grossPay = totalBasicPay + totalOTPay;
+
+                                    // Calculate SSS based on the gross pay
+                                    sss = CalculateSSS(grossPay);
                                 }
                             }
 
@@ -613,7 +618,8 @@ namespace JTI_Payroll_System
                             ndlhrdpay = @ndlhrdpay,
                             total_basic_pay = @totalBasicPay,
                             total_ot_pay = @totalOTPay,
-                            gross_pay = @grossPay
+                            gross_pay = @grossPay,
+                            SSS = @sss
                         WHERE employee_id = @employeeID 
                         AND pay_period_start = @startDate 
                         AND pay_period_end = @endDate
@@ -645,6 +651,7 @@ namespace JTI_Payroll_System
                             updateCmd.Parameters.AddWithValue("@totalBasicPay", totalBasicPay);
                             updateCmd.Parameters.AddWithValue("@totalOTPay", totalOTPay);
                             updateCmd.Parameters.AddWithValue("@grossPay", grossPay);
+                            updateCmd.Parameters.AddWithValue("@sss", sss);
                             updateCmd.Parameters.AddWithValue("@employeeID", employeeID);
                             updateCmd.Parameters.AddWithValue("@startDate", startDate);
                             updateCmd.Parameters.AddWithValue("@endDate", endDate);
@@ -665,6 +672,37 @@ namespace JTI_Payroll_System
             {
                 MessageBox.Show("Error calculating payroll amounts: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private decimal CalculateSSS(decimal grossPay)
+        {
+            decimal sss = 0;
+
+            using (MySqlConnection conn = DatabaseHelper.GetConnection())
+            {
+                conn.Open();
+                string query = "SELECT salary1, salary2, EETotal FROM sssgovdues";
+                using (MySqlCommand command = new MySqlCommand(query, conn))
+                {
+                    using (MySqlDataReader reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            decimal salary1 = reader.GetDecimal("salary1");
+                            decimal salary2 = reader.GetDecimal("salary2");
+                            decimal eeTotal = reader.GetDecimal("EETotal");
+
+                            if (grossPay >= salary1 && grossPay <= salary2)
+                            {
+                                sss = eeTotal;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return sss;
         }
 
         private void btnSavePayroll_Click_1(object sender, EventArgs e)

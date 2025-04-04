@@ -330,5 +330,11 @@ namespace JTI_Payroll_System
             sssgovdues sssgovduesForm = new sssgovdues();
             sssgovduesForm.Show();
         }
+
+        private void ssstest_Click(object sender, EventArgs e)
+        {
+            SSSTEST SSSTESTForm = new SSSTEST();
+            SSSTESTForm.Show();
+        }
     }
 }

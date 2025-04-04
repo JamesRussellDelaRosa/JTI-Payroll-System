@@ -44,6 +44,7 @@
             btnpayrollpost = new Button();
             rateConfig = new Button();
             sssgovdues = new Button();
+            ssstest = new Button();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             SuspendLayout();
             // 
@@ -201,11 +202,22 @@
             sssgovdues.UseVisualStyleBackColor = true;
             sssgovdues.Click += sssgovdues_Click;
             // 
+            // ssstest
+            // 
+            ssstest.Location = new Point(615, 380);
+            ssstest.Name = "ssstest";
+            ssstest.Size = new Size(94, 29);
+            ssstest.TabIndex = 17;
+            ssstest.Text = "SSSTEST";
+            ssstest.UseVisualStyleBackColor = true;
+            ssstest.Click += ssstest_Click;
+            // 
             // Admin
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 451);
+            Controls.Add(ssstest);
             Controls.Add(sssgovdues);
             Controls.Add(rateConfig);
             Controls.Add(btnpayrollpost);
@@ -246,5 +258,6 @@
         private Button btnpayrollpost;
         private Button rateConfig;
         private Button sssgovdues;
+        private Button ssstest;
     }
 }
