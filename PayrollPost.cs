@@ -382,7 +382,7 @@ namespace JTI_Payroll_System
                                             special_holiday_overtime_hours, special_holiday_restday_hours, special_holiday_restday_overtime_hours, 
                                             nd_hrs, ndot_hrs, ndrd_hrs, ndrdot_hrs, ndsh_hrs, ndshot_hrs, ndshrd_hrs, ndshrdot_hrs, 
                                             ndlh_hrs, ndlhot_hrs, ndlhrd_hrs, ndlhrdot_hrs, month, payrollyear, control_period, 
-                                            td_ut, working_hours, legal_holiday_count, non_working_day_count, rate, reliever, SSS
+                                            td_ut, working_hours, legal_holiday_count, non_working_day_count, rate, reliever, SSS, philhealth, hdmf
                                         )
                                         VALUES (
                                             @employeeID, @startDate, @endDate, @totalDays, @overtimeHours, 
@@ -395,8 +395,9 @@ namespace JTI_Payroll_System
                                             @nightDifferentialLegalHolidayHours, @nightDifferentialLegalHolidayOtHours, 
                                             @nightDifferentialLegalHolidayRestDayHours, @nightDifferentialLegalHolidayRestDayOtHours, 
                                             @month, @payrollyear, @controlPeriod, @totalTardinessUndertime, @totalWorkingHours,
-                                            @legalHolidayCount, @nonWorkingDayCount, @rate, @reliever, @sss
+                                            @legalHolidayCount, @nonWorkingDayCount, @rate, @reliever, @sss, @philhealth, @hdmf
                                         )";
+
 
                                     using (MySqlCommand insertCmd = new MySqlCommand(insertQuery, conn))
                                     {
@@ -438,6 +439,9 @@ namespace JTI_Payroll_System
                                         insertCmd.Parameters.AddWithValue("@rate", rate);
                                         insertCmd.Parameters.AddWithValue("@reliever", isReliever);
                                         insertCmd.Parameters.AddWithValue("@sss", 0); // Initial value, will be updated by CalculatePayrollAmounts
+                                        insertCmd.Parameters.AddWithValue("@philhealth", 0); // Initial value, will be updated by CalculatePayrollAmounts
+                                        insertCmd.Parameters.AddWithValue("@hdmf", 0); // Initial value, will be updated by CalculatePayrollAmounts
+
 
                                         insertCmd.ExecuteNonQuery();
                                     }
@@ -496,7 +500,9 @@ namespace JTI_Payroll_System
                     decimal ndpay = 0, ndotpay = 0, ndrdpay = 0, ndshpay = 0, ndshrdpay = 0;
                     decimal ndlhpay = 0, ndlhrdpay = 0;
                     decimal totalBasicPay = 0, totalOTPay = 0, grossPay = 0;
-                    decimal sss = 0, philhealth = 0;
+                    decimal sss = 0, philhealth = 0, hdmf = 0;
+                    int controlPeriod = 0;
+                    int month = 0, payrollyear = 0;
 
                     using (MySqlDataReader rateReader = rateCmd.ExecuteReader())
                     {
@@ -554,7 +560,9 @@ namespace JTI_Payroll_System
                                     decimal ndshrd_hrs = payrollReader.GetDecimal("ndshrd_hrs");
                                     decimal ndlh_hrs = payrollReader.GetDecimal("ndlh_hrs");
                                     decimal ndlhrd_hrs = payrollReader.GetDecimal("ndlhrd_hrs");
-                                    int controlPeriod = payrollReader.GetInt32("control_period");
+                                    controlPeriod = payrollReader.GetInt32("control_period");
+                                    month = payrollReader.GetInt32("month");
+                                    payrollyear = payrollReader.GetInt32("payrollyear");
 
                                     // Calculate pay amounts
                                     basicpay = total_days * basic;
@@ -603,6 +611,21 @@ namespace JTI_Payroll_System
                                     {
                                         philhealth = 0; // Set to zero for relievers or when control period is not 1
                                     }
+
+                                    // Calculate HDMF (Pag-IBIG)
+                                    if (!isReliever)
+                                    {
+                                        if (controlPeriod == 1)
+                                        {
+                                            // For the first half, use the formula
+                                            hdmf = totalBasicPay >= 10000 ? 200 : (totalBasicPay * 0.02m);
+                                        }
+                                        else if (controlPeriod == 2)
+                                        {
+                                            // For the second half, calculate the difference
+                                            hdmf = CalculateSecondHalfHDMF(employeeID, month, payrollyear, totalBasicPay);
+                                        }
+                                    }
                                 }
                             }
 
@@ -634,7 +657,8 @@ namespace JTI_Payroll_System
                             total_ot_pay = @totalOTPay,
                             gross_pay = @grossPay,
                             SSS = @sss,
-                            philhealth = @philhealth
+                            philhealth = @philhealth,
+                            hdmf = @hdmf
                         WHERE employee_id = @employeeID 
                         AND pay_period_start = @startDate 
                         AND pay_period_end = @endDate
@@ -668,6 +692,7 @@ namespace JTI_Payroll_System
                             updateCmd.Parameters.AddWithValue("@grossPay", grossPay);
                             updateCmd.Parameters.AddWithValue("@sss", sss);
                             updateCmd.Parameters.AddWithValue("@philhealth", philhealth);
+                            updateCmd.Parameters.AddWithValue("@hdmf", hdmf);
                             updateCmd.Parameters.AddWithValue("@employeeID", employeeID);
                             updateCmd.Parameters.AddWithValue("@startDate", startDate);
                             updateCmd.Parameters.AddWithValue("@endDate", endDate);
@@ -720,6 +745,61 @@ namespace JTI_Payroll_System
             {
                 MessageBox.Show("Error calculating payroll amounts: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+        private decimal CalculateSecondHalfHDMF(string employeeID, int month, int payrollyear, decimal currentBasicPay)
+        {
+            decimal hdmf = 0;
+            decimal firstHalfHDMF = 0;
+
+            try
+            {
+                using (MySqlConnection conn = DatabaseHelper.GetConnection())
+                {
+                    conn.Open();
+
+                    // First get the first half's HDMF amount
+                    string firstHalfQuery = @"
+                SELECT hdmf
+                FROM payroll
+                WHERE employee_id = @employeeID
+                AND month = @month
+                AND payrollyear = @payrollyear
+                AND control_period = 1
+                AND reliever = 0";
+
+                    using (MySqlCommand cmd = new MySqlCommand(firstHalfQuery, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@employeeID", employeeID);
+                        cmd.Parameters.AddWithValue("@month", month);
+                        cmd.Parameters.AddWithValue("@payrollyear", payrollyear);
+
+                        using (MySqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                firstHalfHDMF = reader.GetDecimal("hdmf");
+
+                                // Simple calculation: 2nd half hdmf = 200 - 1st half hdmf
+                                hdmf = 200 - firstHalfHDMF;
+
+                                // Ensure we don't have negative HDMF
+                                if (hdmf < 0) hdmf = 0;
+                            }
+                            else
+                            {
+                                // If no first half record found, calculate based on current basic pay
+                                hdmf = currentBasicPay >= 10000 ? 200 : (currentBasicPay * 0.02m);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error calculating HDMF for second half: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
+            return hdmf;
         }
         private decimal CalculateSSS(decimal grossPay)
         {
