@@ -496,7 +496,7 @@ namespace JTI_Payroll_System
                     decimal ndpay = 0, ndotpay = 0, ndrdpay = 0, ndshpay = 0, ndshrdpay = 0;
                     decimal ndlhpay = 0, ndlhrdpay = 0;
                     decimal totalBasicPay = 0, totalOTPay = 0, grossPay = 0;
-                    decimal sss = 0;
+                    decimal sss = 0, philhealth = 0;
 
                     using (MySqlDataReader rateReader = rateCmd.ExecuteReader())
                     {
@@ -554,6 +554,7 @@ namespace JTI_Payroll_System
                                     decimal ndshrd_hrs = payrollReader.GetDecimal("ndshrd_hrs");
                                     decimal ndlh_hrs = payrollReader.GetDecimal("ndlh_hrs");
                                     decimal ndlhrd_hrs = payrollReader.GetDecimal("ndlhrd_hrs");
+                                    int controlPeriod = payrollReader.GetInt32("control_period");
 
                                     // Calculate pay amounts
                                     basicpay = total_days * basic;
@@ -592,6 +593,16 @@ namespace JTI_Payroll_System
                                     {
                                         sss = CalculateSSS(grossPay);
                                     }
+
+                                    // Calculate PhilHealth based on the rate and control period only if not a reliever
+                                    if (controlPeriod == 1 && !isReliever)
+                                    {
+                                        philhealth = rate * 313 / 12 * 0.05m / 2;
+                                    }
+                                    else
+                                    {
+                                        philhealth = 0; // Set to zero for relievers or when control period is not 1
+                                    }
                                 }
                             }
 
@@ -622,7 +633,8 @@ namespace JTI_Payroll_System
                             total_basic_pay = @totalBasicPay,
                             total_ot_pay = @totalOTPay,
                             gross_pay = @grossPay,
-                            SSS = @sss
+                            SSS = @sss,
+                            philhealth = @philhealth
                         WHERE employee_id = @employeeID 
                         AND pay_period_start = @startDate 
                         AND pay_period_end = @endDate
@@ -655,6 +667,7 @@ namespace JTI_Payroll_System
                             updateCmd.Parameters.AddWithValue("@totalOTPay", totalOTPay);
                             updateCmd.Parameters.AddWithValue("@grossPay", grossPay);
                             updateCmd.Parameters.AddWithValue("@sss", sss);
+                            updateCmd.Parameters.AddWithValue("@philhealth", philhealth);
                             updateCmd.Parameters.AddWithValue("@employeeID", employeeID);
                             updateCmd.Parameters.AddWithValue("@startDate", startDate);
                             updateCmd.Parameters.AddWithValue("@endDate", endDate);
