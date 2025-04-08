@@ -45,6 +45,8 @@
             rateConfig = new Button();
             sssgovdues = new Button();
             ssstest = new Button();
+            sssloan = new Button();
+            hdmfloan = new Button();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             SuspendLayout();
             // 
@@ -212,11 +214,33 @@
             ssstest.UseVisualStyleBackColor = true;
             ssstest.Click += ssstest_Click;
             // 
+            // sssloan
+            // 
+            sssloan.Location = new Point(715, 315);
+            sssloan.Name = "sssloan";
+            sssloan.Size = new Size(94, 29);
+            sssloan.TabIndex = 18;
+            sssloan.Text = "SSS LOAN";
+            sssloan.UseVisualStyleBackColor = true;
+            sssloan.Click += sssloan_Click;
+            // 
+            // hdmfloan
+            // 
+            hdmfloan.Location = new Point(715, 381);
+            hdmfloan.Name = "hdmfloan";
+            hdmfloan.Size = new Size(119, 29);
+            hdmfloan.TabIndex = 19;
+            hdmfloan.Text = "HDMF LOAN";
+            hdmfloan.UseVisualStyleBackColor = true;
+            hdmfloan.Click += hdmfloan_Click;
+            // 
             // Admin
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(800, 451);
+            ClientSize = new Size(976, 439);
+            Controls.Add(hdmfloan);
+            Controls.Add(sssloan);
             Controls.Add(ssstest);
             Controls.Add(sssgovdues);
             Controls.Add(rateConfig);
@@ -259,5 +283,7 @@
         private Button rateConfig;
         private Button sssgovdues;
         private Button ssstest;
+        private Button sssloan;
+        private Button hdmfloan;
     }
 }

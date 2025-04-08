@@ -336,5 +336,17 @@ namespace JTI_Payroll_System
             SSSTEST SSSTESTForm = new SSSTEST();
             SSSTESTForm.Show();
         }
+
+        private void sssloan_Click(object sender, EventArgs e)
+        {
+            SSSLOAN SSSLOANForm = new SSSLOAN();
+            SSSLOANForm.Show();
+        }
+
+        private void hdmfloan_Click(object sender, EventArgs e)
+        {
+            HDMFLOAN HDMFLOANForm = new HDMFLOAN();
+            HDMFLOANForm.Show();
+        }
     }
 }
