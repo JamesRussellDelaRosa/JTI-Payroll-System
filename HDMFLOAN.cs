@@ -153,7 +153,7 @@ namespace JTI_Payroll_System
                 try
                 {
                     connection.Open();
-                    string query = "INSERT INTO hdmf (employee_id, loan_date, loan_amount, monthly_amortization, deduction_pay, first_collection, last_collection) " +
+                    string query = "INSERT INTO hdmfloan (employee_id, loan_date, loan_amount, monthly_amortization, deduction_pay, first_collection, last_collection) " +
                                 "VALUES (@employee_id, @loan_date, @loan_amount, @monthly_amortization, @deduction_pay, @first_collection, @last_collection)";
                     using (MySqlCommand command = new MySqlCommand(query, connection))
                     {
