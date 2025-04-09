@@ -29,12 +29,12 @@
         private void InitializeComponent()
         {
             flowLayoutPanel1 = new FlowLayoutPanel();
-            textBox1 = new TextBox();
-            textBox2 = new TextBox();
-            textBox3 = new TextBox();
-            textBox4 = new TextBox();
-            textBox5 = new TextBox();
-            textBox6 = new TextBox();
+            loandate = new TextBox();
+            loanamt = new TextBox();
+            monthamort = new TextBox();
+            deductpay = new TextBox();
+            firstcollect = new TextBox();
+            lastcollect = new TextBox();
             label1 = new Label();
             label2 = new Label();
             label3 = new Label();
@@ -58,47 +58,50 @@
             flowLayoutPanel1.Size = new Size(736, 405);
             flowLayoutPanel1.TabIndex = 0;
             // 
-            // textBox1
+            // loandate
             // 
-            textBox1.Location = new Point(1210, 65);
-            textBox1.Name = "textBox1";
-            textBox1.Size = new Size(125, 27);
-            textBox1.TabIndex = 1;
+            loandate.Location = new Point(1210, 65);
+            loandate.Name = "loandate";
+            loandate.PlaceholderText = "MM/DD/YYYY";
+            loandate.Size = new Size(125, 27);
+            loandate.TabIndex = 1;
             // 
-            // textBox2
+            // loanamt
             // 
-            textBox2.Location = new Point(1210, 98);
-            textBox2.Name = "textBox2";
-            textBox2.Size = new Size(125, 27);
-            textBox2.TabIndex = 2;
+            loanamt.Location = new Point(1210, 98);
+            loanamt.Name = "loanamt";
+            loanamt.Size = new Size(125, 27);
+            loanamt.TabIndex = 2;
             // 
-            // textBox3
+            // monthamort
             // 
-            textBox3.Location = new Point(1210, 131);
-            textBox3.Name = "textBox3";
-            textBox3.Size = new Size(125, 27);
-            textBox3.TabIndex = 3;
+            monthamort.Location = new Point(1210, 131);
+            monthamort.Name = "monthamort";
+            monthamort.Size = new Size(125, 27);
+            monthamort.TabIndex = 3;
             // 
-            // textBox4
+            // deductpay
             // 
-            textBox4.Location = new Point(1210, 164);
-            textBox4.Name = "textBox4";
-            textBox4.Size = new Size(125, 27);
-            textBox4.TabIndex = 4;
+            deductpay.Location = new Point(1210, 164);
+            deductpay.Name = "deductpay";
+            deductpay.Size = new Size(125, 27);
+            deductpay.TabIndex = 4;
             // 
-            // textBox5
+            // firstcollect
             // 
-            textBox5.Location = new Point(1210, 197);
-            textBox5.Name = "textBox5";
-            textBox5.Size = new Size(125, 27);
-            textBox5.TabIndex = 5;
+            firstcollect.Location = new Point(1210, 197);
+            firstcollect.Name = "firstcollect";
+            firstcollect.PlaceholderText = "MM/DD/YYYY";
+            firstcollect.Size = new Size(125, 27);
+            firstcollect.TabIndex = 5;
             // 
-            // textBox6
+            // lastcollect
             // 
-            textBox6.Location = new Point(1210, 230);
-            textBox6.Name = "textBox6";
-            textBox6.Size = new Size(125, 27);
-            textBox6.TabIndex = 6;
+            lastcollect.Location = new Point(1210, 230);
+            lastcollect.Name = "lastcollect";
+            lastcollect.PlaceholderText = "MM/DD/YYYY";
+            lastcollect.Size = new Size(125, 27);
+            lastcollect.TabIndex = 6;
             // 
             // label1
             // 
@@ -180,6 +183,7 @@
             save.TabIndex = 15;
             save.Text = "Save";
             save.UseVisualStyleBackColor = true;
+            save.Click += save_Click;
             // 
             // cancel
             // 
@@ -225,12 +229,12 @@
             Controls.Add(label3);
             Controls.Add(label2);
             Controls.Add(label1);
-            Controls.Add(textBox6);
-            Controls.Add(textBox5);
-            Controls.Add(textBox4);
-            Controls.Add(textBox3);
-            Controls.Add(textBox2);
-            Controls.Add(textBox1);
+            Controls.Add(lastcollect);
+            Controls.Add(firstcollect);
+            Controls.Add(deductpay);
+            Controls.Add(monthamort);
+            Controls.Add(loanamt);
+            Controls.Add(loandate);
             Controls.Add(flowLayoutPanel1);
             Name = "HDMFLOAN";
             Text = "HDMFLOAN";
@@ -241,12 +245,12 @@
         #endregion
 
         private FlowLayoutPanel flowLayoutPanel1;
-        private TextBox textBox1;
-        private TextBox textBox2;
-        private TextBox textBox3;
-        private TextBox textBox4;
-        private TextBox textBox5;
-        private TextBox textBox6;
+        private TextBox loandate;
+        private TextBox loanamt;
+        private TextBox monthamort;
+        private TextBox deductpay;
+        private TextBox firstcollect;
+        private TextBox lastcollect;
         private Label label1;
         private Label label2;
         private Label label3;

@@ -8,6 +8,8 @@ namespace JTI_Payroll_System
 {
     public partial class HDMFLOAN : Form
     {
+        private string selectedEmployeeId; // To store the selected employee's ID
+
         public HDMFLOAN()
         {
             InitializeComponent();
@@ -113,7 +115,67 @@ namespace JTI_Payroll_System
             }
         }
 
-        // Event handler for label clicks
+        private void save_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrEmpty(selectedEmployeeId))
+            {
+                MessageBox.Show("Please select an employee first.");
+                return;
+            }
+
+            MessageBox.Show($"Selected Employee ID: {selectedEmployeeId}"); // Debugging log
+
+            // Validate and parse date fields
+            if (!DateTime.TryParse(loandate.Text, out DateTime loanDate))
+            {
+                MessageBox.Show("Please enter a valid Loan Date.");
+                return;
+            }
+
+            if (!DateTime.TryParse(firstcollect.Text, out DateTime firstCollection))
+            {
+                MessageBox.Show("Please enter a valid First Collection Date.");
+                return;
+            }
+
+            if (!DateTime.TryParse(lastcollect.Text, out DateTime lastCollection))
+            {
+                MessageBox.Show("Please enter a valid Last Collection Date.");
+                return;
+            }
+
+            string loanAmount = loanamt.Text;
+            string monthlyAmortization = monthamort.Text;
+            string deductionPay = deductpay.Text;
+
+            using (MySqlConnection connection = DatabaseHelper.GetConnection())
+            {
+                try
+                {
+                    connection.Open();
+                    string query = "INSERT INTO hdmf (employee_id, loan_date, loan_amount, monthly_amortization, deduction_pay, first_collection, last_collection) " +
+                                "VALUES (@employee_id, @loan_date, @loan_amount, @monthly_amortization, @deduction_pay, @first_collection, @last_collection)";
+                    using (MySqlCommand command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@employee_id", selectedEmployeeId);
+                        command.Parameters.AddWithValue("@loan_date", loanDate.ToString("yyyy-MM-dd")); // Format as YYYY-MM-DD
+                        command.Parameters.AddWithValue("@loan_amount", loanAmount);
+                        command.Parameters.AddWithValue("@monthly_amortization", monthlyAmortization);
+                        command.Parameters.AddWithValue("@deduction_pay", deductionPay);
+                        command.Parameters.AddWithValue("@first_collection", firstCollection.ToString("yyyy-MM-dd")); // Format as YYYY-MM-DD
+                        command.Parameters.AddWithValue("@last_collection", lastCollection.ToString("yyyy-MM-dd")); // Format as YYYY-MM-DD
+
+                        command.ExecuteNonQuery();
+                        MessageBox.Show("HDMF Loan saved successfully.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"An error occurred: {ex.Message}");
+                }
+            }
+        }
+
         private void Label_Click(object sender, EventArgs e)
         {
             // Reset the background color of all panels
@@ -135,12 +197,19 @@ namespace JTI_Payroll_System
 
                 // Set empid and empname fields
                 var employeeData = (dynamic)parentPanel.Tag;
-                empid.Text = employeeData.Id;
-                empname.Text = employeeData.Name;
+                if (employeeData != null)
+                {
+                    selectedEmployeeId = employeeData.Id; // Set the selected employee ID
+                    empid.Text = $"ID NO.: {employeeData.Id}";
+                    empname.Text = $"EMPLOYEE NAME: {employeeData.Name}";
+                }
+                else
+                {
+                    MessageBox.Show("Employee data is missing in the label's parent panel's Tag property.");
+                }
             }
         }
 
-        // Event handler for panel clicks
         private void Panel_Click(object sender, EventArgs e)
         {
             // Reset the background color of all panels
@@ -162,8 +231,16 @@ namespace JTI_Payroll_System
 
                 // Set empid and empname fields
                 var employeeData = (dynamic)clickedPanel.Tag;
-                empid.Text = employeeData.Id;
-                empname.Text = employeeData.Name;
+                if (employeeData != null)
+                {
+                    selectedEmployeeId = employeeData.Id; // Set the selected employee ID
+                    empid.Text = $"ID NO.: {employeeData.Id}";
+                    empname.Text = $"EMPLOYEE NAME: {employeeData.Name}";
+                }
+                else
+                {
+                    MessageBox.Show("Employee data is missing in the panel's Tag property.");
+                }
             }
         }
 
