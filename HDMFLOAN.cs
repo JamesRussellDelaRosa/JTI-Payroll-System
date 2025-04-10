@@ -123,8 +123,6 @@ namespace JTI_Payroll_System
                 return;
             }
 
-            MessageBox.Show($"Selected Employee ID: {selectedEmployeeId}"); // Debugging log
-
             // Validate and parse date fields
             if (!DateTime.TryParse(loandate.Text, out DateTime loanDate))
             {
@@ -153,20 +151,54 @@ namespace JTI_Payroll_System
                 try
                 {
                     connection.Open();
-                    string query = "INSERT INTO hdmfloan (employee_id, loan_date, loan_amount, monthly_amortization, deduction_pay, first_collection, last_collection) " +
-                                "VALUES (@employee_id, @loan_date, @loan_amount, @monthly_amortization, @deduction_pay, @first_collection, @last_collection)";
-                    using (MySqlCommand command = new MySqlCommand(query, connection))
-                    {
-                        command.Parameters.AddWithValue("@employee_id", selectedEmployeeId);
-                        command.Parameters.AddWithValue("@loan_date", loanDate.ToString("yyyy-MM-dd")); // Format as YYYY-MM-DD
-                        command.Parameters.AddWithValue("@loan_amount", loanAmount);
-                        command.Parameters.AddWithValue("@monthly_amortization", monthlyAmortization);
-                        command.Parameters.AddWithValue("@deduction_pay", deductionPay);
-                        command.Parameters.AddWithValue("@first_collection", firstCollection.ToString("yyyy-MM-dd")); // Format as YYYY-MM-DD
-                        command.Parameters.AddWithValue("@last_collection", lastCollection.ToString("yyyy-MM-dd")); // Format as YYYY-MM-DD
 
-                        command.ExecuteNonQuery();
-                        MessageBox.Show("HDMF Loan saved successfully.");
+                    // Check if a record already exists for the selected employee
+                    string checkQuery = "SELECT COUNT(*) FROM hdmfloan WHERE employee_id = @employee_id";
+                    using (MySqlCommand checkCommand = new MySqlCommand(checkQuery, connection))
+                    {
+                        checkCommand.Parameters.AddWithValue("@employee_id", selectedEmployeeId);
+                        int recordCount = Convert.ToInt32(checkCommand.ExecuteScalar());
+
+                        if (recordCount > 0)
+                        {
+                            // Update existing record
+                            string updateQuery = "UPDATE hdmfloan SET loan_date = @loan_date, loan_amount = @loan_amount, " +
+                                                 "monthly_amortization = @monthly_amortization, deduction_pay = @deduction_pay, " +
+                                                 "first_collection = @first_collection, last_collection = @last_collection " +
+                                                 "WHERE employee_id = @employee_id";
+                            using (MySqlCommand updateCommand = new MySqlCommand(updateQuery, connection))
+                            {
+                                updateCommand.Parameters.AddWithValue("@employee_id", selectedEmployeeId);
+                                updateCommand.Parameters.AddWithValue("@loan_date", loanDate.ToString("yyyy-MM-dd"));
+                                updateCommand.Parameters.AddWithValue("@loan_amount", loanAmount);
+                                updateCommand.Parameters.AddWithValue("@monthly_amortization", monthlyAmortization);
+                                updateCommand.Parameters.AddWithValue("@deduction_pay", deductionPay);
+                                updateCommand.Parameters.AddWithValue("@first_collection", firstCollection.ToString("yyyy-MM-dd"));
+                                updateCommand.Parameters.AddWithValue("@last_collection", lastCollection.ToString("yyyy-MM-dd"));
+
+                                updateCommand.ExecuteNonQuery();
+                                MessageBox.Show("HDMF Loan updated successfully.");
+                            }
+                        }
+                        else
+                        {
+                            // Insert new record
+                            string insertQuery = "INSERT INTO hdmfloan (employee_id, loan_date, loan_amount, monthly_amortization, deduction_pay, first_collection, last_collection) " +
+                                                 "VALUES (@employee_id, @loan_date, @loan_amount, @monthly_amortization, @deduction_pay, @first_collection, @last_collection)";
+                            using (MySqlCommand insertCommand = new MySqlCommand(insertQuery, connection))
+                            {
+                                insertCommand.Parameters.AddWithValue("@employee_id", selectedEmployeeId);
+                                insertCommand.Parameters.AddWithValue("@loan_date", loanDate.ToString("yyyy-MM-dd"));
+                                insertCommand.Parameters.AddWithValue("@loan_amount", loanAmount);
+                                insertCommand.Parameters.AddWithValue("@monthly_amortization", monthlyAmortization);
+                                insertCommand.Parameters.AddWithValue("@deduction_pay", deductionPay);
+                                insertCommand.Parameters.AddWithValue("@first_collection", firstCollection.ToString("yyyy-MM-dd"));
+                                insertCommand.Parameters.AddWithValue("@last_collection", lastCollection.ToString("yyyy-MM-dd"));
+
+                                insertCommand.ExecuteNonQuery();
+                                MessageBox.Show("HDMF Loan saved successfully.");
+                            }
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -202,6 +234,9 @@ namespace JTI_Payroll_System
                     selectedEmployeeId = employeeData.Id; // Set the selected employee ID
                     empid.Text = $"ID NO.: {employeeData.Id}";
                     empname.Text = $"EMPLOYEE NAME: {employeeData.Name}";
+
+                    // Load saved data for the selected employee
+                    LoadEmployeeData(selectedEmployeeId);
                 }
                 else
                 {
@@ -236,10 +271,117 @@ namespace JTI_Payroll_System
                     selectedEmployeeId = employeeData.Id; // Set the selected employee ID
                     empid.Text = $"ID NO.: {employeeData.Id}";
                     empname.Text = $"EMPLOYEE NAME: {employeeData.Name}";
+
+                    // Load saved data for the selected employee
+                    LoadEmployeeData(selectedEmployeeId);
                 }
                 else
                 {
                     MessageBox.Show("Employee data is missing in the panel's Tag property.");
+                }
+            }
+        }
+
+        private void LoadEmployeeData(string employeeId)
+        {
+            try
+            {
+                using (MySqlConnection connection = DatabaseHelper.GetConnection())
+                {
+                    connection.Open();
+                    string query = "SELECT loan_date, loan_amount, monthly_amortization, deduction_pay, first_collection, last_collection " +
+                                   "FROM hdmfloan WHERE employee_id = @employee_id";
+                    using (MySqlCommand command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@employee_id", employeeId);
+
+                        using (MySqlDataReader reader = command.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                // Populate textboxes with the retrieved data
+                                loandate.Text = Convert.ToDateTime(reader["loan_date"]).ToString("MM/dd/yyyy");
+                                loanamt.Text = reader["loan_amount"].ToString();
+                                monthamort.Text = reader["monthly_amortization"].ToString();
+                                deductpay.Text = reader["deduction_pay"].ToString();
+                                firstcollect.Text = Convert.ToDateTime(reader["first_collection"]).ToString("MM/dd/yyyy");
+                                lastcollect.Text = Convert.ToDateTime(reader["last_collection"]).ToString("MM/dd/yyyy");
+                            }
+                            else
+                            {
+                                // Clear textboxes if no data is found
+                                loandate.Clear();
+                                loanamt.Clear();
+                                monthamort.Clear();
+                                deductpay.Clear();
+                                firstcollect.Clear();
+                                lastcollect.Clear();
+                                MessageBox.Show("No saved data found for the selected employee.");
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred while loading employee data: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void delete_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrEmpty(selectedEmployeeId))
+            {
+                MessageBox.Show("Please select an employee first.");
+                return;
+            }
+
+            // Confirm deletion
+            DialogResult result = MessageBox.Show("Are you sure you want to delete this employee's loan data?",
+                                                  "Confirm Deletion",
+                                                  MessageBoxButtons.YesNo,
+                                                  MessageBoxIcon.Warning);
+
+            if (result == DialogResult.Yes)
+            {
+                using (MySqlConnection connection = DatabaseHelper.GetConnection())
+                {
+                    try
+                    {
+                        connection.Open();
+
+                        // Delete the loan data for the selected employee
+                        string deleteQuery = "DELETE FROM hdmfloan WHERE employee_id = @employee_id";
+                        using (MySqlCommand deleteCommand = new MySqlCommand(deleteQuery, connection))
+                        {
+                            deleteCommand.Parameters.AddWithValue("@employee_id", selectedEmployeeId);
+                            int rowsAffected = deleteCommand.ExecuteNonQuery();
+
+                            if (rowsAffected > 0)
+                            {
+                                MessageBox.Show("Employee loan data deleted successfully.");
+
+                                // Clear the textboxes after deletion
+                                loandate.Clear();
+                                loanamt.Clear();
+                                monthamort.Clear();
+                                deductpay.Clear();
+                                firstcollect.Clear();
+                                lastcollect.Clear();
+                            }
+                            else
+                            {
+                                MessageBox.Show("No loan data found for the selected employee.");
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"An error occurred while deleting the loan data: {ex.Message}",
+                                        "Error",
+                                        MessageBoxButtons.OK,
+                                        MessageBoxIcon.Error);
+                    }
                 }
             }
         }

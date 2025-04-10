@@ -47,6 +47,7 @@
             ssstest = new Button();
             sssloan = new Button();
             hdmfloan = new Button();
+            autodeducthdmfsssloan = new Button();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             SuspendLayout();
             // 
@@ -234,11 +235,22 @@
             hdmfloan.UseVisualStyleBackColor = true;
             hdmfloan.Click += hdmfloan_Click;
             // 
+            // autodeducthdmfsssloan
+            // 
+            autodeducthdmfsssloan.Location = new Point(826, 315);
+            autodeducthdmfsssloan.Name = "autodeducthdmfsssloan";
+            autodeducthdmfsssloan.Size = new Size(217, 29);
+            autodeducthdmfsssloan.TabIndex = 20;
+            autodeducthdmfsssloan.Text = "Auto Deduct SSS/HDMF Loan";
+            autodeducthdmfsssloan.UseVisualStyleBackColor = true;
+            autodeducthdmfsssloan.Click += autodeducthdmfsssloan_Click;
+            // 
             // Admin
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(976, 439);
+            ClientSize = new Size(1141, 490);
+            Controls.Add(autodeducthdmfsssloan);
             Controls.Add(hdmfloan);
             Controls.Add(sssloan);
             Controls.Add(ssstest);
@@ -285,5 +297,6 @@
         private Button ssstest;
         private Button sssloan;
         private Button hdmfloan;
+        private Button autodeducthdmfsssloan;
     }
 }

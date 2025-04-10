@@ -42,11 +42,10 @@
             label5 = new Label();
             label6 = new Label();
             label7 = new Label();
-            update = new Button();
             save = new Button();
-            cancel = new Button();
             empname = new Label();
             empid = new Label();
+            delete = new Button();
             SuspendLayout();
             // 
             // flowLayoutPanel1
@@ -166,33 +165,15 @@
             label7.TabIndex = 13;
             label7.Text = "LAST COLLECTION (MM/DD/YYYY)";
             // 
-            // update
-            // 
-            update.Location = new Point(1031, 309);
-            update.Name = "update";
-            update.Size = new Size(94, 29);
-            update.TabIndex = 14;
-            update.Text = "Update";
-            update.UseVisualStyleBackColor = true;
-            // 
             // save
             // 
-            save.Location = new Point(1131, 309);
+            save.Location = new Point(1158, 308);
             save.Name = "save";
             save.Size = new Size(94, 29);
             save.TabIndex = 15;
             save.Text = "Save";
             save.UseVisualStyleBackColor = true;
             save.Click += save_Click;
-            // 
-            // cancel
-            // 
-            cancel.Location = new Point(1241, 309);
-            cancel.Name = "cancel";
-            cancel.Size = new Size(94, 29);
-            cancel.TabIndex = 16;
-            cancel.Text = "Cancel";
-            cancel.UseVisualStyleBackColor = true;
             // 
             // empname
             // 
@@ -212,16 +193,25 @@
             empid.TabIndex = 17;
             empid.Text = "ID NO.";
             // 
+            // delete
+            // 
+            delete.Location = new Point(1053, 308);
+            delete.Name = "delete";
+            delete.Size = new Size(94, 29);
+            delete.TabIndex = 18;
+            delete.Text = "Delete";
+            delete.UseVisualStyleBackColor = true;
+            delete.Click += delete_Click;
+            // 
             // HDMFLOAN
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1402, 588);
+            Controls.Add(delete);
             Controls.Add(empid);
             Controls.Add(empname);
-            Controls.Add(cancel);
             Controls.Add(save);
-            Controls.Add(update);
             Controls.Add(label7);
             Controls.Add(label6);
             Controls.Add(label5);
@@ -258,10 +248,9 @@
         private Label label5;
         private Label label6;
         private Label label7;
-        private Button update;
         private Button save;
-        private Button cancel;
         private Label empname;
         private Label empid;
+        private Button delete;
     }
 }

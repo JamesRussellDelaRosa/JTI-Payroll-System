@@ -348,5 +348,11 @@ namespace JTI_Payroll_System
             HDMFLOAN HDMFLOANForm = new HDMFLOAN();
             HDMFLOANForm.Show();
         }
+
+        private void autodeducthdmfsssloan_Click(object sender, EventArgs e)
+        {
+            autodeductssshdmfloan autodeductssshdmfloanForm = new autodeductssshdmfloan();
+            autodeductssshdmfloanForm.Show();
+        }
     }
 }
