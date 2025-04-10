@@ -835,12 +835,20 @@ namespace JTI_Payroll_System
         {
             if (!DateTime.TryParseExact(fromdate.Text, "MM/dd/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime startDate) ||
                 !DateTime.TryParseExact(todate.Text, "MM/dd/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime endDate) ||
-                !int.TryParse(month.Text, out int parsedMonth) ||
                 !int.TryParse(payrollyear.Text, out int parsedPayrollYear) ||
+                !int.TryParse(month.Text, out int parsedMonth) ||
                 !int.TryParse(controlPeriod.Text, out int parsedControlPeriod))
             {
                 MessageBox.Show("Invalid input. Please enter valid dates (MM/DD/YYYY) and numeric values for month, payroll year, and control period.",
                     "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Validate that the year of fromdate and todate matches payrollyear
+            if (startDate.Year != parsedPayrollYear || endDate.Year != parsedPayrollYear)
+            {
+                MessageBox.Show("The payroll year must match the year of the From Date and To Date.",
+                    "Year Mismatch", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
