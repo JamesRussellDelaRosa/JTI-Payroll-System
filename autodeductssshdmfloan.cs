@@ -16,20 +16,37 @@ namespace JTI_Payroll_System
         public autodeductssshdmfloan()
         {
             InitializeComponent();
+
+            fromdate.PlaceholderText = "MM/DD/YYYY";
+            todate.PlaceholderText = "MM/DD/YYYY";
         }
 
         private void button1_Click(object sender, EventArgs e)
         {
-            string month = this.month.Text;
-            string year = this.year.Text; 
-            string controlPeriod = controlperiod.Text;
-            string fromDate = fromdate.Text; 
-            string toDate = todate.Text;
+            // Retrieve input values from textboxes
+            string month = this.month.Text; // Replace with the actual textbox name for month
+            string year = this.year.Text; // Replace with the actual textbox name for year
+            string controlPeriod = controlperiod.Text; // Replace with the actual textbox name for control period
+            string fromDateInput = fromdate.Text; // Replace with the actual textbox name for from date
+            string toDateInput = todate.Text; // Replace with the actual textbox name for to date
 
             if (string.IsNullOrEmpty(month) || string.IsNullOrEmpty(year) || string.IsNullOrEmpty(controlPeriod) ||
-                string.IsNullOrEmpty(fromDate) || string.IsNullOrEmpty(toDate))
+                string.IsNullOrEmpty(fromDateInput) || string.IsNullOrEmpty(toDateInput))
             {
                 MessageBox.Show("Please fill in all required fields.");
+                return;
+            }
+
+            // Validate and format dates
+            if (!DateTime.TryParseExact(fromDateInput, "MM/dd/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime fromDate))
+            {
+                MessageBox.Show("Please enter a valid From Date in MM/DD/YYYY format.");
+                return;
+            }
+
+            if (!DateTime.TryParseExact(toDateInput, "MM/dd/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime toDate))
+            {
+                MessageBox.Show("Please enter a valid To Date in MM/DD/YYYY format.");
                 return;
             }
 
@@ -39,16 +56,17 @@ namespace JTI_Payroll_System
                 {
                     connection.Open();
 
-                    // Retrieve matching payroll records
-                    string payrollQuery = "SELECT employee_id FROM payroll WHERE month = @month AND year = @year " +
-                                          "AND control_period = @control_period AND from_date = @from_date AND to_date = @to_date";
+                    // Retrieve matching payroll records excluding relievers
+                    string payrollQuery = "SELECT employee_id FROM payroll WHERE month = @month AND payrollyear = @year " +
+                                          "AND control_period = @control_period AND pay_period_start = @from_date AND pay_period_end = @to_date " +
+                                          "AND reliever = 0"; // Assuming 'reliever' is the column indicating reliever status
                     using (MySqlCommand payrollCommand = new MySqlCommand(payrollQuery, connection))
                     {
                         payrollCommand.Parameters.AddWithValue("@month", month);
                         payrollCommand.Parameters.AddWithValue("@year", year);
                         payrollCommand.Parameters.AddWithValue("@control_period", controlPeriod);
-                        payrollCommand.Parameters.AddWithValue("@from_date", fromDate);
-                        payrollCommand.Parameters.AddWithValue("@to_date", toDate);
+                        payrollCommand.Parameters.AddWithValue("@from_date", fromDate.ToString("yyyy-MM-dd")); // Format for SQL
+                        payrollCommand.Parameters.AddWithValue("@to_date", toDate.ToString("yyyy-MM-dd")); // Format for SQL
 
                         using (MySqlDataReader reader = payrollCommand.ExecuteReader())
                         {
@@ -88,6 +106,26 @@ namespace JTI_Payroll_System
         {
             try
             {
+                // Check if the employee is marked as a reliever
+                string checkRelieverQuery = "SELECT reliever FROM payroll WHERE employee_id = @employee_id";
+                bool isReliever = false;
+
+                using (MySqlCommand checkRelieverCommand = new MySqlCommand(checkRelieverQuery, connection))
+                {
+                    checkRelieverCommand.Parameters.AddWithValue("@employee_id", employeeId);
+                    object result = checkRelieverCommand.ExecuteScalar();
+                    if (result != null)
+                    {
+                        isReliever = Convert.ToBoolean(result);
+                    }
+                }
+
+                // If the employee is a reliever, skip updating the hdmf_loan
+                if (isReliever)
+                {
+                    return;
+                }
+
                 // Retrieve deduction_pay from HDMFLOAN table
                 string getDeductionQuery = "SELECT deduction_pay FROM hdmfloan WHERE employee_id = @employee_id";
                 decimal deductionPay = 0;
@@ -107,8 +145,8 @@ namespace JTI_Payroll_System
                     }
                 }
 
-                // Update hdmf_loan in payroll table
-                string updateQuery = "UPDATE payroll SET hdmf_loan = @hdmf_loan WHERE employee_id = @employee_id";
+                // Update hdmf_loan in payroll table, ensuring relievers are excluded
+                string updateQuery = "UPDATE payroll SET hdmf_loan = @hdmf_loan WHERE employee_id = @employee_id AND reliever = 0";
                 using (MySqlCommand updateCommand = new MySqlCommand(updateQuery, connection))
                 {
                     updateCommand.Parameters.AddWithValue("@hdmf_loan", deductionPay);
