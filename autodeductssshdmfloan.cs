@@ -56,6 +56,31 @@ namespace JTI_Payroll_System
                 {
                     connection.Open();
 
+                    // Check if there is already data in hdmf_loan for the specified cutoff period
+                    string checkQuery = "SELECT COUNT(*) FROM payroll WHERE month = @month AND payrollyear = @year " +
+                                        "AND control_period = @control_period AND pay_period_start = @from_date " +
+                                        "AND pay_period_end = @to_date AND hdmf_loan > 0";
+                    using (MySqlCommand checkCommand = new MySqlCommand(checkQuery, connection))
+                    {
+                        checkCommand.Parameters.AddWithValue("@month", month);
+                        checkCommand.Parameters.AddWithValue("@year", year);
+                        checkCommand.Parameters.AddWithValue("@control_period", controlPeriod);
+                        checkCommand.Parameters.AddWithValue("@from_date", fromDate.ToString("yyyy-MM-dd")); // Format for SQL
+                        checkCommand.Parameters.AddWithValue("@to_date", toDate.ToString("yyyy-MM-dd")); // Format for SQL
+
+                        int existingRecords = Convert.ToInt32(checkCommand.ExecuteScalar());
+
+                        if (existingRecords > 0)
+                        {
+                            // If data already exists, show a message and stop processing
+                            MessageBox.Show("This cutoff has already been deducted. No further processing is allowed.",
+                                            "Cutoff Already Processed",
+                                            MessageBoxButtons.OK,
+                                            MessageBoxIcon.Information);
+                            return;
+                        }
+                    }
+
                     // Retrieve matching payroll records excluding relievers
                     string payrollQuery = "SELECT employee_id FROM payroll WHERE month = @month AND payrollyear = @year " +
                                           "AND control_period = @control_period AND pay_period_start = @from_date AND pay_period_end = @to_date " +
@@ -102,6 +127,7 @@ namespace JTI_Payroll_System
             }
         }
 
+
         private void UpdateHdmfLoan(MySqlConnection connection, string employeeId)
         {
             try
@@ -126,33 +152,56 @@ namespace JTI_Payroll_System
                     return;
                 }
 
-                // Retrieve deduction_pay from HDMFLOAN table
-                string getDeductionQuery = "SELECT deduction_pay FROM hdmfloan WHERE employee_id = @employee_id";
+                // Retrieve deduction_pay and loan_amount from HDMFLOAN table
+                string getLoanDataQuery = "SELECT deduction_pay, loan_amount FROM hdmfloan WHERE employee_id = @employee_id";
                 decimal deductionPay = 0;
+                decimal loanAmount = 0;
 
-                using (MySqlCommand getDeductionCommand = new MySqlCommand(getDeductionQuery, connection))
+                using (MySqlCommand getLoanDataCommand = new MySqlCommand(getLoanDataQuery, connection))
                 {
-                    getDeductionCommand.Parameters.AddWithValue("@employee_id", employeeId);
-                    object result = getDeductionCommand.ExecuteScalar();
-                    if (result != null)
+                    getLoanDataCommand.Parameters.AddWithValue("@employee_id", employeeId);
+                    using (MySqlDataReader reader = getLoanDataCommand.ExecuteReader())
                     {
-                        deductionPay = Convert.ToDecimal(result);
-                    }
-                    else
-                    {
-                        // Skip if no HDMF Loan data is found for the employee
-                        return;
+                        if (reader.Read())
+                        {
+                            deductionPay = Convert.ToDecimal(reader["deduction_pay"]);
+                            loanAmount = Convert.ToDecimal(reader["loan_amount"]);
+                        }
+                        else
+                        {
+                            // Skip if no HDMF Loan data is found for the employee
+                            return;
+                        }
                     }
                 }
 
-                // Update hdmf_loan in payroll table, ensuring relievers are excluded
-                string updateQuery = "UPDATE payroll SET hdmf_loan = @hdmf_loan WHERE employee_id = @employee_id AND reliever = 0";
-                using (MySqlCommand updateCommand = new MySqlCommand(updateQuery, connection))
-                {
-                    updateCommand.Parameters.AddWithValue("@hdmf_loan", deductionPay);
-                    updateCommand.Parameters.AddWithValue("@employee_id", employeeId);
+                // Deduct the monthly amortization from the loan amount
+                decimal newLoanAmount = loanAmount - deductionPay;
 
-                    updateCommand.ExecuteNonQuery();
+                // Ensure the loan amount does not go below zero
+                if (newLoanAmount < 0)
+                {
+                    newLoanAmount = 0;
+                }
+
+                // Update the loan amount in the HDMFLOAN table
+                string updateLoanAmountQuery = "UPDATE hdmfloan SET loan_amount = @new_loan_amount WHERE employee_id = @employee_id";
+                using (MySqlCommand updateLoanAmountCommand = new MySqlCommand(updateLoanAmountQuery, connection))
+                {
+                    updateLoanAmountCommand.Parameters.AddWithValue("@new_loan_amount", newLoanAmount);
+                    updateLoanAmountCommand.Parameters.AddWithValue("@employee_id", employeeId);
+
+                    updateLoanAmountCommand.ExecuteNonQuery();
+                }
+
+                // Update hdmf_loan in payroll table, ensuring relievers are excluded
+                string updatePayrollQuery = "UPDATE payroll SET hdmf_loan = @hdmf_loan WHERE employee_id = @employee_id AND reliever = 0";
+                using (MySqlCommand updatePayrollCommand = new MySqlCommand(updatePayrollQuery, connection))
+                {
+                    updatePayrollCommand.Parameters.AddWithValue("@hdmf_loan", deductionPay);
+                    updatePayrollCommand.Parameters.AddWithValue("@employee_id", employeeId);
+
+                    updatePayrollCommand.ExecuteNonQuery();
                 }
             }
             catch (Exception ex)
@@ -160,6 +209,7 @@ namespace JTI_Payroll_System
                 MessageBox.Show($"An error occurred while updating HDMF Loan for Employee ID {employeeId}: {ex.Message}");
             }
         }
+
 
     }
 }
