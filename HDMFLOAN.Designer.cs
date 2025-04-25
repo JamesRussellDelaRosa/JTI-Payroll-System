@@ -46,6 +46,21 @@
             empname = new Label();
             empid = new Label();
             delete = new Button();
+            calamitydelete = new Button();
+            calamitysave = new Button();
+            label8 = new Label();
+            label9 = new Label();
+            label10 = new Label();
+            label11 = new Label();
+            label12 = new Label();
+            label13 = new Label();
+            label14 = new Label();
+            calamitylastcollect = new TextBox();
+            calamityfirstcollect = new TextBox();
+            calamitydeductpay = new TextBox();
+            calamitymonthamort = new TextBox();
+            calamityloanamt = new TextBox();
+            calamityloandate = new TextBox();
             SuspendLayout();
             // 
             // flowLayoutPanel1
@@ -203,11 +218,154 @@
             delete.UseVisualStyleBackColor = true;
             delete.Click += delete_Click;
             // 
+            // calamitydelete
+            // 
+            calamitydelete.Location = new Point(1044, 642);
+            calamitydelete.Name = "calamitydelete";
+            calamitydelete.Size = new Size(94, 29);
+            calamitydelete.TabIndex = 33;
+            calamitydelete.Text = "Delete";
+            calamitydelete.UseVisualStyleBackColor = true;
+            calamitydelete.Click += calamitydelete_Click;
+            // 
+            // calamitysave
+            // 
+            calamitysave.Location = new Point(1149, 642);
+            calamitysave.Name = "calamitysave";
+            calamitysave.Size = new Size(94, 29);
+            calamitysave.TabIndex = 32;
+            calamitysave.Text = "Save";
+            calamitysave.UseVisualStyleBackColor = true;
+            calamitysave.Click += calamitysave_Click;
+            // 
+            // label8
+            // 
+            label8.AutoSize = true;
+            label8.Location = new Point(951, 567);
+            label8.Name = "label8";
+            label8.Size = new Size(237, 20);
+            label8.TabIndex = 31;
+            label8.Text = "LAST COLLECTION (MM/DD/YYYY)";
+            // 
+            // label9
+            // 
+            label9.AutoSize = true;
+            label9.Location = new Point(951, 538);
+            label9.Name = "label9";
+            label9.Size = new Size(244, 20);
+            label9.TabIndex = 30;
+            label9.Text = "FIRST COLLECTION  (MM/DD/YYYY)";
+            // 
+            // label10
+            // 
+            label10.AutoSize = true;
+            label10.Location = new Point(951, 505);
+            label10.Name = "label10";
+            label10.Size = new Size(194, 20);
+            label10.TabIndex = 29;
+            label10.Text = "DEDUCTION EVERY PAYDAY";
+            // 
+            // label11
+            // 
+            label11.AutoSize = true;
+            label11.Location = new Point(951, 465);
+            label11.Name = "label11";
+            label11.Size = new Size(187, 20);
+            label11.TabIndex = 28;
+            label11.Text = "MONTHLY AMORTIZATION";
+            // 
+            // label12
+            // 
+            label12.AutoSize = true;
+            label12.Location = new Point(951, 432);
+            label12.Name = "label12";
+            label12.Size = new Size(114, 20);
+            label12.TabIndex = 27;
+            label12.Text = "LOAN AMOUNT";
+            // 
+            // label13
+            // 
+            label13.AutoSize = true;
+            label13.Location = new Point(951, 402);
+            label13.Name = "label13";
+            label13.Size = new Size(193, 20);
+            label13.TabIndex = 26;
+            label13.Text = "LOAN DATE (MM/DD/YYYY)";
+            // 
+            // label14
+            // 
+            label14.AutoSize = true;
+            label14.Location = new Point(1022, 371);
+            label14.Name = "label14";
+            label14.Size = new Size(225, 20);
+            label14.TabIndex = 25;
+            label14.Text = "HDMF CALAMITY LOAN DETAILS";
+            // 
+            // calamitylastcollect
+            // 
+            calamitylastcollect.Location = new Point(1201, 564);
+            calamitylastcollect.Name = "calamitylastcollect";
+            calamitylastcollect.PlaceholderText = "MM/DD/YYYY";
+            calamitylastcollect.Size = new Size(125, 27);
+            calamitylastcollect.TabIndex = 24;
+            // 
+            // calamityfirstcollect
+            // 
+            calamityfirstcollect.Location = new Point(1201, 531);
+            calamityfirstcollect.Name = "calamityfirstcollect";
+            calamityfirstcollect.PlaceholderText = "MM/DD/YYYY";
+            calamityfirstcollect.Size = new Size(125, 27);
+            calamityfirstcollect.TabIndex = 23;
+            // 
+            // calamitydeductpay
+            // 
+            calamitydeductpay.Location = new Point(1201, 498);
+            calamitydeductpay.Name = "calamitydeductpay";
+            calamitydeductpay.Size = new Size(125, 27);
+            calamitydeductpay.TabIndex = 22;
+            // 
+            // calamitymonthamort
+            // 
+            calamitymonthamort.Location = new Point(1201, 465);
+            calamitymonthamort.Name = "calamitymonthamort";
+            calamitymonthamort.Size = new Size(125, 27);
+            calamitymonthamort.TabIndex = 21;
+            // 
+            // calamityloanamt
+            // 
+            calamityloanamt.Location = new Point(1201, 432);
+            calamityloanamt.Name = "calamityloanamt";
+            calamityloanamt.Size = new Size(125, 27);
+            calamityloanamt.TabIndex = 20;
+            // 
+            // calamityloandate
+            // 
+            calamityloandate.Location = new Point(1201, 399);
+            calamityloandate.Name = "calamityloandate";
+            calamityloandate.PlaceholderText = "MM/DD/YYYY";
+            calamityloandate.Size = new Size(125, 27);
+            calamityloandate.TabIndex = 19;
+            // 
             // HDMFLOAN
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1402, 588);
+            ClientSize = new Size(1442, 814);
+            Controls.Add(calamitydelete);
+            Controls.Add(calamitysave);
+            Controls.Add(label8);
+            Controls.Add(label9);
+            Controls.Add(label10);
+            Controls.Add(label11);
+            Controls.Add(label12);
+            Controls.Add(label13);
+            Controls.Add(label14);
+            Controls.Add(calamitylastcollect);
+            Controls.Add(calamityfirstcollect);
+            Controls.Add(calamitydeductpay);
+            Controls.Add(calamitymonthamort);
+            Controls.Add(calamityloanamt);
+            Controls.Add(calamityloandate);
             Controls.Add(delete);
             Controls.Add(empid);
             Controls.Add(empname);
@@ -252,5 +410,20 @@
         private Label empname;
         private Label empid;
         private Button delete;
+        private Button calamitydelete;
+        private Button calamitysave;
+        private Label label8;
+        private Label label9;
+        private Label label10;
+        private Label label11;
+        private Label label12;
+        private Label label13;
+        private Label label14;
+        private TextBox calamitylastcollect;
+        private TextBox calamityfirstcollect;
+        private TextBox calamitydeductpay;
+        private TextBox calamitymonthamort;
+        private TextBox calamityloanamt;
+        private TextBox calamityloandate;
     }
 }

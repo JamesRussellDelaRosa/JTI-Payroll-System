@@ -114,6 +114,7 @@ namespace JTI_Payroll_System
                             foreach (string employeeId in employeeIds)
                             {
                                 UpdateHdmfLoan(connection, employeeId);
+                                UpdateHdmfCalamityLoan(connection, employeeId);
                             }
 
                             MessageBox.Show("HDMF Loan deductions updated successfully.");
@@ -126,7 +127,6 @@ namespace JTI_Payroll_System
                 MessageBox.Show($"An error occurred: {ex.Message}");
             }
         }
-
 
         private void UpdateHdmfLoan(MySqlConnection connection, string employeeId)
         {
@@ -207,6 +207,88 @@ namespace JTI_Payroll_System
             catch (Exception ex)
             {
                 MessageBox.Show($"An error occurred while updating HDMF Loan for Employee ID {employeeId}: {ex.Message}");
+            }
+        }
+
+        private void UpdateHdmfCalamityLoan(MySqlConnection connection, string employeeId)
+        {
+            try
+            {
+                // Check if the employee is marked as a reliever
+                string checkRelieverQuery = "SELECT reliever FROM payroll WHERE employee_id = @employee_id";
+                bool isReliever = false;
+
+                using (MySqlCommand checkRelieverCommand = new MySqlCommand(checkRelieverQuery, connection))
+                {
+                    checkRelieverCommand.Parameters.AddWithValue("@employee_id", employeeId);
+                    object result = checkRelieverCommand.ExecuteScalar();
+                    if (result != null)
+                    {
+                        isReliever = Convert.ToBoolean(result);
+                    }
+                }
+
+                // If the employee is a reliever, skip updating the hdmfcalamityloan
+                if (isReliever)
+                {
+                    return;
+                }
+
+                // Retrieve deduction_pay and loan_amount from hdmfcalamityloan table
+                string getLoanDataQuery = "SELECT deduction_pay, loan_amount FROM hdmfcalamityloan WHERE employee_id = @employee_id";
+                decimal deductionPay = 0;
+                decimal loanAmount = 0;
+
+                using (MySqlCommand getLoanDataCommand = new MySqlCommand(getLoanDataQuery, connection))
+                {
+                    getLoanDataCommand.Parameters.AddWithValue("@employee_id", employeeId);
+                    using (MySqlDataReader reader = getLoanDataCommand.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            deductionPay = Convert.ToDecimal(reader["deduction_pay"]);
+                            loanAmount = Convert.ToDecimal(reader["loan_amount"]);
+                        }
+                        else
+                        {
+                            // Skip if no HDMF Calamity Loan data is found for the employee
+                            return;
+                        }
+                    }
+                }
+
+                // Deduct the monthly amortization from the loan amount
+                decimal newLoanAmount = loanAmount - deductionPay;
+
+                // Ensure the loan amount does not go below zero
+                if (newLoanAmount < 0)
+                {
+                    newLoanAmount = 0;
+                }
+
+                // Update the loan amount in the hdmfcalamityloan table
+                string updateLoanAmountQuery = "UPDATE hdmfcalamityloan SET loan_amount = @new_loan_amount WHERE employee_id = @employee_id";
+                using (MySqlCommand updateLoanAmountCommand = new MySqlCommand(updateLoanAmountQuery, connection))
+                {
+                    updateLoanAmountCommand.Parameters.AddWithValue("@new_loan_amount", newLoanAmount);
+                    updateLoanAmountCommand.Parameters.AddWithValue("@employee_id", employeeId);
+
+                    updateLoanAmountCommand.ExecuteNonQuery();
+                }
+
+                // Update hdmfcalamityloan in payroll table, ensuring relievers are excluded
+                string updatePayrollQuery = "UPDATE payroll SET hdmfcalamity_loan = @hdmfcalamityloan WHERE employee_id = @employee_id AND reliever = 0";
+                using (MySqlCommand updatePayrollCommand = new MySqlCommand(updatePayrollQuery, connection))
+                {
+                    updatePayrollCommand.Parameters.AddWithValue("@hdmfcalamityloan", deductionPay);
+                    updatePayrollCommand.Parameters.AddWithValue("@employee_id", employeeId);
+
+                    updatePayrollCommand.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred while updating HDMF Calamity Loan for Employee ID {employeeId}: {ex.Message}");
             }
         }
 
