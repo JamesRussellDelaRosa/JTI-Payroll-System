@@ -113,8 +113,10 @@ namespace JTI_Payroll_System
                             // Update hdmf_loan for each employee
                             foreach (string employeeId in employeeIds)
                             {
-                                UpdateHdmfLoan(connection, employeeId);
-                                UpdateHdmfCalamityLoan(connection, employeeId);
+                                UpdateHdmfLoan(connection, employeeId, fromDate, toDate);
+                                UpdateHdmfCalamityLoan(connection, employeeId, fromDate, toDate);
+                                UpdateSSSLoan(connection, employeeId, fromDate, toDate);
+                                UpdateSSSCalamityLoan(connection, employeeId, fromDate, toDate);
                             }
 
                             MessageBox.Show("HDMF Loan deductions updated successfully.");
@@ -128,7 +130,7 @@ namespace JTI_Payroll_System
             }
         }
 
-        private void UpdateHdmfLoan(MySqlConnection connection, string employeeId)
+        private void UpdateHdmfLoan(MySqlConnection connection, string employeeId, DateTime fromDate, DateTime toDate)
         {
             try
             {
@@ -195,11 +197,15 @@ namespace JTI_Payroll_System
                 }
 
                 // Update hdmf_loan in payroll table, ensuring relievers are excluded
-                string updatePayrollQuery = "UPDATE payroll SET hdmf_loan = @hdmf_loan WHERE employee_id = @employee_id AND reliever = 0";
+                string updatePayrollQuery = "UPDATE payroll SET hdmf_loan = @hdmf_loan " +
+                                            "WHERE employee_id = @employee_id AND reliever = 0 " +
+                                            "AND pay_period_start = @from_date AND pay_period_end = @to_date";
                 using (MySqlCommand updatePayrollCommand = new MySqlCommand(updatePayrollQuery, connection))
                 {
                     updatePayrollCommand.Parameters.AddWithValue("@hdmf_loan", deductionPay);
                     updatePayrollCommand.Parameters.AddWithValue("@employee_id", employeeId);
+                    updatePayrollCommand.Parameters.AddWithValue("@from_date", fromDate.ToString("yyyy-MM-dd"));
+                    updatePayrollCommand.Parameters.AddWithValue("@to_date", toDate.ToString("yyyy-MM-dd"));
 
                     updatePayrollCommand.ExecuteNonQuery();
                 }
@@ -210,7 +216,7 @@ namespace JTI_Payroll_System
             }
         }
 
-        private void UpdateHdmfCalamityLoan(MySqlConnection connection, string employeeId)
+        private void UpdateHdmfCalamityLoan(MySqlConnection connection, string employeeId, DateTime fromDate, DateTime toDate)
         {
             try
             {
@@ -277,11 +283,15 @@ namespace JTI_Payroll_System
                 }
 
                 // Update hdmfcalamityloan in payroll table, ensuring relievers are excluded
-                string updatePayrollQuery = "UPDATE payroll SET hdmfcalamity_loan = @hdmfcalamityloan WHERE employee_id = @employee_id AND reliever = 0";
+                string updatePayrollQuery = "UPDATE payroll SET hdmfcalamity_loan = @hdmfcalamity_loan " +
+                        "WHERE employee_id = @employee_id AND reliever = 0 " +
+                        "AND pay_period_start = @from_date AND pay_period_end = @to_date";
                 using (MySqlCommand updatePayrollCommand = new MySqlCommand(updatePayrollQuery, connection))
                 {
-                    updatePayrollCommand.Parameters.AddWithValue("@hdmfcalamityloan", deductionPay);
+                    updatePayrollCommand.Parameters.AddWithValue("@hdmfcalamity_loan", deductionPay);
                     updatePayrollCommand.Parameters.AddWithValue("@employee_id", employeeId);
+                    updatePayrollCommand.Parameters.AddWithValue("@from_date", fromDate.ToString("yyyy-MM-dd"));
+                    updatePayrollCommand.Parameters.AddWithValue("@to_date", toDate.ToString("yyyy-MM-dd"));
 
                     updatePayrollCommand.ExecuteNonQuery();
                 }
@@ -289,6 +299,177 @@ namespace JTI_Payroll_System
             catch (Exception ex)
             {
                 MessageBox.Show($"An error occurred while updating HDMF Calamity Loan for Employee ID {employeeId}: {ex.Message}");
+            }
+        }
+
+        private void UpdateSSSLoan(MySqlConnection connection, string employeeId, DateTime fromDate, DateTime toDate)
+        {
+            try
+            {
+                // Check if the employee is marked as a reliever
+                string checkRelieverQuery = "SELECT reliever FROM payroll WHERE employee_id = @employee_id";
+                bool isReliever = false;
+
+                using (MySqlCommand checkRelieverCommand = new MySqlCommand(checkRelieverQuery, connection))
+                {
+                    checkRelieverCommand.Parameters.AddWithValue("@employee_id", employeeId);
+                    object result = checkRelieverCommand.ExecuteScalar();
+                    if (result != null)
+                    {
+                        isReliever = Convert.ToBoolean(result);
+                    }
+                }
+
+                // If the employee is a reliever, skip updating the sss_loan
+                if (isReliever)
+                {
+                    return;
+                }
+
+                // Retrieve deduction_pay and loan_amount from sssLOAN table
+                string getLoanDataQuery = "SELECT deduction_pay, loan_amount FROM sssloan WHERE employee_id = @employee_id";
+                decimal deductionPay = 0;
+                decimal loanAmount = 0;
+
+                using (MySqlCommand getLoanDataCommand = new MySqlCommand(getLoanDataQuery, connection))
+                {
+                    getLoanDataCommand.Parameters.AddWithValue("@employee_id", employeeId);
+                    using (MySqlDataReader reader = getLoanDataCommand.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            deductionPay = Convert.ToDecimal(reader["deduction_pay"]);
+                            loanAmount = Convert.ToDecimal(reader["loan_amount"]);
+                        }
+                        else
+                        {
+                            // Skip if no sss Loan data is found for the employee
+                            return;
+                        }
+                    }
+                }
+
+                // Deduct the monthly amortization from the loan amount
+                decimal newLoanAmount = loanAmount - deductionPay;
+
+                // Ensure the loan amount does not go below zero
+                if (newLoanAmount < 0)
+                {
+                    newLoanAmount = 0;
+                }
+
+                // Update the loan amount in the sssLOAN table
+                string updateLoanAmountQuery = "UPDATE sssloan SET loan_amount = @new_loan_amount WHERE employee_id = @employee_id";
+                using (MySqlCommand updateLoanAmountCommand = new MySqlCommand(updateLoanAmountQuery, connection))
+                {
+                    updateLoanAmountCommand.Parameters.AddWithValue("@new_loan_amount", newLoanAmount);
+                    updateLoanAmountCommand.Parameters.AddWithValue("@employee_id", employeeId);
+
+                    updateLoanAmountCommand.ExecuteNonQuery();
+                }
+
+                string updatePayrollQuery = "UPDATE payroll SET sss_loan = @sss_loan " +
+                            "WHERE employee_id = @employee_id AND reliever = 0 " +
+                            "AND pay_period_start = @from_date AND pay_period_end = @to_date";
+                using (MySqlCommand updatePayrollCommand = new MySqlCommand(updatePayrollQuery, connection))
+                {
+                    updatePayrollCommand.Parameters.AddWithValue("@sss_loan", deductionPay);
+                    updatePayrollCommand.Parameters.AddWithValue("@employee_id", employeeId);
+                    updatePayrollCommand.Parameters.AddWithValue("@from_date", fromDate.ToString("yyyy-MM-dd"));
+                    updatePayrollCommand.Parameters.AddWithValue("@to_date", toDate.ToString("yyyy-MM-dd"));
+
+                    updatePayrollCommand.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred while updating sss Loan for Employee ID {employeeId}: {ex.Message}");
+            }
+        }
+
+        private void UpdateSSSCalamityLoan(MySqlConnection connection, string employeeId, DateTime fromDate, DateTime toDate)
+        {
+            try
+            {
+                // Check if the employee is marked as a reliever
+                string checkRelieverQuery = "SELECT reliever FROM payroll WHERE employee_id = @employee_id";
+                bool isReliever = false;
+
+                using (MySqlCommand checkRelieverCommand = new MySqlCommand(checkRelieverQuery, connection))
+                {
+                    checkRelieverCommand.Parameters.AddWithValue("@employee_id", employeeId);
+                    object result = checkRelieverCommand.ExecuteScalar();
+                    if (result != null)
+                    {
+                        isReliever = Convert.ToBoolean(result);
+                    }
+                }
+
+                // If the employee is a reliever, skip updating the ssscalamityloan
+                if (isReliever)
+                {
+                    return;
+                }
+
+                // Retrieve deduction_pay and loan_amount from ssscalamityloan table
+                string getLoanDataQuery = "SELECT deduction_pay, loan_amount FROM ssscalamityloan WHERE employee_id = @employee_id";
+                decimal deductionPay = 0;
+                decimal loanAmount = 0;
+
+                using (MySqlCommand getLoanDataCommand = new MySqlCommand(getLoanDataQuery, connection))
+                {
+                    getLoanDataCommand.Parameters.AddWithValue("@employee_id", employeeId);
+                    using (MySqlDataReader reader = getLoanDataCommand.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            deductionPay = Convert.ToDecimal(reader["deduction_pay"]);
+                            loanAmount = Convert.ToDecimal(reader["loan_amount"]);
+                        }
+                        else
+                        {
+                            // Skip if no sss Calamity Loan data is found for the employee
+                            return;
+                        }
+                    }
+                }
+
+                // Deduct the monthly amortization from the loan amount
+                decimal newLoanAmount = loanAmount - deductionPay;
+
+                // Ensure the loan amount does not go below zero
+                if (newLoanAmount < 0)
+                {
+                    newLoanAmount = 0;
+                }
+
+                // Update the loan amount in the ssscalamityloan table
+                string updateLoanAmountQuery = "UPDATE ssscalamityloan SET loan_amount = @new_loan_amount WHERE employee_id = @employee_id";
+                using (MySqlCommand updateLoanAmountCommand = new MySqlCommand(updateLoanAmountQuery, connection))
+                {
+                    updateLoanAmountCommand.Parameters.AddWithValue("@new_loan_amount", newLoanAmount);
+                    updateLoanAmountCommand.Parameters.AddWithValue("@employee_id", employeeId);
+
+                    updateLoanAmountCommand.ExecuteNonQuery();
+                }
+
+                string updatePayrollQuery = "UPDATE payroll SET ssscalamity_loan = @ssscalamity_loan " +
+                        "WHERE employee_id = @employee_id AND reliever = 0 " +
+                        "AND pay_period_start = @from_date AND pay_period_end = @to_date";
+                using (MySqlCommand updatePayrollCommand = new MySqlCommand(updatePayrollQuery, connection))
+                {
+                    updatePayrollCommand.Parameters.AddWithValue("@ssscalamity_loan", deductionPay);
+                    updatePayrollCommand.Parameters.AddWithValue("@employee_id", employeeId);
+                    updatePayrollCommand.Parameters.AddWithValue("@from_date", fromDate.ToString("yyyy-MM-dd"));
+                    updatePayrollCommand.Parameters.AddWithValue("@to_date", toDate.ToString("yyyy-MM-dd"));
+
+
+                    updatePayrollCommand.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred while updating sss Calamity Loan for Employee ID {employeeId}: {ex.Message}");
             }
         }
 
