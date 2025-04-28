@@ -83,10 +83,11 @@
             menuFlowLayoutPanel.Controls.Add(editUsersPanel);
         }
 
-        private Panel CreateClickablePanel(string text, EventHandler clickHandler)
+        private Panel CreateClickablePanel(string text, EventHandler functionHandler)
         {
             Panel panel = new Panel();
-            panel.Size = new Size(400, 29);
+            panel.Size = new Size(442, 29);
+            panel.TabStop = true; // Enable focus for the panel to capture key events
 
             Label label = new Label();
             label.Text = text;
@@ -96,18 +97,46 @@
 
             panel.Controls.Add(label);
 
-            // Add click event to highlight the panel
+            // Add single-click event to highlight the panel
             panel.Click += (s, e) =>
             {
                 HighlightPanel(panel); // Highlight the clicked panel
-                clickHandler(s, e);    // Trigger the original click handler
+                panel.Focus(); // Set focus to the panel to capture key events
             };
 
-            // Ensure label click triggers the same behavior
+            // Add double-click event to execute the function
+            panel.DoubleClick += (s, e) =>
+            {
+                functionHandler(s, e); // Trigger the original double-click handler
+            };
+
+            // Add key press event to execute the function when Enter is pressed or navigate with Up/Down keys
+            panel.KeyDown += (s, e) =>
+            {
+                if (e.KeyCode == Keys.Enter)
+                {
+                    functionHandler(s, e); // Trigger the function handler
+                }
+                else if (e.KeyCode == Keys.Up)
+                {
+                    NavigateToPreviousPanel(panel); // Navigate to the previous panel
+                }
+                else if (e.KeyCode == Keys.Down)
+                {
+                    NavigateToNextPanel(panel); // Navigate to the next panel
+                }
+            };
+
+            // Ensure label click and double-click trigger the same behavior
             label.Click += (s, e) =>
             {
                 HighlightPanel(panel);
-                clickHandler(s, e);
+                panel.Focus();
+            };
+
+            label.DoubleClick += (s, e) =>
+            {
+                functionHandler(s, e);
             };
 
             return panel;
@@ -127,6 +156,35 @@
             // Set the selected panel's background color to blue
             selectedPanel.BackColor = Color.LightBlue;
         }
+
+        private void NavigateToPreviousPanel(Panel currentPanel)
+        {
+            int currentIndex = menuFlowLayoutPanel.Controls.GetChildIndex(currentPanel);
+            if (currentIndex > 0)
+            {
+                Panel previousPanel = menuFlowLayoutPanel.Controls[currentIndex - 1] as Panel;
+                if (previousPanel != null)
+                {
+                    HighlightPanel(previousPanel);
+                    previousPanel.Focus();
+                }
+            }
+        }
+
+        private void NavigateToNextPanel(Panel currentPanel)
+        {
+            int currentIndex = menuFlowLayoutPanel.Controls.GetChildIndex(currentPanel);
+            if (currentIndex < menuFlowLayoutPanel.Controls.Count - 1)
+            {
+                Panel nextPanel = menuFlowLayoutPanel.Controls[currentIndex + 1] as Panel;
+                if (nextPanel != null)
+                {
+                    HighlightPanel(nextPanel);
+                    nextPanel.Focus();
+                }
+            }
+        }
+
 
         #endregion
         private FlowLayoutPanel menuFlowLayoutPanel;
