@@ -26,6 +26,8 @@
         /// Required method for Designer support - do not modify
         /// the contents of this method with the code editor.
         /// </summary>
+        /// 
+
         private void InitializeComponent()
         {
             add = new Button();
@@ -48,6 +50,7 @@
             sssloan = new Button();
             hdmfloan = new Button();
             autodeducthdmfsssloan = new Button();
+            menuFlowLayoutPanel = new FlowLayoutPanel();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             SuspendLayout();
             // 
@@ -245,11 +248,59 @@
             autodeducthdmfsssloan.UseVisualStyleBackColor = true;
             autodeducthdmfsssloan.Click += autodeducthdmfsssloan_Click;
             // 
+            // menuFlowLayoutPanel
+            // 
+            menuFlowLayoutPanel.Location = new Point(1105, 55);
+            menuFlowLayoutPanel.Name = "menuFlowLayoutPanel";
+            menuFlowLayoutPanel.Size = new Size(442, 568);
+            menuFlowLayoutPanel.FlowDirection = FlowDirection.LeftToRight;
+            menuFlowLayoutPanel.WrapContents = true;
+            menuFlowLayoutPanel.AutoScroll = true; // Enable scrolling
+            menuFlowLayoutPanel.BorderStyle = BorderStyle.FixedSingle; // Optional: Add a border for better visibility
+
+
+            // Initialize Panels
+            addPanel = CreateClickablePanel("ADD USER", add_Click);
+            searchPanel = CreateClickablePanel("SEARCH", search_Click);
+            deletePanel = CreateClickablePanel("DELETE", delete_Click);
+            updatePanel = CreateClickablePanel("UPDATE", update_Click);
+            viewPanel = CreateClickablePanel("VIEW", view_Click);
+            employeePanel = CreateClickablePanel("EMPLOYEE", button1_Click);
+            uploadattlogPanel = CreateClickablePanel("UploadATT", uploadattlog_Click);
+            processDtrPanel = CreateClickablePanel("PROCESS DTR", processDtr_Click);
+            btnpayrollpostPanel = CreateClickablePanel("PAYROLL POSTING", btnpayrollpost_Click);
+            rateConfigPanel = CreateClickablePanel("RATECONFIG", rateConfig_Click);
+            sssgovduesPanel = CreateClickablePanel("SSS CONTRIB TABLE", sssgovdues_Click);
+            ssstestPanel = CreateClickablePanel("SSSTEST", ssstest_Click);
+            sssloanPanel = CreateClickablePanel("SSS LOAN", sssloan_Click);
+            hdmfloanPanel = CreateClickablePanel("HDMF LOAN", hdmfloan_Click);
+            autodeducthdmfsssloanPanel = CreateClickablePanel("Auto Deduct SSS/HDMF Loan", autodeducthdmfsssloan_Click);
+
+            // Add Panels to FlowLayoutPanel
+            menuFlowLayoutPanel.Controls.Add(addPanel);
+            menuFlowLayoutPanel.Controls.Add(searchPanel);
+            menuFlowLayoutPanel.Controls.Add(deletePanel);
+            menuFlowLayoutPanel.Controls.Add(updatePanel);
+            menuFlowLayoutPanel.Controls.Add(viewPanel);
+            menuFlowLayoutPanel.Controls.Add(employeePanel);
+            menuFlowLayoutPanel.Controls.Add(uploadattlogPanel);
+            menuFlowLayoutPanel.Controls.Add(processDtrPanel);
+            menuFlowLayoutPanel.Controls.Add(btnpayrollpostPanel);
+            menuFlowLayoutPanel.Controls.Add(rateConfigPanel);
+            menuFlowLayoutPanel.Controls.Add(sssgovduesPanel);
+            menuFlowLayoutPanel.Controls.Add(ssstestPanel);
+            menuFlowLayoutPanel.Controls.Add(sssloanPanel);
+            menuFlowLayoutPanel.Controls.Add(hdmfloanPanel);
+            menuFlowLayoutPanel.Controls.Add(autodeducthdmfsssloanPanel);
+            // Add FlowLayoutPanel to Form
+            Controls.Add(menuFlowLayoutPanel);
+            // 
             // Admin
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1141, 490);
+            ClientSize = new Size(1575, 635);
+            Controls.Add(menuFlowLayoutPanel);
             Controls.Add(autodeducthdmfsssloan);
             Controls.Add(hdmfloan);
             Controls.Add(sssloan);
@@ -277,6 +328,52 @@
             PerformLayout();
         }
 
+        private Panel CreateClickablePanel(string text, EventHandler clickHandler)
+        {
+            Panel panel = new Panel();
+            panel.Size = new Size(400, 29);
+
+            Label label = new Label();
+            label.Text = text;
+            label.Dock = DockStyle.Fill;
+            label.TextAlign = ContentAlignment.MiddleLeft;
+            label.Font = new Font("Segoe UI", 10, FontStyle.Regular);
+
+            panel.Controls.Add(label);
+
+            // Add click event to highlight the panel
+            panel.Click += (s, e) =>
+            {
+                HighlightPanel(panel); // Highlight the clicked panel
+                clickHandler(s, e);    // Trigger the original click handler
+            };
+
+            // Ensure label click triggers the same behavior
+            label.Click += (s, e) =>
+            {
+                HighlightPanel(panel);
+                clickHandler(s, e);
+            };
+
+            return panel;
+        }
+
+        // Method to highlight the selected panel
+        private void HighlightPanel(Panel selectedPanel)
+        {
+            // Reset all panels' background color to default
+            foreach (Control control in menuFlowLayoutPanel.Controls)
+            {
+                if (control is Panel panel)
+                {
+                    panel.BackColor = Color.Transparent; // Default color
+                }
+            }
+
+            // Set the selected panel's background color to blue
+            selectedPanel.BackColor = Color.LightBlue;
+        }
+
         #endregion
         private Button add;
         private Button search;
@@ -298,5 +395,21 @@
         private Button sssloan;
         private Button hdmfloan;
         private Button autodeducthdmfsssloan;
+        private FlowLayoutPanel menuFlowLayoutPanel;
+        private Panel addPanel;
+        private Panel searchPanel;
+        private Panel deletePanel;
+        private Panel updatePanel;
+        private Panel viewPanel;
+        private Panel employeePanel;
+        private Panel uploadattlogPanel;
+        private Panel processDtrPanel;
+        private Panel btnpayrollpostPanel;
+        private Panel rateConfigPanel;
+        private Panel sssgovduesPanel;
+        private Panel ssstestPanel;
+        private Panel sssloanPanel;
+        private Panel hdmfloanPanel;
+        private Panel autodeducthdmfsssloanPanel;
     }
 }
