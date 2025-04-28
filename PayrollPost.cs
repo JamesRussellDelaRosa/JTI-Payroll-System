@@ -55,6 +55,34 @@ namespace JTI_Payroll_System
                 {
                     conn.Open();
 
+                    // Check if payroll data already exists for the specified cutoff period, month, year, and control period
+                    string checkExistingPayrollQuery = @"
+                        SELECT COUNT(*) 
+                        FROM payroll 
+                        WHERE pay_period_start = @startDate 
+                        AND pay_period_end = @endDate
+                        AND month = @month
+                        AND payrollyear = @payrollyear
+                        AND control_period = @controlPeriod";
+
+                    using (MySqlCommand checkCmd = new MySqlCommand(checkExistingPayrollQuery, conn))
+                    {
+                        checkCmd.Parameters.AddWithValue("@startDate", startDate);
+                        checkCmd.Parameters.AddWithValue("@endDate", endDate);
+                        checkCmd.Parameters.AddWithValue("@month", month);
+                        checkCmd.Parameters.AddWithValue("@payrollyear", payrollyear);
+                        checkCmd.Parameters.AddWithValue("@controlPeriod", controlPeriod);
+
+                        int existingPayrollCount = Convert.ToInt32(checkCmd.ExecuteScalar());
+                        if (existingPayrollCount > 0)
+                        {
+                            // Notify the user and exit the method
+                            MessageBox.Show("Payroll data already exists for the specified cutoff period, month, year, and control period. No new data will be inserted.",
+                                "Existing Payroll Data", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            return;
+                        }
+                    }
+
                     // Fetch employee IDs with attendance in the given date range
                     List<string> employeeIDs = new List<string>();
                     string query = @"
