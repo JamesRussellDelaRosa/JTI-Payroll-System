@@ -119,6 +119,7 @@ namespace JTI_Payroll_System
         {
             LoadUserData();
         }
+
         private void LoadUserData()
         {
             try
@@ -353,6 +354,12 @@ namespace JTI_Payroll_System
         {
             autodeductssshdmfloan autodeductssshdmfloanForm = new autodeductssshdmfloan();
             autodeductssshdmfloanForm.Show();
+        }
+
+        private void editUsers_Click(object sender, EventArgs e)
+        {
+            editUsers editUsersForm = new editUsers();
+            editUsersForm.Show();
         }
     }
 }
