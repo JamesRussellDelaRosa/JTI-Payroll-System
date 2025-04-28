@@ -2,6 +2,7 @@
 {
     partial class Admin
     {
+
         /// <summary>
         /// Required designer variable.
         /// </summary>
@@ -41,38 +42,6 @@
             menuFlowLayoutPanel.Name = "menuFlowLayoutPanel";
             menuFlowLayoutPanel.Size = new Size(442, 568);
             menuFlowLayoutPanel.TabIndex = 0;
-
-            // Initialize Panels
-            employeePanel = CreateClickablePanel("EMPLOYEE", button1_Click);
-            uploadattlogPanel = CreateClickablePanel("UploadATT", uploadattlog_Click);
-            processDtrPanel = CreateClickablePanel("PROCESS DTR", processDtr_Click);
-            btnpayrollpostPanel = CreateClickablePanel("PAYROLL POSTING", btnpayrollpost_Click);
-            rateConfigPanel = CreateClickablePanel("RATECONFIG", rateConfig_Click);
-            sssgovduesPanel = CreateClickablePanel("SSS CONTRIB TABLE", sssgovdues_Click);
-            ssstestPanel = CreateClickablePanel("SSSTEST", ssstest_Click);
-            sssloanPanel = CreateClickablePanel("SSS LOAN", sssloan_Click);
-            hdmfloanPanel = CreateClickablePanel("HDMF LOAN", hdmfloan_Click);
-            autodeducthdmfsssloanPanel = CreateClickablePanel("Auto Deduct SSS/HDMF Loan", autodeducthdmfsssloan_Click);
-            editUsersPanel = CreateClickablePanel("EditUsers", editUsers_Click);
-
-            // Add Panels to FlowLayoutPanel
-            menuFlowLayoutPanel.Controls.Add(addPanel);
-            menuFlowLayoutPanel.Controls.Add(searchPanel);
-            menuFlowLayoutPanel.Controls.Add(deletePanel);
-            menuFlowLayoutPanel.Controls.Add(updatePanel);
-            menuFlowLayoutPanel.Controls.Add(viewPanel);
-            menuFlowLayoutPanel.Controls.Add(employeePanel);
-            menuFlowLayoutPanel.Controls.Add(uploadattlogPanel);
-            menuFlowLayoutPanel.Controls.Add(processDtrPanel);
-            menuFlowLayoutPanel.Controls.Add(btnpayrollpostPanel);
-            menuFlowLayoutPanel.Controls.Add(rateConfigPanel);
-            menuFlowLayoutPanel.Controls.Add(sssgovduesPanel);
-            menuFlowLayoutPanel.Controls.Add(ssstestPanel);
-            menuFlowLayoutPanel.Controls.Add(sssloanPanel);
-            menuFlowLayoutPanel.Controls.Add(hdmfloanPanel);
-            menuFlowLayoutPanel.Controls.Add(autodeducthdmfsssloanPanel);
-            menuFlowLayoutPanel.Controls.Add(editUsersPanel);
-
             // 
             // Admin
             // 
@@ -85,8 +54,34 @@
             ResumeLayout(false);
         }
 
+        private void InitializeCustomPanels()
+        {
+            // Initialize Panels
+            Panel employeePanel = CreateClickablePanel("EMPLOYEE", button1_Click);
+            Panel uploadattlogPanel = CreateClickablePanel("UploadATT", uploadattlog_Click);
+            Panel processDtrPanel = CreateClickablePanel("PROCESS DTR", processDtr_Click);
+            Panel btnpayrollpostPanel = CreateClickablePanel("PAYROLL POSTING", btnpayrollpost_Click);
+            Panel rateConfigPanel = CreateClickablePanel("RATECONFIG", rateConfig_Click);
+            Panel sssgovduesPanel = CreateClickablePanel("SSS CONTRIB TABLE", sssgovdues_Click);
+            Panel ssstestPanel = CreateClickablePanel("SSSTEST", ssstest_Click);
+            Panel sssloanPanel = CreateClickablePanel("SSS LOAN", sssloan_Click);
+            Panel hdmfloanPanel = CreateClickablePanel("HDMF LOAN", hdmfloan_Click);
+            Panel autodeducthdmfsssloanPanel = CreateClickablePanel("Auto Deduct SSS/HDMF Loan", autodeducthdmfsssloan_Click);
+            Panel editUsersPanel = CreateClickablePanel("EditUsers", editUsers_Click);
 
-
+            // Add Panels to FlowLayoutPanel
+            menuFlowLayoutPanel.Controls.Add(employeePanel);
+            menuFlowLayoutPanel.Controls.Add(uploadattlogPanel);
+            menuFlowLayoutPanel.Controls.Add(processDtrPanel);
+            menuFlowLayoutPanel.Controls.Add(btnpayrollpostPanel);
+            menuFlowLayoutPanel.Controls.Add(rateConfigPanel);
+            menuFlowLayoutPanel.Controls.Add(sssgovduesPanel);
+            menuFlowLayoutPanel.Controls.Add(ssstestPanel);
+            menuFlowLayoutPanel.Controls.Add(sssloanPanel);
+            menuFlowLayoutPanel.Controls.Add(hdmfloanPanel);
+            menuFlowLayoutPanel.Controls.Add(autodeducthdmfsssloanPanel);
+            menuFlowLayoutPanel.Controls.Add(editUsersPanel);
+        }
 
         private Panel CreateClickablePanel(string text, EventHandler clickHandler)
         {
@@ -118,7 +113,6 @@
             return panel;
         }
 
-        // Method to highlight the selected panel
         private void HighlightPanel(Panel selectedPanel)
         {
             // Reset all panels' background color to default
@@ -135,22 +129,7 @@
         }
 
         #endregion
-        private Button employee;
-        private Button uploadattlog;
-        private Button processDtr;
-        private Button btnpayrollpost;
-        private Button rateConfig;
-        private Button sssgovdues;
-        private Button ssstest;
-        private Button sssloan;
-        private Button hdmfloan;
-        private Button autodeducthdmfsssloan;
         private FlowLayoutPanel menuFlowLayoutPanel;
-        private Panel addPanel;
-        private Panel searchPanel;
-        private Panel deletePanel;
-        private Panel updatePanel;
-        private Panel viewPanel;
         private Panel employeePanel;
         private Panel uploadattlogPanel;
         private Panel processDtrPanel;

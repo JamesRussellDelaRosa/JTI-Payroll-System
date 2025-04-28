@@ -17,6 +17,7 @@ namespace JTI_Payroll_System
         public Admin()
         {
             InitializeComponent();
+            InitializeCustomPanels();
         }
 
         private void button1_Click(object sender, EventArgs e)
