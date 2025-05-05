@@ -24,15 +24,17 @@ namespace JTI_Payroll_System
             {
                 string userName = username.Text;
                 string passWord = password.Text;
+                string userType = userTypeComboBox.SelectedItem?.ToString() ?? "user"; // Default to "user" if nothing is selected
 
                 using (MySqlConnection connection = DatabaseHelper.GetConnection())
                 {
                     connection.Open();
-                    string query = "INSERT INTO Users (Username, Password, UserType) VALUES (@Username, @Password, 'User')";
+                    string query = "INSERT INTO Users (Username, Password, UserType) VALUES (@Username, @Password, @UserType)";
                     using (MySqlCommand command = new MySqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@Username", userName);
                         command.Parameters.AddWithValue("@Password", passWord);
+                        command.Parameters.AddWithValue("@UserType", userType);
                         command.ExecuteNonQuery();
 
                         MessageBox.Show("User added successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -47,7 +49,50 @@ namespace JTI_Payroll_System
 
         private void search_Click(object sender, EventArgs e)
         {
+            try
+            {
+                string searchUsername = username.Text; // Get the username from the input field
+                string searchUserType = userTypeComboBox.SelectedItem?.ToString(); // Get the selected user type from the ComboBox
 
+                using (MySqlConnection connection = DatabaseHelper.GetConnection())
+                {
+                    connection.Open();
+
+                    // Build the query dynamically based on the search criteria
+                    string query = "SELECT Username, Password, UserType FROM Users WHERE 1=1";
+                    if (!string.IsNullOrEmpty(searchUsername))
+                    {
+                        query += " AND Username LIKE @SearchUsername";
+                    }
+                    if (!string.IsNullOrEmpty(searchUserType))
+                    {
+                        query += " AND UserType = @SearchUserType";
+                    }
+
+                    using (MySqlCommand command = new MySqlCommand(query, connection))
+                    {
+                        if (!string.IsNullOrEmpty(searchUsername))
+                        {
+                            command.Parameters.AddWithValue("@SearchUsername", $"%{searchUsername}%");
+                        }
+                        if (!string.IsNullOrEmpty(searchUserType))
+                        {
+                            command.Parameters.AddWithValue("@SearchUserType", searchUserType);
+                        }
+
+                        using (MySqlDataReader reader = command.ExecuteReader())
+                        {
+                            DataTable dt = new DataTable();
+                            dt.Load(reader);
+                            dataGridView1.DataSource = dt; // Display the search results in the DataGridView
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void delete_Click(object sender, EventArgs e)
@@ -89,18 +134,19 @@ namespace JTI_Payroll_System
         {
             try
             {
-
                 string userName = username.Text;
                 string newPassword = password.Text;
+                string newUserType = userTypeComboBox.SelectedItem?.ToString() ?? "user"; // Default to "user" if nothing is selected
 
                 using (MySqlConnection connection = DatabaseHelper.GetConnection())
                 {
                     connection.Open();
-                    string query = "UPDATE Users SET Password = @NewPassword WHERE Username = @Username";
+                    string query = "UPDATE Users SET Password = @NewPassword, UserType = @NewUserType WHERE Username = @Username";
                     using (MySqlCommand command = new MySqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@Username", userName);
                         command.Parameters.AddWithValue("@NewPassword", newPassword);
+                        command.Parameters.AddWithValue("@NewUserType", newUserType);
                         command.ExecuteNonQuery();
 
                         MessageBox.Show("User updated successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);

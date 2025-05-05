@@ -38,6 +38,8 @@
             delete = new Button();
             search = new Button();
             add = new Button();
+            label3 = new Label();
+            userTypeComboBox = new ComboBox();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             SuspendLayout();
             // 
@@ -52,7 +54,7 @@
             // 
             // view
             // 
-            view.Location = new Point(434, 319);
+            view.Location = new Point(434, 364);
             view.Name = "view";
             view.Size = new Size(94, 29);
             view.TabIndex = 19;
@@ -96,7 +98,7 @@
             // 
             // update
             // 
-            update.Location = new Point(334, 319);
+            update.Location = new Point(334, 364);
             update.Name = "update";
             update.Size = new Size(94, 29);
             update.TabIndex = 14;
@@ -106,7 +108,7 @@
             // 
             // delete
             // 
-            delete.Location = new Point(234, 319);
+            delete.Location = new Point(234, 364);
             delete.Name = "delete";
             delete.Size = new Size(94, 29);
             delete.TabIndex = 13;
@@ -116,7 +118,7 @@
             // 
             // search
             // 
-            search.Location = new Point(134, 319);
+            search.Location = new Point(134, 364);
             search.Name = "search";
             search.Size = new Size(94, 29);
             search.TabIndex = 12;
@@ -126,7 +128,7 @@
             // 
             // add
             // 
-            add.Location = new Point(34, 319);
+            add.Location = new Point(34, 364);
             add.Name = "add";
             add.Size = new Size(94, 29);
             add.TabIndex = 11;
@@ -134,11 +136,34 @@
             add.UseVisualStyleBackColor = true;
             add.Click += add_Click;
             // 
+            // label3
+            // 
+            label3.AutoSize = true;
+            label3.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            label3.Location = new Point(53, 305);
+            label3.Name = "label3";
+            label3.Size = new Size(100, 28);
+            label3.TabIndex = 21;
+            label3.Text = "USERTYPE";
+            // 
+            // userTypeComboBox
+            // 
+            userTypeComboBox.FormattingEnabled = true;
+            userTypeComboBox.Location = new Point(203, 309);
+            userTypeComboBox.Name = "userTypeComboBox";
+            userTypeComboBox.Size = new Size(125, 28);
+            userTypeComboBox.TabIndex = 22;
+            this.userTypeComboBox.Items.AddRange(new object[] {
+            "admin",
+            "user"});
+            // 
             // editUsers
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(userTypeComboBox);
+            Controls.Add(label3);
             Controls.Add(dataGridView1);
             Controls.Add(view);
             Controls.Add(password);
@@ -154,6 +179,8 @@
             ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
             ResumeLayout(false);
             PerformLayout();
+
+
         }
 
         #endregion
@@ -168,5 +195,7 @@
         private Button delete;
         private Button search;
         private Button add;
+        private Label label3;
+        private ComboBox userTypeComboBox;
     }
 }
