@@ -103,6 +103,21 @@ namespace JTI_Payroll_System
                                 string id = values[0];
                                 string date = values[1];
                                 string time = values[2];
+
+                                // 🔹 Reformat time to "0000" format (HHMM)
+                                if (TimeSpan.TryParse(time, out TimeSpan parsedTime))
+                                {
+                                    // Format as HHMM with leading zeros
+                                    int hours = parsedTime.Hours;
+                                    int minutes = parsedTime.Minutes;
+                                    time = $"{hours:00}{minutes:00}";
+                                }
+                                else
+                                {
+                                    skippedLines++;
+                                    continue;
+                                }
+
                                 string recordKey = $"{id}|{date}|{time}";
 
                                 // 🔹 Skip if the record already exists
