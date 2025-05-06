@@ -296,10 +296,13 @@ namespace JTI_Payroll_System
 
                 dgvDTR.Columns["WorkingHours"].DefaultCellStyle.Format = "N2";
                 dgvDTR.Columns["OTHours"].DefaultCellStyle.Format = "N2";
-                dgvDTR.Columns["StartTime"].DefaultCellStyle.Format = "h\\:mm";
-                dgvDTR.Columns["EndTime"].DefaultCellStyle.Format = "h\\:mm";
                 dgvDTR.Columns["NightDifferentialHours"].DefaultCellStyle.Format = "N2";
                 dgvDTR.Columns["NightDifferentialOtHours"].DefaultCellStyle.Format = "N2";
+
+                dgvDTR.Columns["TimeIn"].DefaultCellStyle.Format = "hh\\:mm";
+                dgvDTR.Columns["TimeOut"].DefaultCellStyle.Format = "hh\\:mm";
+                dgvDTR.Columns["StartTime"].DefaultCellStyle.Format = "hh\\:mm";
+                dgvDTR.Columns["EndTime"].DefaultCellStyle.Format = "hh\\:mm";
 
                 dgvDTR.Columns["EmployeeID"].Visible = false;
                 dgvDTR.Columns["EmployeeName"].Visible = false;
@@ -423,7 +426,7 @@ namespace JTI_Payroll_System
             COALESCE(p.legal_holiday, false) AS LegalHoliday,
             COALESCE(p.special_holiday, false) AS SpecialHoliday,
             COALESCE(p.non_working_day, false) AS NonWorkingDay,
-            COALESCE(p.reliever, false) AS Reliever  -- Include Reliever column
+            COALESCE(p.reliever, false) AS Reliever
         FROM employee e
         JOIN DateRange d ON 1=1
         LEFT JOIN attendance a
@@ -449,9 +452,56 @@ namespace JTI_Payroll_System
                         cmd.Parameters.AddWithValue("@startDate", startDate);
                         cmd.Parameters.AddWithValue("@endDate", endDate);
 
-                        using (MySqlDataAdapter adapter = new MySqlDataAdapter(cmd))
+                        using (MySqlDataReader reader = cmd.ExecuteReader())
                         {
-                            adapter.Fill(dt);
+                            while (reader.Read())
+                            {
+                                DataRow row = dt.NewRow();
+                                row["EmployeeID"] = reader["EmployeeID"];
+                                row["EmployeeName"] = reader["EmployeeName"];
+                                row["Date"] = reader["Date"];
+
+                                // Convert varchar HHMM time to proper TimeSpan
+                                if (reader["TimeIn"] != DBNull.Value)
+                                {
+                                    string timeInStr = reader["TimeIn"].ToString();
+                                    row["TimeIn"] = ConvertHHMMToTimeSpan(timeInStr);
+                                }
+
+                                if (reader["TimeOut"] != DBNull.Value)
+                                {
+                                    string timeOutStr = reader["TimeOut"].ToString();
+                                    row["TimeOut"] = ConvertHHMMToTimeSpan(timeOutStr);
+                                }
+
+                                row["Rate"] = reader["Rate"];
+                                row["WorkingHours"] = reader["WorkingHours"];
+                                row["OTHours"] = reader["OTHours"];
+                                row["ShiftCode"] = reader["ShiftCode"];
+
+                                // Handle StartTime and EndTime from database
+                                if (reader["StartTime"] != DBNull.Value)
+                                {
+                                    row["StartTime"] = reader.GetTimeSpan(reader.GetOrdinal("StartTime"));
+                                }
+
+                                if (reader["EndTime"] != DBNull.Value)
+                                {
+                                    row["EndTime"] = reader.GetTimeSpan(reader.GetOrdinal("EndTime"));
+                                }
+
+                                row["NightDifferentialHours"] = reader["NightDifferentialHours"];
+                                row["NightDifferentialOtHours"] = reader["NightDifferentialOtHours"];
+                                row["Remarks"] = reader["Remarks"];
+                                row["TardinessUndertime"] = reader["TardinessUndertime"];
+                                row["RestDay"] = reader["RestDay"];
+                                row["LegalHoliday"] = reader["LegalHoliday"];
+                                row["SpecialHoliday"] = reader["SpecialHoliday"];
+                                row["NonWorkingDay"] = reader["NonWorkingDay"];
+                                row["Reliever"] = reader["Reliever"];
+
+                                dt.Rows.Add(row);
+                            }
                         }
                     }
                 }
@@ -472,6 +522,34 @@ namespace JTI_Payroll_System
 
             return dt;
         }
+
+        // Helper method to convert HHMM format to TimeSpan
+        private TimeSpan ConvertHHMMToTimeSpan(string hhmmString)
+        {
+            if (string.IsNullOrEmpty(hhmmString))
+                return TimeSpan.Zero;
+
+            // Clean up the string to ensure it only contains digits
+            string cleanedInput = new string(hhmmString.Where(char.IsDigit).ToArray());
+
+            if (cleanedInput.Length < 3)
+                return TimeSpan.Zero;
+
+            // Ensure we have at least 3-4 digits
+            while (cleanedInput.Length < 4)
+                cleanedInput = "0" + cleanedInput;
+
+            // Extract hours and minutes from the HHMM format
+            int hours = int.Parse(cleanedInput.Substring(0, 2));
+            int minutes = int.Parse(cleanedInput.Substring(2, 2));
+
+            // Validate and cap hours/minutes to valid ranges
+            hours = Math.Min(hours, 23);
+            minutes = Math.Min(minutes, 59);
+
+            return new TimeSpan(hours, minutes, 0);
+        }
+
         private void btnNext_Click(object sender, EventArgs e)
         {
             if (employeeIDs.Count == 0) return;
@@ -785,6 +863,15 @@ namespace JTI_Payroll_System
             }
             else if (e.ColumnIndex == dgvDTR.Columns["TimeIn"].Index || e.ColumnIndex == dgvDTR.Columns["TimeOut"].Index)
             {
+                // Handle TimeIn and TimeOut columns using the new conversion method
+                string cellValue = row.Cells[e.ColumnIndex].Value?.ToString();
+                if (!string.IsNullOrEmpty(cellValue))
+                {
+                    // Convert the entered time value using our special method for HHMM format
+                    TimeSpan timeValue = ConvertHHMMToTimeSpan(cellValue);
+                    row.Cells[e.ColumnIndex].Value = timeValue;
+                }
+
                 if (row.Cells["ShiftCode"].Value != null)
                 {
                     ShiftCodeData shiftData = GetShiftCodeData(row.Cells["ShiftCode"].Value.ToString());
@@ -800,14 +887,23 @@ namespace JTI_Payroll_System
 
                 row.Cells["Remarks"].Value = CalculateRemarks(row);
 
+                // Get time values after conversion for database update
+                TimeSpan? timeIn = row.Cells["TimeIn"].Value != DBNull.Value
+                    ? (TimeSpan?)row.Cells["TimeIn"].Value
+                    : null;
+
+                TimeSpan? timeOut = row.Cells["TimeOut"].Value != DBNull.Value
+                    ? (TimeSpan?)row.Cells["TimeOut"].Value
+                    : null;
+
                 UpdateProcessedDTR(row.Cells["EmployeeID"].Value.ToString(),
                                    Convert.ToDateTime(row.Cells["Date"].Value),
                                    row.Cells["ShiftCode"].Value?.ToString(),
                                    row.Cells["WorkingHours"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["WorkingHours"].Value) : 0.00m,
                                    row.Cells["OTHours"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["OTHours"].Value) : 0.00m,
                                    row.Cells["Rate"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["Rate"].Value) : 0.00m,
-                                   row.Cells["TimeIn"].Value != DBNull.Value ? (TimeSpan?)TimeSpan.Parse(row.Cells["TimeIn"].Value.ToString()) : null,
-                                   row.Cells["TimeOut"].Value != DBNull.Value ? (TimeSpan?)TimeSpan.Parse(row.Cells["TimeOut"].Value.ToString()) : null,
+                                   timeIn,
+                                   timeOut,
                                    row.Cells["NightDifferentialHours"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["NightDifferentialHours"].Value) : 0.00m,
                                    row.Cells["NightDifferentialOtHours"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["NightDifferentialOtHours"].Value) : 0.00m,
                                    row.Cells["Remarks"].Value?.ToString(),
@@ -864,12 +960,63 @@ namespace JTI_Payroll_System
         }
         private void dgvDTR_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
         {
+            // Handle ShiftCode column ComboBox
             if (dgvDTR.CurrentCell.ColumnIndex == dgvDTR.Columns["ShiftCode"].Index)
             {
                 if (e.Control is ComboBox comboBox)
                 {
                     comboBox.SelectedIndexChanged -= ComboBox_SelectedIndexChanged; // Remove any existing handler
                     comboBox.SelectedIndexChanged += ComboBox_SelectedIndexChanged; // Add the new handler
+                }
+            }
+
+            // Handle TimeIn and TimeOut columns for 4-digit entry
+            else if (dgvDTR.CurrentCell.ColumnIndex == dgvDTR.Columns["TimeIn"].Index ||
+                     dgvDTR.CurrentCell.ColumnIndex == dgvDTR.Columns["TimeOut"].Index)
+            {
+                if (e.Control is TextBox textBox)
+                {
+                    // Remove any existing handlers to prevent multiple attachments
+                    textBox.KeyPress -= TimeTextBox_KeyPress;
+                    textBox.KeyPress += TimeTextBox_KeyPress;
+
+                    // Optional: Select all text when starting edit for easier replacement
+                    textBox.SelectAll();
+                }
+            }
+        }
+        private void TimeTextBox_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            // Allow only digits, backspace, and Enter key
+            if (!char.IsDigit(e.KeyChar) && e.KeyChar != '\b' && e.KeyChar != '\r')
+            {
+                e.Handled = true; // Suppress the character
+            }
+
+            // Optional: Auto-format when user types 4 digits
+            if (sender is TextBox textBox && char.IsDigit(e.KeyChar))
+            {
+                // If we'll have 4 digits after this keypress, format and end editing
+                if (textBox.Text.Where(char.IsDigit).Count() == 3)
+                {
+                    // Get the final 4-digit string
+                    string digits = textBox.Text + e.KeyChar;
+                    digits = new string(digits.Where(char.IsDigit).Take(4).ToArray());
+
+                    // Convert to TimeSpan right away
+                    TimeSpan time = ConvertHHMMToTimeSpan(digits);
+
+                    // Update the cell with the formatted value
+                    if (dgvDTR.CurrentCell != null)
+                    {
+                        dgvDTR.CurrentCell.Value = time;
+
+                        // Prevent the character from being added
+                        e.Handled = true;
+
+                        // End editing
+                        dgvDTR.EndEdit();
+                    }
                 }
             }
         }
