@@ -42,46 +42,74 @@ namespace JTI_Payroll_System
         {
             string rateColumnName = "Rate";
 
-            // ✅ Check if Rate column already exists
+            // Check if Rate column already exists
             if (dgvDTR.Columns.Contains(rateColumnName))
             {
                 dgvDTR.Columns.Remove(rateColumnName); // Remove existing column to re-add ComboBox
             }
 
-            // ✅ Fetch rate values from database
+            // Fetch rate values from the database
             List<decimal> rateValues = GetRateValuesFromDatabase();
 
-            // ✅ Add default value 0.00 at the beginning
+            // Add default value 0.00 at the beginning
             rateValues.Insert(0, 0.00m);
 
-            // ✅ Create ComboBox Column with database rates
+            // Create ComboBox Column with database rates
             DataGridViewComboBoxColumn rateColumn = new DataGridViewComboBoxColumn
             {
                 Name = rateColumnName,
                 HeaderText = "Rate",
-                DataPropertyName = rateColumnName,  // ✅ Binds to Rate column
-                DataSource = rateValues,  // ✅ Use dynamic database values
-                AutoComplete = true
+                DataPropertyName = rateColumnName, // Binds to Rate column
+                DataSource = rateValues, // Use dynamic database values
+                AutoComplete = true,
+                DisplayStyle = DataGridViewComboBoxDisplayStyle.ComboBox // Set to ComboBox to display dropdown immediately
             };
 
             dgvDTR.Columns.Add(rateColumn);
 
-            // ✅ Ensure existing database values match the DataSource
-            foreach (DataGridViewRow row in dgvDTR.Rows)
+            // Attach EditingControlShowing event to handle user-typed input
+            dgvDTR.EditingControlShowing += (sender, e) =>
             {
-                if (row.IsNewRow) continue;
-
-                object rateValue = row.Cells[rateColumnName].Value;
-
-                // Convert to decimal to match DataSource
-                if (rateValue == null || !rateValues.Contains(Convert.ToDecimal(rateValue)))
+                if (dgvDTR.CurrentCell != null && dgvDTR.CurrentCell.ColumnIndex == dgvDTR.Columns[rateColumnName].Index)
                 {
-                    row.Cells[rateColumnName].Value = rateValues.FirstOrDefault(); // ✅ Default valid value
+                    if (e.Control is ComboBox comboBox)
+                    {
+                        comboBox.DropDownStyle = ComboBoxStyle.DropDown; // Allow typing
+                        comboBox.Validating -= ComboBox_Validating; // Remove any existing handler
+                        comboBox.Validating += ComboBox_Validating; // Add new handler
+                    }
+                }
+            };
+        }
+        private void ComboBox_Validating(object sender, EventArgs e)
+        {
+            if (sender is ComboBox comboBoxrate)
+            {
+                string input = comboBoxrate.Text;
+
+                // Validate if the input is a valid decimal
+                if (decimal.TryParse(input, out decimal newRate))
+                {
+                    // Check if the value already exists in the dropdown
+                    var rateColumn = (DataGridViewComboBoxColumn)dgvDTR.Columns["Rate"];
+                    var currentDataSource = (List<decimal>)rateColumn.DataSource;
+
+                    if (!currentDataSource.Contains(newRate))
+                    {
+                        // Show a warning and reset the input
+                        MessageBox.Show("The entered rate does not exist in the dropdown. Please select a valid rate.",
+                                        "Invalid Rate", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        comboBoxrate.Text = "0.00"; // Reset to default
+                    }
+                }
+                else
+                {
+                    // Show a warning and reset the input
+                    MessageBox.Show("Invalid Rate value. Please enter a valid decimal number.",
+                                    "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    comboBoxrate.Text = "0.00"; // Reset to default
                 }
             }
-
-            // ✅ Set Rate column's value type to decimal to avoid type mismatches
-            dgvDTR.Columns[rateColumnName].ValueType = typeof(decimal);
         }
         private List<decimal> GetRateValuesFromDatabase()
         {
@@ -110,41 +138,73 @@ namespace JTI_Payroll_System
         {
             string shiftCodeColumnName = "ShiftCode";
 
-            // ✅ Check if ShiftCode column already exists
+            // Check if ShiftCode column already exists
             if (dgvDTR.Columns.Contains(shiftCodeColumnName))
             {
                 dgvDTR.Columns.Remove(shiftCodeColumnName); // Remove existing column to re-add ComboBox
             }
 
-            // ✅ Fetch shift codes from database
+            // Fetch shift codes from the database
             List<string> shiftCodes = GetShiftCodesFromDatabase();
 
-            // ✅ Create ComboBox Column with database shift codes
+            // Create ComboBox Column with database shift codes
             DataGridViewComboBoxColumn shiftCodeColumn = new DataGridViewComboBoxColumn
             {
                 Name = shiftCodeColumnName,
                 HeaderText = "Shift Code",
-                DataPropertyName = shiftCodeColumnName,  // ✅ Binds to ShiftCode column
-                DataSource = shiftCodes,  // ✅ Use dynamic database values
+                DataPropertyName = shiftCodeColumnName, // Binds to ShiftCode column
+                DataSource = shiftCodes, // Use dynamic database values
                 AutoComplete = true,
                 DisplayStyle = DataGridViewComboBoxDisplayStyle.ComboBox // Set to ComboBox to display dropdown immediately
             };
 
             dgvDTR.Columns.Add(shiftCodeColumn);
 
-            // ✅ Ensure existing database values match the DataSource
-            foreach (DataGridViewRow row in dgvDTR.Rows)
+            // Attach EditingControlShowing event to handle user-typed input
+            dgvDTR.EditingControlShowing += (sender, e) =>
             {
-                if (row.IsNewRow) continue;
-
-                object shiftCodeValue = row.Cells[shiftCodeColumnName].Value;
-
-                if (shiftCodeValue != null && !shiftCodes.Contains(shiftCodeValue.ToString()))
+                if (dgvDTR.CurrentCell != null && dgvDTR.CurrentCell.ColumnIndex == dgvDTR.Columns[shiftCodeColumnName].Index)
                 {
-                    row.Cells[shiftCodeColumnName].Value = shiftCodes.FirstOrDefault(); // ✅ Default valid value
+                    if (e.Control is ComboBox comboBox)
+                    {
+                        comboBox.DropDownStyle = ComboBoxStyle.DropDown; // Allow typing
+                        comboBox.Validating -= ShiftCodeComboBox_Validating; // Remove any existing handler
+                        comboBox.Validating += ShiftCodeComboBox_Validating; // Add new handler
+                    }
+                }
+            };
+        }
+        private void ShiftCodeComboBox_Validating(object sender, EventArgs e)
+        {
+            if (sender is ComboBox comboBoxshiftcode)
+            {
+                string input = comboBoxshiftcode.Text;
+
+                // Validate if the input is a valid shift code
+                if (!string.IsNullOrWhiteSpace(input))
+                {
+                    // Check if the value already exists in the dropdown
+                    var shiftCodeColumn = (DataGridViewComboBoxColumn)dgvDTR.Columns["ShiftCode"];
+                    var currentDataSource = (List<string>)shiftCodeColumn.DataSource;
+
+                    if (!currentDataSource.Contains(input))
+                    {
+                        // Show a warning and reset the input
+                        MessageBox.Show("The entered shift code does not exist in the dropdown. Please select a valid shift code.",
+                                        "Invalid Shift Code", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        comboBoxshiftcode.Text = ""; // Reset to default
+                    }
+                }
+                else
+                {
+                    // Show a warning and reset the input
+                    MessageBox.Show("Invalid Shift Code. Please enter a valid value.",
+                                    "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    comboBoxshiftcode.Text = ""; // Reset to default
                 }
             }
         }
+
         private List<string> GetShiftCodesFromDatabase()
         {
             List<string> shiftCodes = new List<string>();
@@ -306,6 +366,9 @@ namespace JTI_Payroll_System
 
                 dgvDTR.Columns["EmployeeID"].Visible = false;
                 dgvDTR.Columns["EmployeeName"].Visible = false;
+
+                dgvDTR.Columns["Rate"].DisplayIndex = 3;
+                dgvDTR.Columns["ShiftCode"].DisplayIndex = 3;
 
                 HighlightRestDaysAndUpdateRemarks(dgvDTR);
 
@@ -788,6 +851,7 @@ namespace JTI_Payroll_System
 
             if (e.ColumnIndex == dgvDTR.Columns["ShiftCode"].Index)
             {
+                // Handle ShiftCode logic
                 if (row.Cells["ShiftCode"].Value != null)
                 {
                     string shiftCode = row.Cells["ShiftCode"].Value.ToString();
@@ -798,52 +862,21 @@ namespace JTI_Payroll_System
                         row.Cells["StartTime"].Value = shiftData.StartTime;
                         row.Cells["EndTime"].Value = shiftData.EndTime;
                         row.Cells["WorkingHours"].Value = shiftData.RegularHours;
-
-                        // Use fixed values from ShiftCodeData instead of calculations
                         row.Cells["OTHours"].Value = shiftData.OtHours;
                         row.Cells["NightDifferentialHours"].Value = shiftData.NightDifferentialHours;
                         row.Cells["NightDifferentialOtHours"].Value = shiftData.NightDifferentialOtHours;
-
-                        // Set default values for TimeIn and TimeOut to 0:00 if they are blank
-                        if (row.Cells["TimeIn"].Value == DBNull.Value)
-                        {
-                            row.Cells["TimeIn"].Value = TimeSpan.Zero;
-                        }
-                        if (row.Cells["TimeOut"].Value == DBNull.Value)
-                        {
-                            row.Cells["TimeOut"].Value = TimeSpan.Zero;
-                        }
-
-                        // Update Remarks based on TimeIn and TimeOut values
                         row.Cells["Remarks"].Value = CalculateRemarks(row);
                     }
                     else
                     {
                         MessageBox.Show("Invalid Shift Code", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        row.Cells["ShiftCode"].Value = DBNull.Value;
-                        row.Cells["StartTime"].Value = DBNull.Value;
-                        row.Cells["EndTime"].Value = DBNull.Value;
-                        row.Cells["WorkingHours"].Value = DBNull.Value;
-                        row.Cells["OTHours"].Value = DBNull.Value;
-                        row.Cells["NightDifferentialHours"].Value = DBNull.Value;
-                        row.Cells["NightDifferentialOtHours"].Value = DBNull.Value;
-                        row.Cells["Remarks"].Value = DBNull.Value;
+                        ClearShiftData(row);
                     }
-                }
-                else
-                {
-                    row.Cells["StartTime"].Value = DBNull.Value;
-                    row.Cells["EndTime"].Value = DBNull.Value;
-                    row.Cells["WorkingHours"].Value = DBNull.Value;
-                    row.Cells["OTHours"].Value = DBNull.Value;
-                    row.Cells["NightDifferentialHours"].Value = DBNull.Value;
-                    row.Cells["NightDifferentialOtHours"].Value = DBNull.Value;
-                    row.Cells["Remarks"].Value = DBNull.Value;
                 }
             }
             else if (e.ColumnIndex == dgvDTR.Columns["Rate"].Index)
             {
-                // Handle changes to the Rate column
+                // Handle Rate logic
                 if (row.Cells["Rate"].Value != null && row.Cells["Rate"].Value != DBNull.Value)
                 {
                     decimal rate = Convert.ToDecimal(row.Cells["Rate"].Value);
@@ -960,28 +993,37 @@ namespace JTI_Payroll_System
         }
         private void dgvDTR_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
         {
-            // Handle ShiftCode column ComboBox
             if (dgvDTR.CurrentCell.ColumnIndex == dgvDTR.Columns["ShiftCode"].Index)
             {
                 if (e.Control is ComboBox comboBox)
                 {
-                    comboBox.SelectedIndexChanged -= ComboBox_SelectedIndexChanged; // Remove any existing handler
-                    comboBox.SelectedIndexChanged += ComboBox_SelectedIndexChanged; // Add the new handler
+                    // Detach any existing handlers to avoid duplication
+                    comboBox.Validating -= ShiftCodeComboBox_Validating;
+                    comboBox.Validating -= ComboBox_Validating;
+
+                    // Attach the handler for ShiftCode validation
+                    comboBox.Validating += ShiftCodeComboBox_Validating;
                 }
             }
-
-            // Handle TimeIn and TimeOut columns for 4-digit entry
-            else if (dgvDTR.CurrentCell.ColumnIndex == dgvDTR.Columns["TimeIn"].Index ||
-                     dgvDTR.CurrentCell.ColumnIndex == dgvDTR.Columns["TimeOut"].Index)
+            else if (dgvDTR.CurrentCell.ColumnIndex == dgvDTR.Columns["Rate"].Index)
             {
-                if (e.Control is TextBox textBox)
+                if (e.Control is ComboBox comboBox)
                 {
-                    // Remove any existing handlers to prevent multiple attachments
-                    textBox.KeyPress -= TimeTextBox_KeyPress;
-                    textBox.KeyPress += TimeTextBox_KeyPress;
+                    // Detach any existing handlers to avoid duplication
+                    comboBox.Validating -= ShiftCodeComboBox_Validating;
+                    comboBox.Validating -= ComboBox_Validating;
 
-                    // Optional: Select all text when starting edit for easier replacement
-                    textBox.SelectAll();
+                    // Attach the handler for Rate validation
+                    comboBox.Validating += ComboBox_Validating;
+                }
+            }
+            else
+            {
+                // Detach all handlers if the column is neither ShiftCode nor Rate
+                if (e.Control is ComboBox comboBox)
+                {
+                    comboBox.Validating -= ShiftCodeComboBox_Validating;
+                    comboBox.Validating -= ComboBox_Validating;
                 }
             }
         }
