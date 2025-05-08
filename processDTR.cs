@@ -585,8 +585,6 @@ namespace JTI_Payroll_System
 
             return dt;
         }
-
-        // Helper method to convert HHMM format to TimeSpan
         private TimeSpan ConvertHHMMToTimeSpan(string hhmmString)
         {
             if (string.IsNullOrEmpty(hhmmString))
@@ -612,7 +610,6 @@ namespace JTI_Payroll_System
 
             return new TimeSpan(hours, minutes, 0);
         }
-
         private void btnNext_Click(object sender, EventArgs e)
         {
             if (employeeIDs.Count == 0) return;
@@ -993,37 +990,48 @@ namespace JTI_Payroll_System
         }
         private void dgvDTR_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
         {
-            if (dgvDTR.CurrentCell.ColumnIndex == dgvDTR.Columns["ShiftCode"].Index)
+            if (dgvDTR.CurrentCell.ColumnIndex == dgvDTR.Columns["Rate"].Index ||
+                dgvDTR.CurrentCell.ColumnIndex == dgvDTR.Columns["ShiftCode"].Index)
             {
                 if (e.Control is ComboBox comboBox)
                 {
                     // Detach any existing handlers to avoid duplication
-                    comboBox.Validating -= ShiftCodeComboBox_Validating;
                     comboBox.Validating -= ComboBox_Validating;
-
-                    // Attach the handler for ShiftCode validation
-                    comboBox.Validating += ShiftCodeComboBox_Validating;
-                }
-            }
-            else if (dgvDTR.CurrentCell.ColumnIndex == dgvDTR.Columns["Rate"].Index)
-            {
-                if (e.Control is ComboBox comboBox)
-                {
-                    // Detach any existing handlers to avoid duplication
                     comboBox.Validating -= ShiftCodeComboBox_Validating;
-                    comboBox.Validating -= ComboBox_Validating;
 
-                    // Attach the handler for Rate validation
-                    comboBox.Validating += ComboBox_Validating;
+                    // Attach the appropriate handler
+                    if (dgvDTR.CurrentCell.ColumnIndex == dgvDTR.Columns["Rate"].Index)
+                    {
+                        comboBox.Validating += ComboBox_Validating;
+                    }
+                    else if (dgvDTR.CurrentCell.ColumnIndex == dgvDTR.Columns["ShiftCode"].Index)
+                    {
+                        comboBox.Validating += ShiftCodeComboBox_Validating;
+                    }
+
+                    // Customize ComboBox appearance
+                    comboBox.FlatStyle = FlatStyle.Flat; // Remove border
+                    comboBox.DropDownStyle = ComboBoxStyle.DropDown; // Allow typing
+                    comboBox.IntegralHeight = false; // Enable scrolling for long lists
+                    comboBox.MaxDropDownItems = 10; // Limit visible items in the dropdown
+
+                    // Ensure arrow key navigation highlights items
+                    comboBox.KeyDown += (s, args) =>
+                    {
+                        if (args.KeyCode == Keys.Up || args.KeyCode == Keys.Down)
+                        {
+                            comboBox.DroppedDown = true; // Keep the dropdown open
+                        }
+                    };
                 }
             }
             else
             {
-                // Detach all handlers if the column is neither ShiftCode nor Rate
+                // Detach all handlers if the column is neither Rate nor ShiftCode
                 if (e.Control is ComboBox comboBox)
                 {
-                    comboBox.Validating -= ShiftCodeComboBox_Validating;
                     comboBox.Validating -= ComboBox_Validating;
+                    comboBox.Validating -= ShiftCodeComboBox_Validating;
                 }
             }
         }
