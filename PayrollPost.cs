@@ -133,9 +133,9 @@ namespace JTI_Payroll_System
 
                     foreach (string employeeID in employeeIDs)
                     {
-                        // Fetch employee name details
-                        string lname = "", fname = "", mname = "";
-                        string nameQuery = "SELECT lname, fname, mname FROM employee WHERE id_no = @employeeID LIMIT 1";
+                        // Fetch employee name and ccode details
+                        string lname = "", fname = "", mname = "", ccode = "";
+                        string nameQuery = "SELECT lname, fname, mname, ccode FROM employee WHERE id_no = @employeeID LIMIT 1";
                         using (MySqlCommand nameCmd = new MySqlCommand(nameQuery, conn))
                         {
                             nameCmd.Parameters.AddWithValue("@employeeID", employeeID);
@@ -146,6 +146,7 @@ namespace JTI_Payroll_System
                                     lname = nameReader["lname"].ToString();
                                     fname = nameReader["fname"].ToString();
                                     mname = nameReader["mname"].ToString();
+                                    ccode = nameReader["ccode"].ToString();
                                 }
                             }
                         }
@@ -332,7 +333,7 @@ namespace JTI_Payroll_System
                                     // Record already exists, perform update
                                     string updateQuery = @"
                                 UPDATE payroll 
-                                SET lname = @lname, fname = @fname, mname = @mname,
+                                SET lname = @lname, fname = @fname, mname = @mname, ccode = @ccode,
                                     total_days = @totalDays, 
                                     overtime_hours = @overtimeHours, 
                                     total_earnings = @totalEarnings, 
@@ -376,6 +377,7 @@ namespace JTI_Payroll_System
                                         updateCmd.Parameters.AddWithValue("@lname", lname);
                                         updateCmd.Parameters.AddWithValue("@fname", fname);
                                         updateCmd.Parameters.AddWithValue("@mname", mname);
+                                        updateCmd.Parameters.AddWithValue("@ccode", ccode);
                                         updateCmd.Parameters.AddWithValue("@totalDays", totalDays);
                                         updateCmd.Parameters.AddWithValue("@overtimeHours", overtimeHours);
                                         updateCmd.Parameters.AddWithValue("@totalEarnings", totalEarnings);
@@ -422,7 +424,7 @@ namespace JTI_Payroll_System
                                     // Record does not exist, perform insert
                                     string insertQuery = @"
                                 INSERT INTO payroll (
-                                    employee_id, lname, fname, mname, pay_period_start, pay_period_end, total_days, overtime_hours, 
+                                    employee_id, lname, fname, mname, ccode, pay_period_start, pay_period_end, total_days, overtime_hours, 
                                     total_earnings, restday_hours, restday_overtime_hours, legal_holiday_hours, 
                                     legal_holiday_overtime_hours, lhrd_hours, lhrd_overtime_hours, special_holiday_hours, 
                                     special_holiday_overtime_hours, special_holiday_restday_hours, special_holiday_restday_overtime_hours, 
@@ -431,7 +433,7 @@ namespace JTI_Payroll_System
                                     td_ut, working_hours, legal_holiday_count, non_working_day_count, rate, reliever, SSS, philhealth, hdmf
                                 )
                                 VALUES (
-                                    @employeeID, @lname, @fname, @mname, @startDate, @endDate, @totalDays, @overtimeHours, 
+                                    @employeeID, @lname, @fname, @mname, @ccode, @startDate, @endDate, @totalDays, @overtimeHours, 
                                     @totalEarnings, @restdayHours, @restdayOvertimeHours, @legalHolidayHours, 
                                     @legalHolidayOvertimeHours, @lhrdHours, @lhrdOvertimeHours, @specialHolidayHours, 
                                     @specialHolidayOvertimeHours, @specialHolidayRestDayHours, @specialHolidayRestDayOvertimeHours, 
@@ -450,6 +452,7 @@ namespace JTI_Payroll_System
                                         insertCmd.Parameters.AddWithValue("@lname", lname);
                                         insertCmd.Parameters.AddWithValue("@fname", fname);
                                         insertCmd.Parameters.AddWithValue("@mname", mname);
+                                        insertCmd.Parameters.AddWithValue("@ccode", ccode);
                                         insertCmd.Parameters.AddWithValue("@startDate", startDate);
                                         insertCmd.Parameters.AddWithValue("@endDate", endDate);
                                         insertCmd.Parameters.AddWithValue("@totalDays", totalDays);
