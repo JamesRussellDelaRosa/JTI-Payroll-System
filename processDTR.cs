@@ -27,8 +27,11 @@ namespace JTI_Payroll_System
             textStartDate.Enter += TextBox_Enter;
             textStartDate.Leave += TextBox_Leave;
             textStartDate.TextChanged += TextBox_TextChanged; // Add this line
+            textStartDate.KeyPress += AutoFormatDate; // Attach AutoFormatDate
+
             textEndDate.Enter += TextBox_Enter;
             textEndDate.Leave += TextBox_Leave;
+            textEndDate.KeyPress += AutoFormatDate; // Attach AutoFormatDate
 
             // Add Paint event handlers for custom drawing
             textStartDate.Paint += TextBox_Paint;
@@ -1454,6 +1457,29 @@ namespace JTI_Payroll_System
                 {
                     // Begin edit mode for this cell
                     dgvDTR.BeginEdit(true);
+                }
+            }
+        }
+        private void AutoFormatDate(object sender, KeyPressEventArgs e)
+        {
+            TextBox textBox = sender as TextBox;
+
+            // Allow only digits and control keys (e.g., backspace)
+            if (!char.IsDigit(e.KeyChar) && !char.IsControl(e.KeyChar))
+            {
+                e.Handled = true;
+                return;
+            }
+
+            // Auto-insert slashes based on the MM/DD/YYYY format
+            if (!char.IsControl(e.KeyChar))
+            {
+                int length = textBox.Text.Length;
+
+                if (length == 2 || length == 5)
+                {
+                    textBox.Text += "/";
+                    textBox.SelectionStart = textBox.Text.Length; // Move the caret to the end
                 }
             }
         }

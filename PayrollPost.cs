@@ -22,11 +22,13 @@ namespace JTI_Payroll_System
 
         private void InitializeCustomComponents()
         {
-            // Assuming fromDate and toDate are already added to the form
             fromdate.Enter += new EventHandler(RemoveHint);
             fromdate.Leave += new EventHandler(AddHint);
+            fromdate.KeyPress += new KeyPressEventHandler(AutoFormatDate);
+
             todate.Enter += new EventHandler(RemoveHint);
             todate.Leave += new EventHandler(AddHint);
+            todate.KeyPress += new KeyPressEventHandler(AutoFormatDate);
 
             AddHint(fromdate, null);
             AddHint(todate, null);
@@ -907,10 +909,32 @@ namespace JTI_Payroll_System
 
             CalculateAndSavePayroll(startDate, endDate, parsedMonth, parsedPayrollYear, parsedControlPeriod);
         }
-
         private void repost_CheckedChanged(object sender, EventArgs e)
         {
             allowRepost = repost.Checked;
+        }
+        private void AutoFormatDate(object sender, KeyPressEventArgs e)
+        {
+            TextBox textBox = sender as TextBox;
+
+            // Allow only digits and control keys (e.g., backspace)
+            if (!char.IsDigit(e.KeyChar) && !char.IsControl(e.KeyChar))
+            {
+                e.Handled = true;
+                return;
+            }
+
+            // Auto-insert slashes based on the MM/DD/YYYY format
+            if (!char.IsControl(e.KeyChar))
+            {
+                int length = textBox.Text.Length;
+
+                if (length == 2 || length == 5)
+                {
+                    textBox.Text += "/";
+                    textBox.SelectionStart = textBox.Text.Length; // Move the caret to the end
+                }
+            }
         }
     }
 }
