@@ -990,48 +990,67 @@ namespace JTI_Payroll_System
         }
         private void dgvDTR_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
         {
-            if (dgvDTR.CurrentCell.ColumnIndex == dgvDTR.Columns["Rate"].Index ||
-                dgvDTR.CurrentCell.ColumnIndex == dgvDTR.Columns["ShiftCode"].Index)
+            if (dgvDTR.CurrentCell != null)
             {
-                if (e.Control is ComboBox comboBox)
+                // Handle TimeIn and TimeOut columns
+                if (dgvDTR.CurrentCell.OwningColumn.Name == "TimeIn" || dgvDTR.CurrentCell.OwningColumn.Name == "TimeOut")
                 {
-                    // Detach any existing handlers to avoid duplication
-                    comboBox.Validating -= ComboBox_Validating;
-                    comboBox.Validating -= ShiftCodeComboBox_Validating;
-
-                    // Attach the appropriate handler
-                    if (dgvDTR.CurrentCell.ColumnIndex == dgvDTR.Columns["Rate"].Index)
+                    if (e.Control is TextBox textBox)
                     {
-                        comboBox.Validating += ComboBox_Validating;
+                        // Detach any existing KeyPress event to avoid duplication
+                        textBox.KeyPress -= TimeTextBox_KeyPress;
+
+                        // Attach the KeyPress event
+                        textBox.KeyPress += TimeTextBox_KeyPress;
                     }
-                    else if (dgvDTR.CurrentCell.ColumnIndex == dgvDTR.Columns["ShiftCode"].Index)
-                    {
-                        comboBox.Validating += ShiftCodeComboBox_Validating;
-                    }
-
-                    // Customize ComboBox appearance
-                    comboBox.FlatStyle = FlatStyle.Flat; // Remove border
-                    comboBox.DropDownStyle = ComboBoxStyle.DropDown; // Allow typing
-                    comboBox.IntegralHeight = false; // Enable scrolling for long lists
-                    comboBox.MaxDropDownItems = 10; // Limit visible items in the dropdown
-
-                    // Ensure arrow key navigation highlights items
-                    comboBox.KeyDown += (s, args) =>
-                    {
-                        if (args.KeyCode == Keys.Up || args.KeyCode == Keys.Down)
-                        {
-                            comboBox.DroppedDown = true; // Keep the dropdown open
-                        }
-                    };
                 }
-            }
-            else
-            {
-                // Detach all handlers if the column is neither Rate nor ShiftCode
-                if (e.Control is ComboBox comboBox)
+                // Handle Rate and ShiftCode columns
+                else if (dgvDTR.CurrentCell.OwningColumn.Name == "Rate" || dgvDTR.CurrentCell.OwningColumn.Name == "ShiftCode")
                 {
-                    comboBox.Validating -= ComboBox_Validating;
-                    comboBox.Validating -= ShiftCodeComboBox_Validating;
+                    if (e.Control is ComboBox comboBox)
+                    {
+                        // Detach any existing handlers to avoid duplication
+                        comboBox.Validating -= ComboBox_Validating;
+                        comboBox.Validating -= ShiftCodeComboBox_Validating;
+
+                        // Attach the appropriate handler
+                        if (dgvDTR.CurrentCell.OwningColumn.Name == "Rate")
+                        {
+                            comboBox.Validating += ComboBox_Validating;
+                        }
+                        else if (dgvDTR.CurrentCell.OwningColumn.Name == "ShiftCode")
+                        {
+                            comboBox.Validating += ShiftCodeComboBox_Validating;
+                        }
+
+                        // Customize ComboBox appearance
+                        comboBox.FlatStyle = FlatStyle.Flat; // Remove border
+                        comboBox.DropDownStyle = ComboBoxStyle.DropDown; // Allow typing
+                        comboBox.IntegralHeight = false; // Enable scrolling for long lists
+                        comboBox.MaxDropDownItems = 10; // Limit visible items in the dropdown
+
+                        // Ensure arrow key navigation highlights items
+                        comboBox.KeyDown += (s, args) =>
+                        {
+                            if (args.KeyCode == Keys.Up || args.KeyCode == Keys.Down)
+                            {
+                                comboBox.DroppedDown = true; // Keep the dropdown open
+                            }
+                        };
+                    }
+                }
+                else
+                {
+                    // Detach all handlers if the column is neither TimeIn, TimeOut, Rate, nor ShiftCode
+                    if (e.Control is TextBox textBox)
+                    {
+                        textBox.KeyPress -= TimeTextBox_KeyPress;
+                    }
+                    else if (e.Control is ComboBox comboBox)
+                    {
+                        comboBox.Validating -= ComboBox_Validating;
+                        comboBox.Validating -= ShiftCodeComboBox_Validating;
+                    }
                 }
             }
         }
@@ -1041,32 +1060,16 @@ namespace JTI_Payroll_System
             if (!char.IsDigit(e.KeyChar) && e.KeyChar != '\b' && e.KeyChar != '\r')
             {
                 e.Handled = true; // Suppress the character
+                return;
             }
 
-            // Optional: Auto-format when user types 4 digits
             if (sender is TextBox textBox && char.IsDigit(e.KeyChar))
             {
-                // If we'll have 4 digits after this keypress, format and end editing
-                if (textBox.Text.Where(char.IsDigit).Count() == 3)
+                // If the text length is 2, add a colon automatically
+                if (textBox.Text.Length == 2)
                 {
-                    // Get the final 4-digit string
-                    string digits = textBox.Text + e.KeyChar;
-                    digits = new string(digits.Where(char.IsDigit).Take(4).ToArray());
-
-                    // Convert to TimeSpan right away
-                    TimeSpan time = ConvertHHMMToTimeSpan(digits);
-
-                    // Update the cell with the formatted value
-                    if (dgvDTR.CurrentCell != null)
-                    {
-                        dgvDTR.CurrentCell.Value = time;
-
-                        // Prevent the character from being added
-                        e.Handled = true;
-
-                        // End editing
-                        dgvDTR.EndEdit();
-                    }
+                    textBox.Text += ":";
+                    textBox.SelectionStart = textBox.Text.Length; // Move the cursor to the end
                 }
             }
         }
