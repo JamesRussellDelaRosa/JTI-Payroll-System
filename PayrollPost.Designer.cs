@@ -39,6 +39,7 @@
             label5 = new Label();
             todate = new TextBox();
             btnSavePayroll = new Button();
+            repost = new CheckBox();
             SuspendLayout();
             // 
             // month
@@ -131,11 +132,23 @@
             btnSavePayroll.UseVisualStyleBackColor = true;
             btnSavePayroll.Click += btnSavePayroll_Click_1;
             // 
+            // repost
+            // 
+            repost.AutoSize = true;
+            repost.Location = new Point(112, 310);
+            repost.Name = "repost";
+            repost.Size = new Size(83, 24);
+            repost.TabIndex = 11;
+            repost.Text = "REPOST";
+            repost.UseVisualStyleBackColor = true;
+            repost.CheckedChanged += repost_CheckedChanged;
+            // 
             // PayrollPost
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(repost);
             Controls.Add(btnSavePayroll);
             Controls.Add(label5);
             Controls.Add(todate);
@@ -166,5 +179,6 @@
         private Label label5;
         private TextBox todate;
         private Button btnSavePayroll;
+        private CheckBox repost;
     }
 }

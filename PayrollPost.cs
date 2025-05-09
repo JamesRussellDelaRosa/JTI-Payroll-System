@@ -18,6 +18,8 @@ namespace JTI_Payroll_System
             InitializeCustomComponents();
         }
 
+        private bool allowRepost = false;
+
         private void InitializeCustomComponents()
         {
             // Assuming fromDate and toDate are already added to the form
@@ -74,13 +76,36 @@ namespace JTI_Payroll_System
                         checkCmd.Parameters.AddWithValue("@controlPeriod", controlPeriod);
 
                         int existingPayrollCount = Convert.ToInt32(checkCmd.ExecuteScalar());
-                        if (existingPayrollCount > 0)
+                        if (existingPayrollCount > 0 && !allowRepost)
                         {
                             // Notify the user and exit the method
                             MessageBox.Show("Payroll data already exists for the specified cutoff period, month, year, and control period. No new data will be inserted.",
                                 "Existing Payroll Data", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                             return;
                         }
+                        else if (existingPayrollCount > 0 && allowRepost)
+                        {
+                            // Delete existing payroll data to allow overwriting
+                            string deleteQuery = @"
+                            DELETE FROM payroll 
+                            WHERE pay_period_start = @startDate 
+                            AND pay_period_end = @endDate
+                            AND month = @month
+                            AND payrollyear = @payrollyear
+                            AND control_period = @controlPeriod";
+
+                            using (MySqlCommand deleteCmd = new MySqlCommand(deleteQuery, conn))
+                            {
+                                deleteCmd.Parameters.AddWithValue("@startDate", startDate);
+                                deleteCmd.Parameters.AddWithValue("@endDate", endDate);
+                                deleteCmd.Parameters.AddWithValue("@month", month);
+                                deleteCmd.Parameters.AddWithValue("@payrollyear", payrollyear);
+                                deleteCmd.Parameters.AddWithValue("@controlPeriod", controlPeriod);
+
+                                deleteCmd.ExecuteNonQuery();
+                            }
+                        }
+
                     }
 
                     // Fetch employee IDs with attendance in the given date range
@@ -881,6 +906,11 @@ namespace JTI_Payroll_System
             }
 
             CalculateAndSavePayroll(startDate, endDate, parsedMonth, parsedPayrollYear, parsedControlPeriod);
+        }
+
+        private void repost_CheckedChanged(object sender, EventArgs e)
+        {
+            allowRepost = repost.Checked;
         }
     }
 }
