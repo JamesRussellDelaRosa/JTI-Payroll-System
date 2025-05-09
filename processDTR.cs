@@ -21,6 +21,7 @@ namespace JTI_Payroll_System
             dgvDTR.EditingControlShowing += dgvDTR_EditingControlShowing;
             dgvDTR.CellValueChanged += dgvDTR_CellValueChanged; // Add this line
             dgvDTR.CurrentCellDirtyStateChanged += dgvDTR_CurrentCellDirtyStateChanged; // Add this line
+            dgvDTR.CellEnter += dgvDTR_CellEnter;
 
             // Add event handlers for placeholder text
             textStartDate.Enter += TextBox_Enter;
@@ -204,7 +205,6 @@ namespace JTI_Payroll_System
                 }
             }
         }
-
         private List<string> GetShiftCodesFromDatabase()
         {
             List<string> shiftCodes = new List<string>();
@@ -1433,6 +1433,24 @@ namespace JTI_Payroll_System
                 using (Brush brush = new SolidBrush(SystemColors.GrayText))
                 {
                     e.Graphics.DrawString("MM/DD/YYYY", textBox.Font, brush, new PointF(0, 0));
+                }
+            }
+        }
+        private void dgvDTR_CellEnter(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0) return; // Skip header row
+
+            // Get the column name of the current cell
+            string columnName = dgvDTR.Columns[e.ColumnIndex].Name;
+
+            // Auto-enter edit mode only for Rate and ShiftCode columns
+            if (columnName == "Rate" || columnName == "ShiftCode")
+            {
+                // Check if the cell is not in edit mode already
+                if (!dgvDTR.IsCurrentCellInEditMode)
+                {
+                    // Begin edit mode for this cell
+                    dgvDTR.BeginEdit(true);
                 }
             }
         }
