@@ -68,6 +68,7 @@
             Panel hdmfloanPanel = CreateClickablePanel("HDMF LOAN", hdmfloan_Click);
             Panel autodeducthdmfsssloanPanel = CreateClickablePanel("Auto Deduct SSS/HDMF Loan", autodeducthdmfsssloan_Click);
             Panel editUsersPanel = CreateClickablePanel("EditUsers", editUsers_Click);
+            Panel payrollAdjPanel = CreateClickablePanel("Payroll Adjustments", payrollAdj_Click);
 
             // Add Panels to FlowLayoutPanel
             menuFlowLayoutPanel.Controls.Add(employeePanel);
@@ -81,6 +82,7 @@
             menuFlowLayoutPanel.Controls.Add(hdmfloanPanel);
             menuFlowLayoutPanel.Controls.Add(autodeducthdmfsssloanPanel);
             menuFlowLayoutPanel.Controls.Add(editUsersPanel);
+            menuFlowLayoutPanel.Controls.Add(payrollAdjPanel);
         }
 
         private Panel CreateClickablePanel(string text, EventHandler functionHandler)

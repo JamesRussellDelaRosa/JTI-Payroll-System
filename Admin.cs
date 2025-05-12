@@ -250,5 +250,11 @@ namespace JTI_Payroll_System
             editUsers editUsersForm = new editUsers();
             editUsersForm.Show();
         }
+
+        private void payrollAdj_Click(object sender, EventArgs e)
+        {
+            PayrollAdj payrollAjdForm = new PayrollAdj();
+            payrollAjdForm.Show();
+        }
     }
 }
