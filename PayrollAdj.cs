@@ -50,7 +50,7 @@ namespace JTI_Payroll_System
                 conn.Open();
                 string query = @"
             SELECT 
-                id,
+                employee_id,
                 mname,
                 fname,
                 lname,
