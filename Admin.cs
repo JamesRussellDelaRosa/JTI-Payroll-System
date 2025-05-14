@@ -266,5 +266,9 @@ namespace JTI_Payroll_System
             this.Close();
         }
 
+        private void buttonClose_Click(object sender, EventArgs e)
+        {
+            Application.Exit();
+        }
     }
 }

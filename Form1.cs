@@ -11,6 +11,25 @@ namespace JTI_Payroll_System
         public Form1()
         {
             InitializeComponent();
+            // Move focus to textBox2 when Enter is pressed in textBox1
+            textBox1.KeyDown += (s, e) =>
+            {
+                if (e.KeyCode == Keys.Enter)
+                {
+                    textBox2.Focus();
+                    e.SuppressKeyPress = true; // Prevent ding sound
+                }
+            };
+
+            // Trigger login when Enter is pressed in textBox2
+            textBox2.KeyDown += (s, e) =>
+            {
+                if (e.KeyCode == Keys.Enter)
+                {
+                    button1.PerformClick();
+                    e.SuppressKeyPress = true; // Prevent ding sound
+                }
+            };
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -70,6 +89,11 @@ namespace JTI_Payroll_System
                     }
                 }
             }
+        }
+
+        private void buttonClose_Click(object sender, EventArgs e)
+        {
+            Application.Exit();
         }
     }
 }

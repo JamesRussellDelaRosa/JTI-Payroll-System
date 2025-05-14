@@ -33,6 +33,7 @@
             textBox1 = new TextBox();
             textBox2 = new TextBox();
             button1 = new Button();
+            buttonClose = new Button();
             SuspendLayout();
             // 
             // label1
@@ -64,6 +65,7 @@
             // 
             textBox2.Location = new Point(329, 208);
             textBox2.Name = "textBox2";
+            textBox2.PasswordChar = '*';
             textBox2.Size = new Size(125, 27);
             textBox2.TabIndex = 3;
             // 
@@ -73,15 +75,26 @@
             button1.Name = "button1";
             button1.Size = new Size(94, 29);
             button1.TabIndex = 4;
-            button1.Text = "login";
+            button1.Text = "LOGIN";
             button1.UseVisualStyleBackColor = true;
             button1.Click += button1_Click;
+            // 
+            // buttonClose
+            // 
+            buttonClose.Location = new Point(329, 390);
+            buttonClose.Name = "buttonClose";
+            buttonClose.Size = new Size(94, 29);
+            buttonClose.TabIndex = 5;
+            buttonClose.Text = "CLOSE";
+            buttonClose.UseVisualStyleBackColor = true;
+            buttonClose.Click += buttonClose_Click;
             // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(buttonClose);
             Controls.Add(button1);
             Controls.Add(textBox2);
             Controls.Add(textBox1);
@@ -100,5 +113,6 @@
         private TextBox textBox1;
         private TextBox textBox2;
         private Button button1;
+        private Button buttonClose;
     }
 }

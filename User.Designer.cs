@@ -32,6 +32,7 @@
             label1 = new Label();
             lblFullName = new Label();
             btnLogout = new Button();
+            buttonClose = new Button();
             SuspendLayout();
             // 
             // menuFlowLayoutPanel
@@ -73,11 +74,22 @@
             btnLogout.UseVisualStyleBackColor = true;
             btnLogout.Click += btnLogout_Click;
             // 
+            // buttonClose
+            // 
+            buttonClose.Location = new Point(560, 551);
+            buttonClose.Name = "buttonClose";
+            buttonClose.Size = new Size(94, 29);
+            buttonClose.TabIndex = 6;
+            buttonClose.Text = "CLOSE";
+            buttonClose.UseVisualStyleBackColor = true;
+            buttonClose.Click += buttonClose_Click;
+            // 
             // User
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1007, 600);
+            Controls.Add(buttonClose);
             Controls.Add(btnLogout);
             Controls.Add(label1);
             Controls.Add(lblFullName);
@@ -94,5 +106,6 @@
         private Label label1;
         private Label lblFullName;
         private Button btnLogout;
+        private Button buttonClose;
     }
 }
