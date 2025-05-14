@@ -19,8 +19,7 @@ namespace JTI_Payroll_System
             string username = textBox1.Text;
             string password = textBox2.Text;
 
-            // SQL query to check user credentials
-            string query = "SELECT UserType FROM Users WHERE Username = @Username AND Password = @Password";
+            string query = "SELECT UserID, FullName, UserType FROM Users WHERE Username = @Username AND Password = @Password";
 
             using (MySqlConnection connection = DatabaseHelper.GetConnection())
             {
@@ -38,21 +37,22 @@ namespace JTI_Payroll_System
                         {
                             if (reader.Read())
                             {
-                                // Login successful, retrieve UserType
-                                string userType = reader.GetString(0);
+                                // Store user info in session
+                                UserSession.UserID = reader.GetInt32(0);
+                                UserSession.FullName = reader.GetString(1);
+                                UserSession.UserType = reader.GetString(2);
+                                UserSession.Username = username;
 
                                 MessageBox.Show("Login successful!");
 
-                                if (userType == "admin")
+                                if (UserSession.IsAdmin)
                                 {
-                                    // Redirect to Admin form
                                     Admin adminForm = new Admin();
                                     adminForm.Show();
                                     this.Hide();
                                 }
                                 else
                                 {
-                                    // Redirect to User form (or another form)
                                     User userForm = new User();
                                     userForm.Show();
                                     this.Hide();
@@ -60,7 +60,6 @@ namespace JTI_Payroll_System
                             }
                             else
                             {
-                                // Login failed
                                 MessageBox.Show("Invalid username or password.");
                             }
                         }

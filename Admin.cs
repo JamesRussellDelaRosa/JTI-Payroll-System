@@ -18,6 +18,7 @@ namespace JTI_Payroll_System
         {
             InitializeComponent();
             InitializeCustomPanels();
+            lblFullName.Text = $"{UserSession.FullName}";
         }
 
         private void button1_Click(object sender, EventArgs e)

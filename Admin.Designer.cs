@@ -32,6 +32,8 @@
         private void InitializeComponent()
         {
             menuFlowLayoutPanel = new FlowLayoutPanel();
+            lblFullName = new Label();
+            label1 = new Label();
             SuspendLayout();
             // 
             // menuFlowLayoutPanel
@@ -43,15 +45,38 @@
             menuFlowLayoutPanel.Size = new Size(442, 568);
             menuFlowLayoutPanel.TabIndex = 0;
             // 
+            // lblFullName
+            // 
+            lblFullName.AutoSize = true;
+            lblFullName.Font = new Font("Segoe UI", 28.2F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lblFullName.Location = new Point(477, 134);
+            lblFullName.Name = "lblFullName";
+            lblFullName.Size = new Size(175, 62);
+            lblFullName.TabIndex = 1;
+            lblFullName.Text = "sample";
+            // 
+            // label1
+            // 
+            label1.AutoSize = true;
+            label1.Font = new Font("Segoe UI", 28.2F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            label1.Location = new Point(477, 72);
+            label1.Name = "label1";
+            label1.Size = new Size(220, 62);
+            label1.TabIndex = 2;
+            label1.Text = "Welcome";
+            // 
             // Admin
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(923, 635);
+            ClientSize = new Size(931, 635);
+            Controls.Add(label1);
+            Controls.Add(lblFullName);
             Controls.Add(menuFlowLayoutPanel);
             Name = "Admin";
             Text = "Admin";
             ResumeLayout(false);
+            PerformLayout();
         }
 
         private void InitializeCustomPanels()
@@ -201,5 +226,7 @@
         private Panel hdmfloanPanel;
         private Panel autodeducthdmfsssloanPanel;
         private Panel editUsersPanel;
+        private Label lblFullName;
+        private Label label1;
     }
 }
