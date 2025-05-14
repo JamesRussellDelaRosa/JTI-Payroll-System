@@ -81,7 +81,7 @@
             // 
             // buttonClose
             // 
-            buttonClose.Location = new Point(329, 390);
+            buttonClose.Location = new Point(329, 311);
             buttonClose.Name = "buttonClose";
             buttonClose.Size = new Size(94, 29);
             buttonClose.TabIndex = 5;
