@@ -209,12 +209,6 @@ namespace JTI_Payroll_System
             payrollPostForm.Show();
         }
 
-        private void rateConfig_Click(object sender, EventArgs e)
-        {
-            RateConfig rateConfigForm = new RateConfig();
-            rateConfigForm.Show();
-        }
-
         private void sssgovdues_Click(object sender, EventArgs e)
         {
             sssgovdues sssgovduesForm = new sssgovdues();

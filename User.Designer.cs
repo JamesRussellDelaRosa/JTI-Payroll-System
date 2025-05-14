@@ -107,7 +107,6 @@
             Panel uploadattlogPanel = CreateClickablePanel("UploadATT", uploadattlog_Click);
             Panel processDtrPanel = CreateClickablePanel("PROCESS DTR", processDtr_Click);
             Panel btnpayrollpostPanel = CreateClickablePanel("PAYROLL POSTING", btnpayrollpost_Click);
-            Panel rateConfigPanel = CreateClickablePanel("RATECONFIG", rateConfig_Click);
             Panel sssloanPanel = CreateClickablePanel("SSS LOAN", sssloan_Click);
             Panel hdmfloanPanel = CreateClickablePanel("HDMF LOAN", hdmfloan_Click);
             Panel autodeducthdmfsssloanPanel = CreateClickablePanel("Auto Deduct SSS/HDMF Loan", autodeducthdmfsssloan_Click);
@@ -118,7 +117,6 @@
             menuFlowLayoutPanel.Controls.Add(uploadattlogPanel);
             menuFlowLayoutPanel.Controls.Add(processDtrPanel);
             menuFlowLayoutPanel.Controls.Add(btnpayrollpostPanel);
-            menuFlowLayoutPanel.Controls.Add(rateConfigPanel);
             menuFlowLayoutPanel.Controls.Add(sssloanPanel);
             menuFlowLayoutPanel.Controls.Add(hdmfloanPanel);
             menuFlowLayoutPanel.Controls.Add(autodeducthdmfsssloanPanel);
