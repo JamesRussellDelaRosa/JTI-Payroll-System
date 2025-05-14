@@ -30,7 +30,7 @@
         {
             dataGridView1 = new DataGridView();
             view = new Button();
-            password = new TextBox();
+            fullname = new TextBox();
             username = new TextBox();
             label2 = new Label();
             label1 = new Label();
@@ -40,6 +40,8 @@
             add = new Button();
             label3 = new Label();
             userTypeComboBox = new ComboBox();
+            password = new TextBox();
+            label4 = new Label();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             SuspendLayout();
             // 
@@ -62,16 +64,16 @@
             view.UseVisualStyleBackColor = true;
             view.Click += view_Click;
             // 
-            // password
+            // fullname
             // 
-            password.Location = new Point(203, 251);
-            password.Name = "password";
-            password.Size = new Size(125, 27);
-            password.TabIndex = 18;
+            fullname.Location = new Point(203, 181);
+            fullname.Name = "fullname";
+            fullname.Size = new Size(125, 27);
+            fullname.TabIndex = 18;
             // 
             // username
             // 
-            username.Location = new Point(203, 192);
+            username.Location = new Point(203, 134);
             username.Name = "username";
             username.Size = new Size(125, 27);
             username.TabIndex = 17;
@@ -80,17 +82,17 @@
             // 
             label2.AutoSize = true;
             label2.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label2.Location = new Point(53, 247);
+            label2.Location = new Point(53, 177);
             label2.Name = "label2";
-            label2.Size = new Size(117, 28);
+            label2.Size = new Size(110, 28);
             label2.TabIndex = 16;
-            label2.Text = "PASSWORD";
+            label2.Text = "FULLNAME";
             // 
             // label1
             // 
             label1.AutoSize = true;
             label1.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label1.Location = new Point(50, 191);
+            label1.Location = new Point(50, 133);
             label1.Name = "label1";
             label1.Size = new Size(115, 28);
             label1.TabIndex = 15;
@@ -140,7 +142,7 @@
             // 
             label3.AutoSize = true;
             label3.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label3.Location = new Point(53, 305);
+            label3.Location = new Point(53, 273);
             label3.Name = "label3";
             label3.Size = new Size(100, 28);
             label3.TabIndex = 21;
@@ -149,24 +151,41 @@
             // userTypeComboBox
             // 
             userTypeComboBox.FormattingEnabled = true;
-            userTypeComboBox.Location = new Point(203, 309);
+            userTypeComboBox.Items.AddRange(new object[] { "admin", "user" });
+            userTypeComboBox.Location = new Point(203, 277);
             userTypeComboBox.Name = "userTypeComboBox";
             userTypeComboBox.Size = new Size(125, 28);
             userTypeComboBox.TabIndex = 22;
-            this.userTypeComboBox.Items.AddRange(new object[] {
-            "admin",
-            "user"});
+            // 
+            // password
+            // 
+            password.Location = new Point(203, 230);
+            password.Name = "password";
+            password.Size = new Size(125, 27);
+            password.TabIndex = 24;
+            // 
+            // label4
+            // 
+            label4.AutoSize = true;
+            label4.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            label4.Location = new Point(53, 226);
+            label4.Name = "label4";
+            label4.Size = new Size(117, 28);
+            label4.TabIndex = 23;
+            label4.Text = "PASSWORD";
             // 
             // editUsers
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(password);
+            Controls.Add(label4);
             Controls.Add(userTypeComboBox);
             Controls.Add(label3);
             Controls.Add(dataGridView1);
             Controls.Add(view);
-            Controls.Add(password);
+            Controls.Add(fullname);
             Controls.Add(username);
             Controls.Add(label2);
             Controls.Add(label1);
@@ -187,7 +206,7 @@
 
         private DataGridView dataGridView1;
         private Button view;
-        private TextBox password;
+        private TextBox fullname;
         private TextBox username;
         private Label label2;
         private Label label1;
@@ -197,5 +216,7 @@
         private Button add;
         private Label label3;
         private ComboBox userTypeComboBox;
+        private TextBox password;
+        private Label label4;
     }
 }

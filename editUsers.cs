@@ -24,17 +24,19 @@ namespace JTI_Payroll_System
             {
                 string userName = username.Text;
                 string passWord = password.Text;
+                string fullName = fullname.Text;
                 string userType = userTypeComboBox.SelectedItem?.ToString() ?? "user"; // Default to "user" if nothing is selected
 
                 using (MySqlConnection connection = DatabaseHelper.GetConnection())
                 {
                     connection.Open();
-                    string query = "INSERT INTO Users (Username, Password, UserType) VALUES (@Username, @Password, @UserType)";
+                    string query = "INSERT INTO Users (Username, Password, UserType, Fullname) VALUES (@Username, @Password, @UserType, @Fullname)";
                     using (MySqlCommand command = new MySqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@Username", userName);
                         command.Parameters.AddWithValue("@Password", passWord);
                         command.Parameters.AddWithValue("@UserType", userType);
+                        command.Parameters.AddWithValue("@Fullname", fullName);
                         command.ExecuteNonQuery();
 
                         MessageBox.Show("User added successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -136,17 +138,19 @@ namespace JTI_Payroll_System
             {
                 string userName = username.Text;
                 string newPassword = password.Text;
+                string newFullname = fullname.Text;
                 string newUserType = userTypeComboBox.SelectedItem?.ToString() ?? "user"; // Default to "user" if nothing is selected
 
                 using (MySqlConnection connection = DatabaseHelper.GetConnection())
                 {
                     connection.Open();
-                    string query = "UPDATE Users SET Password = @NewPassword, UserType = @NewUserType WHERE Username = @Username";
+                    string query = "UPDATE Users SET Password = @NewPassword, UserType = @NewUserType, Fullname = @NewFullname WHERE Username = @Username";
                     using (MySqlCommand command = new MySqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@Username", userName);
                         command.Parameters.AddWithValue("@NewPassword", newPassword);
                         command.Parameters.AddWithValue("@NewUserType", newUserType);
+                        command.Parameters.AddWithValue("@NewFullname", newFullname);
                         command.ExecuteNonQuery();
 
                         MessageBox.Show("User updated successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -172,7 +176,7 @@ namespace JTI_Payroll_System
                 using (MySqlConnection connection = DatabaseHelper.GetConnection())
                 {
                     connection.Open();
-                    string query = "SELECT Username, Password, UserType FROM Users";
+                    string query = "SELECT Username, Password, UserType, Fullname FROM Users";
                     using (MySqlCommand command = new MySqlCommand(query, connection))
                     {
                         using (MySqlDataReader reader = command.ExecuteReader())

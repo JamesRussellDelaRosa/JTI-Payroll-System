@@ -15,11 +15,15 @@ namespace JTI_Payroll_System
         public User()
         {
             InitializeComponent();
+            lblFullName.Text = $"{UserSession.FullName}";
         }
 
-        private void label1_Click(object sender, EventArgs e)
+        private void btnLogout_Click(object sender, EventArgs e)
         {
-
+            UserSession.Clear(); // Clear the session
+            Form1 loginForm = new Form1();
+            loginForm.Show();
+            this.Close();
         }
     }
 }

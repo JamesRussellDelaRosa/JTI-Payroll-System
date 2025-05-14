@@ -34,6 +34,7 @@
             menuFlowLayoutPanel = new FlowLayoutPanel();
             lblFullName = new Label();
             label1 = new Label();
+            btnLogout = new Button();
             SuspendLayout();
             // 
             // menuFlowLayoutPanel
@@ -65,11 +66,22 @@
             label1.TabIndex = 2;
             label1.Text = "Welcome";
             // 
+            // btnLogout
+            // 
+            btnLogout.Location = new Point(460, 594);
+            btnLogout.Name = "btnLogout";
+            btnLogout.Size = new Size(94, 29);
+            btnLogout.TabIndex = 3;
+            btnLogout.Text = "LOGOUT";
+            btnLogout.UseVisualStyleBackColor = true;
+            btnLogout.Click += btnLogout_Click;
+            // 
             // Admin
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(931, 635);
+            Controls.Add(btnLogout);
             Controls.Add(label1);
             Controls.Add(lblFullName);
             Controls.Add(menuFlowLayoutPanel);
@@ -228,5 +240,6 @@
         private Panel editUsersPanel;
         private Label lblFullName;
         private Label label1;
+        private Button btnLogout;
     }
 }
