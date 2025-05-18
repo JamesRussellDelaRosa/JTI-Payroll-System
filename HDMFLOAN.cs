@@ -9,6 +9,7 @@ namespace JTI_Payroll_System
     public partial class HDMFLOAN : Form
     {
         private string selectedEmployeeId; // To store the selected employee's ID
+        private Panel highlightedPanel = null;
 
         public HDMFLOAN()
         {
@@ -96,10 +97,15 @@ namespace JTI_Payroll_System
 
                                 // Add Click events to each label
                                 idLabel.Click += Label_Click;
+                                idLabel.DoubleClick += Label_DoubleClick;
                                 firstNameLabel.Click += Label_Click;
+                                firstNameLabel.DoubleClick += Label_DoubleClick;
                                 middleNameLabel.Click += Label_Click;
+                                middleNameLabel.DoubleClick += Label_DoubleClick;
                                 lastNameLabel.Click += Label_Click;
+                                lastNameLabel.DoubleClick += Label_DoubleClick;
                                 ccodeLabel.Click += Label_Click;
+                                ccodeLabel.DoubleClick += Label_DoubleClick;
 
                                 // Add labels to the panel
                                 employeePanel.Controls.Add(idLabel);
@@ -108,8 +114,12 @@ namespace JTI_Payroll_System
                                 employeePanel.Controls.Add(lastNameLabel);
                                 employeePanel.Controls.Add(ccodeLabel);
 
-                                // Add Click event to the panel
+                                // Add Click and DoubleClick events to the panel
                                 employeePanel.Click += Panel_Click;
+                                employeePanel.DoubleClick += Panel_DoubleClick;
+                                employeePanel.DoubleClick += (s, e) => { }; // Ensures DoubleClick is recognized
+                                employeePanel.TabStop = true;
+                                employeePanel.KeyDown += EmployeePanel_KeyDown;
 
                                 flowLayoutPanel1.Controls.Add(employeePanel);
                             }
@@ -125,32 +135,20 @@ namespace JTI_Payroll_System
 
         private void Label_Click(object sender, EventArgs e)
         {
-            // Reset the background color of all panels
-            foreach (Control control in flowLayoutPanel1.Controls)
-            {
-                if (control is Panel panel)
-                {
-                    panel.BackColor = SystemColors.Control; // Default panel color
-                }
-            }
-
-            // Determine the parent panel of the clicked label
+            HighlightPanel(((Control)sender).Parent as Panel);
+        }
+        private void Label_DoubleClick(object sender, EventArgs e)
+        {
+            // Load and display data
             Panel parentPanel = ((Control)sender).Parent as Panel;
-
             if (parentPanel != null)
             {
-                // Highlight the parent panel
-                parentPanel.BackColor = Color.LightBlue;
-
-                // Set empid and empname fields
                 var employeeData = (dynamic)parentPanel.Tag;
                 if (employeeData != null)
                 {
-                    selectedEmployeeId = employeeData.Id; // Set the selected employee ID
+                    selectedEmployeeId = employeeData.Id;
                     empid.Text = $"ID NO.: {employeeData.Id}";
                     empname.Text = $"EMPLOYEE NAME: {employeeData.Name}";
-
-                    // Load saved data for the selected employee
                     LoadEmployeeData(selectedEmployeeId);
                     LoadEmployeeDataCalamity(selectedEmployeeId);
                 }
@@ -161,34 +159,23 @@ namespace JTI_Payroll_System
             }
         }
 
+
         private void Panel_Click(object sender, EventArgs e)
         {
-            // Reset the background color of all panels
-            foreach (Control control in flowLayoutPanel1.Controls)
-            {
-                if (control is Panel panel)
-                {
-                    panel.BackColor = SystemColors.Control; // Default panel color
-                }
-            }
-
-            // Determine the clicked panel
+            HighlightPanel(sender as Panel ?? ((Control)sender).Parent as Panel);
+        }
+        private void Panel_DoubleClick(object sender, EventArgs e)
+        {
+            // Load and display data
             Panel clickedPanel = sender as Panel ?? ((Control)sender).Parent as Panel;
-
             if (clickedPanel != null)
             {
-                // Highlight the clicked panel
-                clickedPanel.BackColor = Color.LightBlue;
-
-                // Set empid and empname fields
                 var employeeData = (dynamic)clickedPanel.Tag;
                 if (employeeData != null)
                 {
-                    selectedEmployeeId = employeeData.Id; // Set the selected employee ID
+                    selectedEmployeeId = employeeData.Id;
                     empid.Text = $"ID NO.: {employeeData.Id}";
                     empname.Text = $"EMPLOYEE NAME: {employeeData.Name}";
-
-                    // Load saved data for the selected employee
                     LoadEmployeeData(selectedEmployeeId);
                     LoadEmployeeDataCalamity(selectedEmployeeId);
                 }
@@ -198,6 +185,44 @@ namespace JTI_Payroll_System
                 }
             }
         }
+
+        private void HighlightPanel(Panel panel)
+        {
+            foreach (Control control in flowLayoutPanel1.Controls)
+            {
+                if (control is Panel p)
+                    p.BackColor = SystemColors.Control;
+            }
+            if (panel != null)
+            {
+                panel.BackColor = Color.LightBlue;
+                panel.Focus();
+                highlightedPanel = panel;
+            }
+        }
+        private void EmployeePanel_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (highlightedPanel == null) return;
+
+            int idx = flowLayoutPanel1.Controls.GetChildIndex(highlightedPanel);
+            if (e.KeyCode == Keys.Down && idx < flowLayoutPanel1.Controls.Count - 1)
+            {
+                HighlightPanel((Panel)flowLayoutPanel1.Controls[idx + 1]);
+                e.Handled = true;
+            }
+            else if (e.KeyCode == Keys.Up && idx > 0)
+            {
+                HighlightPanel((Panel)flowLayoutPanel1.Controls[idx - 1]);
+                e.Handled = true;
+            }
+            else if (e.KeyCode == Keys.Enter)
+            {
+                // Simulate double-click to load data
+                Panel_DoubleClick(highlightedPanel, EventArgs.Empty);
+                e.Handled = true;
+            }
+        }
+
 
         //HDMF LOAN
 
