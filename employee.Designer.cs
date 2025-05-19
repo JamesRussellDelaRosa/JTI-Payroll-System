@@ -135,6 +135,8 @@
             spou_name = new TextBox();
             label46 = new Label();
             cancel = new Button();
+            delete = new Button();
+            empnew = new Button();
             SuspendLayout();
             // 
             // label1
@@ -919,7 +921,7 @@
             // 
             // empsearch
             // 
-            empsearch.Location = new Point(660, 538);
+            empsearch.Location = new Point(760, 538);
             empsearch.Name = "empsearch";
             empsearch.Size = new Size(94, 29);
             empsearch.TabIndex = 100;
@@ -1028,11 +1030,33 @@
             cancel.UseVisualStyleBackColor = true;
             cancel.Click += cancel_Click;
             // 
+            // delete
+            // 
+            delete.Location = new Point(660, 538);
+            delete.Name = "delete";
+            delete.Size = new Size(94, 29);
+            delete.TabIndex = 113;
+            delete.Text = "delete";
+            delete.UseVisualStyleBackColor = true;
+            delete.Click += delete_Click;
+            // 
+            // empnew
+            // 
+            empnew.Location = new Point(860, 538);
+            empnew.Name = "empnew";
+            empnew.Size = new Size(94, 29);
+            empnew.TabIndex = 114;
+            empnew.Text = "new";
+            empnew.UseVisualStyleBackColor = true;
+            empnew.Click += empnew_Click;
+            // 
             // employee
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1375, 579);
+            Controls.Add(empnew);
+            Controls.Add(delete);
             Controls.Add(cancel);
             Controls.Add(label46);
             Controls.Add(spou_name);
@@ -1255,5 +1279,7 @@
         private TextBox spou_name;
         private Label label46;
         private Button cancel;
+        private Button delete;
+        private Button empnew;
     }
 }

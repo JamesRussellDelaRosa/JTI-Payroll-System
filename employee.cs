@@ -27,9 +27,10 @@ namespace JTI_Payroll_System
                     chk.Enabled = !isReadOnly;
             }
         }
-
+        private bool isNewEmployee = false;
         private List<string> employeeIdList = new();
         private int currentEmployeeIndex = 0;
+
         public employee()
         {
             InitializeComponent();
@@ -72,67 +73,82 @@ namespace JTI_Payroll_System
         {
             if (string.IsNullOrWhiteSpace(id_no.Text))
             {
-                MessageBox.Show("No employee selected.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Please enter an Employee ID.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
             using (MySqlConnection connection = DatabaseHelper.GetConnection())
             {
                 connection.Open();
-                string query = @"
-            UPDATE employee SET
-                fname = @fname,
-                mname = @mname,
-                lname = @lname,
-                sex = @sex,
-                dt_birth = @dt_birth,
-                civil_stat = @civil_stat,
-                sssnum = @sssnum,
-                tin = @tin,
-                hdmfnum = @hdmfnum,
-                phnum = @phnum,
-                bir_cd = @bir_cd,
-                bir_stat = @bir_stat,
-                acct_no = @acct_no,
-                atm_card_no = @atm_card_no,
-                dt_issued = @dt_issued,
-                enable_atm = @enable_atm,
-                atm_status = @atm_status,
-                ccode = @ccode,
-                client = @client,
-                dep_code = @dep_code,
-                department = @department,
-                line_cd = @line_cd,
-                line = @line,
-                cont_date = @cont_date,
-                cont_end = @cont_end,
-                rate_month = @rate_month,
-                rate_day = @rate_day,
-                cont_rate = @cont_rate,
-                meal_rate = @meal_rate,
-                allowance = @allowance,
-                position = @position,
-                sil_amt = @sil_amt,
-                street = @street,
-                barangay = @barangay,
-                city = @city,
-                province = @province,
-                title_code = @title_code,
-                mfname = @mfname,
-                mmname = @mmname,
-                mlname = @mlname,
-                spou_name = @spou_name,
-                edu_attaint = @edu_attaint,
-                dt_expired = @dt_expired,
-                contact_no = @contact_no,
-                zipcode = @zipcode,
-                enable_atm = @enable_atm,
-                staff = @staff,
-                active = @active,
-                active_hmo = @active_hmo,
-                active_sil = @active_sil
-            WHERE id_no = @id_no
-        ";
+                string query;
+
+                if (isNewEmployee)
+                {
+                    query = @"
+                        INSERT INTO employee (
+                            id_no, fname, mname, lname, sex, dt_birth, civil_stat, sssnum, tin, hdmfnum, phnum, bir_cd, bir_stat, acct_no, atm_card_no, dt_issued, enable_atm, atm_status, ccode, client, dep_code, department, line_cd, line, cont_date, cont_end, rate_month, rate_day, cont_rate, meal_rate, allowance, position, sil_amt, street, barangay, city, province, title_code, mfname, mmname, mlname, spou_name, edu_attaint, dt_expired, contact_no, zipcode, staff, active, active_hmo, active_sil
+                        ) VALUES (
+                            @id_no, @fname, @mname, @lname, @sex, @dt_birth, @civil_stat, @sssnum, @tin, @hdmfnum, @phnum, @bir_cd, @bir_stat, @acct_no, @atm_card_no, @dt_issued, @enable_atm, @atm_status, @ccode, @client, @dep_code, @department, @line_cd, @line, @cont_date, @cont_end, @rate_month, @rate_day, @cont_rate, @meal_rate, @allowance, @position, @sil_amt, @street, @barangay, @city, @province, @title_code, @mfname, @mmname, @mlname, @spou_name, @edu_attaint, @dt_expired, @contact_no, @zipcode, @staff, @active, @active_hmo, @active_sil
+                        )
+                    ";
+                }
+                else
+                {
+                    query = @"
+                        UPDATE employee SET
+                            fname = @fname,
+                            mname = @mname,
+                            lname = @lname,
+                            sex = @sex,
+                            dt_birth = @dt_birth,
+                            civil_stat = @civil_stat,
+                            sssnum = @sssnum,
+                            tin = @tin,
+                            hdmfnum = @hdmfnum,
+                            phnum = @phnum,
+                            bir_cd = @bir_cd,
+                            bir_stat = @bir_stat,
+                            acct_no = @acct_no,
+                            atm_card_no = @atm_card_no,
+                            dt_issued = @dt_issued,
+                            enable_atm = @enable_atm,
+                            atm_status = @atm_status,
+                            ccode = @ccode,
+                            client = @client,
+                            dep_code = @dep_code,
+                            department = @department,
+                            line_cd = @line_cd,
+                            line = @line,
+                            cont_date = @cont_date,
+                            cont_end = @cont_end,
+                            rate_month = @rate_month,
+                            rate_day = @rate_day,
+                            cont_rate = @cont_rate,
+                            meal_rate = @meal_rate,
+                            allowance = @allowance,
+                            position = @position,
+                            sil_amt = @sil_amt,
+                            street = @street,
+                            barangay = @barangay,
+                            city = @city,
+                            province = @province,
+                            title_code = @title_code,
+                            mfname = @mfname,
+                            mmname = @mmname,
+                            mlname = @mlname,
+                            spou_name = @spou_name,
+                            edu_attaint = @edu_attaint,
+                            dt_expired = @dt_expired,
+                            contact_no = @contact_no,
+                            zipcode = @zipcode,
+                            enable_atm = @enable_atm,
+                            staff = @staff,
+                            active = @active,
+                            active_hmo = @active_hmo,
+                            active_sil = @active_sil
+                        WHERE id_no = @id_no
+                    ";
+                }
 
                 using (MySqlCommand cmd = new MySqlCommand(query, connection))
                 {
@@ -141,12 +157,12 @@ namespace JTI_Payroll_System
                     cmd.Parameters.AddWithValue("@fname", fname.Text.Trim());
                     cmd.Parameters.AddWithValue("@mname", mname.Text.Trim());
                     cmd.Parameters.AddWithValue("@lname", lname.Text.Trim());
-                    cmd.Parameters.AddWithValue("@mfname", fname.Text.Trim());
-                    cmd.Parameters.AddWithValue("@mmname", mname.Text.Trim());
-                    cmd.Parameters.AddWithValue("@mlname", lname.Text.Trim());
+                    cmd.Parameters.AddWithValue("@mfname", mfname.Text.Trim());
+                    cmd.Parameters.AddWithValue("@mmname", mmname.Text.Trim());
+                    cmd.Parameters.AddWithValue("@mlname", mlname.Text.Trim());
                     cmd.Parameters.AddWithValue("@title_code", title_code.Text.Trim());
                     cmd.Parameters.AddWithValue("@sex", sex.Text.Trim());
-                    cmd.Parameters.AddWithValue("@spou_name", lname.Text.Trim());
+                    cmd.Parameters.AddWithValue("@spou_name", spou_name.Text.Trim());
                     cmd.Parameters.AddWithValue("@dt_birth", DateTime.TryParse(dt_birth.Text, out DateTime dtb) ? dtb.ToString("yyyy-MM-dd") : (object)DBNull.Value);
                     cmd.Parameters.AddWithValue("@civil_stat", civil_stat.Text.Trim());
                     cmd.Parameters.AddWithValue("@sssnum", sssnum.Text.Trim());
@@ -194,9 +210,21 @@ namespace JTI_Payroll_System
                 }
             }
 
+            if (isNewEmployee)
+            {
+                // Add new ID to list and set as current
+                employeeIdList.Add(id_no.Text.Trim());
+                currentEmployeeIndex = employeeIdList.Count - 1;
+                isNewEmployee = false;
+                MessageBox.Show("New employee added successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            else
+            {
+                MessageBox.Show("Employee data updated successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+
             SetControlsReadOnly(true);
             cancel.Enabled = false;
-            MessageBox.Show("Employee data updated successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void import_Click(object sender, EventArgs e)
@@ -410,6 +438,27 @@ namespace JTI_Payroll_System
                     }
 
                     MessageBox.Show("Data Imported Successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                    using (MySqlConnection connection = DatabaseHelper.GetConnection())
+                    {
+                        connection.Open();
+                        string query = "SELECT id_no FROM employee ORDER BY fileno ASC";
+                        using (MySqlCommand cmd = new MySqlCommand(query, connection))
+                        using (MySqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            employeeIdList.Clear();
+                            while (reader.Read())
+                            {
+                                employeeIdList.Add(reader["id_no"].ToString());
+                            }
+                        }
+                    }
+
+                    if (employeeIdList.Count > 0)
+                    {
+                        currentEmployeeIndex = 0;
+                        LoadEmployeeData(employeeIdList[currentEmployeeIndex]);
+                    }
                 }
             }
         }
@@ -569,6 +618,79 @@ namespace JTI_Payroll_System
                                     // Optionally reload the current employee data to revert changes
             if (employeeIdList.Count > 0)
                 LoadEmployeeData(employeeIdList[currentEmployeeIndex]);
+        }
+
+        private void delete_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(id_no.Text))
+            {
+                MessageBox.Show("No employee selected.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            var confirmResult = MessageBox.Show(
+                "Are you sure you want to delete this employee?",
+                "Confirm Delete",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
+
+            if (confirmResult == DialogResult.Yes)
+            {
+                using (MySqlConnection connection = DatabaseHelper.GetConnection())
+                {
+                    connection.Open();
+                    string query = "DELETE FROM employee WHERE id_no = @id_no";
+                    using (MySqlCommand cmd = new MySqlCommand(query, connection))
+                    {
+                        cmd.Parameters.AddWithValue("@id_no", id_no.Text.Trim());
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+
+                // Remove from local list and update UI
+                int removedIndex = currentEmployeeIndex;
+                employeeIdList.RemoveAt(currentEmployeeIndex);
+
+                if (employeeIdList.Count > 0)
+                {
+                    // Show next employee, or previous if last was deleted
+                    if (removedIndex >= employeeIdList.Count)
+                        removedIndex = employeeIdList.Count - 1;
+                    currentEmployeeIndex = removedIndex;
+                    LoadEmployeeData(employeeIdList[currentEmployeeIndex]);
+                }
+                else
+                {
+                    // No employees left, clear fields
+                    foreach (Control c in Controls)
+                    {
+                        if (c is TextBox tb) tb.Text = "";
+                        else if (c is ComboBox cb) cb.SelectedIndex = -1;
+                        else if (c is CheckBox chk) chk.Checked = false;
+                    }
+                    currentEmployeeIndex = 0;
+                }
+
+                SetControlsReadOnly(true);
+                cancel.Enabled = false;
+                MessageBox.Show("Employee deleted successfully.", "Deleted", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+
+        private void empnew_Click(object sender, EventArgs e)
+        {
+            // Clear all input fields
+            foreach (Control c in Controls)
+            {
+                if (c is TextBox tb) tb.Text = "";
+                else if (c is ComboBox cb) cb.SelectedIndex = -1;
+                else if (c is CheckBox chk) chk.Checked = false;
+            }
+
+            SetControlsReadOnly(false);
+            cancel.Enabled = true;
+            isNewEmployee = true;
+            id_no.ReadOnly = false; // Allow entering new ID
         }
     }
 }
