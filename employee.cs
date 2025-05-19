@@ -111,6 +111,11 @@ namespace JTI_Payroll_System
                 barangay = @barangay,
                 city = @city,
                 province = @province,
+                title_code = @title_code,
+                mfname = @mfname,
+                mmname = @mmname,
+                mlname = @mlname,
+                spou_name = @spou_name,
                 edu_attaint = @edu_attaint,
                 dt_expired = @dt_expired,
                 contact_no = @contact_no,
@@ -130,7 +135,12 @@ namespace JTI_Payroll_System
                     cmd.Parameters.AddWithValue("@fname", fname.Text.Trim());
                     cmd.Parameters.AddWithValue("@mname", mname.Text.Trim());
                     cmd.Parameters.AddWithValue("@lname", lname.Text.Trim());
+                    cmd.Parameters.AddWithValue("@mfname", fname.Text.Trim());
+                    cmd.Parameters.AddWithValue("@mmname", mname.Text.Trim());
+                    cmd.Parameters.AddWithValue("@mlname", lname.Text.Trim());
+                    cmd.Parameters.AddWithValue("@title_code", title_code.Text.Trim());
                     cmd.Parameters.AddWithValue("@sex", sex.Text.Trim());
+                    cmd.Parameters.AddWithValue("@spou_name", lname.Text.Trim());
                     cmd.Parameters.AddWithValue("@dt_birth", DateTime.TryParse(dt_birth.Text, out DateTime dtb) ? dtb.ToString("yyyy-MM-dd") : (object)DBNull.Value);
                     cmd.Parameters.AddWithValue("@civil_stat", civil_stat.Text.Trim());
                     cmd.Parameters.AddWithValue("@sssnum", sssnum.Text.Trim());
@@ -416,6 +426,7 @@ namespace JTI_Payroll_System
                             mname.Text = reader["mname"]?.ToString();
                             lname.Text = reader["lname"]?.ToString();
                             sex.Text = reader["sex"]?.ToString();
+                            title_code.Text = reader["title_code"]?.ToString();
                             dt_birth.Text = reader["dt_birth"] is DateTime dtb ? dtb.ToString("yyyy-MM-dd") : reader["dt_birth"]?.ToString();
                             civil_stat.Text = reader["civil_stat"]?.ToString();
                             sssnum.Text = reader["sssnum"]?.ToString();
@@ -451,6 +462,10 @@ namespace JTI_Payroll_System
                             dt_expired.Text = reader["dt_expired"] is DateTime dte ? dte.ToString("yyyy-MM-dd") : reader["dt_expired"]?.ToString();
                             contact_no.Text = reader["contact_no"]?.ToString();
                             zipcode.Text = reader["zipcode"]?.ToString();
+                            mfname.Text = reader["mfname"]?.ToString();
+                            mmname.Text = reader["mmname"]?.ToString();
+                            mlname.Text = reader["mlname"]?.ToString();
+                            spou_name.Text = reader["spou_name"]?.ToString();
 
                             // CheckBoxes
                             enable_atm.Checked = reader["enable_atm"] != DBNull.Value && Convert.ToBoolean(reader["enable_atm"]);

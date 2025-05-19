@@ -123,6 +123,17 @@
             back = new Button();
             next = new Button();
             empsearch = new Button();
+            mmname = new TextBox();
+            label41 = new Label();
+            mlname = new TextBox();
+            label42 = new Label();
+            mfname = new TextBox();
+            label43 = new Label();
+            label44 = new Label();
+            label45 = new Label();
+            title_code = new ComboBox();
+            spou_name = new TextBox();
+            label46 = new Label();
             SuspendLayout();
             // 
             // label1
@@ -242,11 +253,11 @@
             // 
             // import
             // 
-            import.Location = new Point(1060, 538);
+            import.Location = new Point(1172, 538);
             import.Name = "import";
-            import.Size = new Size(94, 29);
+            import.Size = new Size(191, 29);
             import.TabIndex = 17;
-            import.Text = "import";
+            import.Text = "import from excel";
             import.UseVisualStyleBackColor = true;
             import.Click += import_Click;
             // 
@@ -915,11 +926,113 @@
             empsearch.UseVisualStyleBackColor = true;
             empsearch.Click += empsearch_Click;
             // 
+            // mmname
+            // 
+            mmname.Location = new Point(1238, 121);
+            mmname.Name = "mmname";
+            mmname.Size = new Size(125, 27);
+            mmname.TabIndex = 106;
+            // 
+            // label41
+            // 
+            label41.AutoSize = true;
+            label41.Location = new Point(1157, 157);
+            label41.Name = "label41";
+            label41.Size = new Size(75, 20);
+            label41.TabIndex = 105;
+            label41.Text = "LastName";
+            // 
+            // mlname
+            // 
+            mlname.Location = new Point(1238, 154);
+            mlname.Name = "mlname";
+            mlname.Size = new Size(125, 27);
+            mlname.TabIndex = 104;
+            // 
+            // label42
+            // 
+            label42.AutoSize = true;
+            label42.Location = new Point(1136, 124);
+            label42.Name = "label42";
+            label42.Size = new Size(96, 20);
+            label42.TabIndex = 103;
+            label42.Text = "MiddleName";
+            // 
+            // mfname
+            // 
+            mfname.Location = new Point(1238, 88);
+            mfname.Name = "mfname";
+            mfname.Size = new Size(125, 27);
+            mfname.TabIndex = 102;
+            // 
+            // label43
+            // 
+            label43.AutoSize = true;
+            label43.Location = new Point(1156, 92);
+            label43.Name = "label43";
+            label43.Size = new Size(76, 20);
+            label43.TabIndex = 101;
+            label43.Text = "FirstName";
+            // 
+            // label44
+            // 
+            label44.AutoSize = true;
+            label44.Font = new Font("Segoe UI", 10.2F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            label44.Location = new Point(1146, 52);
+            label44.Name = "label44";
+            label44.Size = new Size(195, 23);
+            label44.TabIndex = 107;
+            label44.Text = "Mother's  Maiden Name";
+            // 
+            // label45
+            // 
+            label45.AutoSize = true;
+            label45.Location = new Point(1005, 61);
+            label45.Name = "label45";
+            label45.Size = new Size(77, 20);
+            label45.TabIndex = 108;
+            label45.Text = "Title Code";
+            // 
+            // title_code
+            // 
+            title_code.FormattingEnabled = true;
+            title_code.Location = new Point(1084, 58);
+            title_code.Name = "title_code";
+            title_code.Size = new Size(56, 28);
+            title_code.TabIndex = 109;
+            // 
+            // spou_name
+            // 
+            spou_name.Location = new Point(1156, 198);
+            spou_name.Name = "spou_name";
+            spou_name.Size = new Size(207, 27);
+            spou_name.TabIndex = 110;
+            // 
+            // label46
+            // 
+            label46.AutoSize = true;
+            label46.Location = new Point(1050, 201);
+            label46.Name = "label46";
+            label46.Size = new Size(101, 20);
+            label46.TabIndex = 111;
+            label46.Text = "Spouse Name";
+            // 
             // employee
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1166, 579);
+            ClientSize = new Size(1375, 579);
+            Controls.Add(label46);
+            Controls.Add(spou_name);
+            Controls.Add(title_code);
+            Controls.Add(label45);
+            Controls.Add(label44);
+            Controls.Add(mmname);
+            Controls.Add(label41);
+            Controls.Add(mlname);
+            Controls.Add(label42);
+            Controls.Add(mfname);
+            Controls.Add(label43);
             Controls.Add(empsearch);
             Controls.Add(next);
             Controls.Add(back);
@@ -1118,5 +1231,16 @@
         private Button back;
         private Button next;
         private Button empsearch;
+        private TextBox mmname;
+        private Label label41;
+        private TextBox mlname;
+        private Label label42;
+        private TextBox mfname;
+        private Label label43;
+        private Label label44;
+        private Label label45;
+        private ComboBox title_code;
+        private TextBox spou_name;
+        private Label label46;
     }
 }
