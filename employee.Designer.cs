@@ -134,6 +134,7 @@
             title_code = new ComboBox();
             spou_name = new TextBox();
             label46 = new Label();
+            cancel = new Button();
             SuspendLayout();
             // 
             // label1
@@ -243,7 +244,7 @@
             // 
             // saveEmp
             // 
-            saveEmp.Location = new Point(486, 538);
+            saveEmp.Location = new Point(560, 538);
             saveEmp.Name = "saveEmp";
             saveEmp.Size = new Size(94, 29);
             saveEmp.TabIndex = 16;
@@ -888,7 +889,7 @@
             // 
             // edit
             // 
-            edit.Location = new Point(386, 538);
+            edit.Location = new Point(460, 538);
             edit.Name = "edit";
             edit.Size = new Size(94, 29);
             edit.TabIndex = 97;
@@ -918,7 +919,7 @@
             // 
             // empsearch
             // 
-            empsearch.Location = new Point(586, 538);
+            empsearch.Location = new Point(660, 538);
             empsearch.Name = "empsearch";
             empsearch.Size = new Size(94, 29);
             empsearch.TabIndex = 100;
@@ -1017,11 +1018,22 @@
             label46.TabIndex = 111;
             label46.Text = "Spouse Name";
             // 
+            // cancel
+            // 
+            cancel.Location = new Point(359, 538);
+            cancel.Name = "cancel";
+            cancel.Size = new Size(94, 29);
+            cancel.TabIndex = 112;
+            cancel.Text = "cancel";
+            cancel.UseVisualStyleBackColor = true;
+            cancel.Click += cancel_Click;
+            // 
             // employee
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1375, 579);
+            Controls.Add(cancel);
             Controls.Add(label46);
             Controls.Add(spou_name);
             Controls.Add(title_code);
@@ -1242,5 +1254,6 @@
         private ComboBox title_code;
         private TextBox spou_name;
         private Label label46;
+        private Button cancel;
     }
 }

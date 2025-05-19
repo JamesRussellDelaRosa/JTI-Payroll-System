@@ -35,6 +35,12 @@ namespace JTI_Payroll_System
             InitializeComponent();
             SetControlsReadOnly(true);
             this.Load += employee_Load;
+            cancel.Enabled = false;
+            dt_birth.KeyPress += AutoFormatDate;
+            dt_issued.KeyPress += AutoFormatDate;
+            cont_date.KeyPress += AutoFormatDate;
+            cont_end.KeyPress += AutoFormatDate;
+            dt_expired.KeyPress += AutoFormatDate;
 
         }
 
@@ -189,6 +195,7 @@ namespace JTI_Payroll_System
             }
 
             SetControlsReadOnly(true);
+            cancel.Enabled = false;
             MessageBox.Show("Employee data updated successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
@@ -427,7 +434,7 @@ namespace JTI_Payroll_System
                             lname.Text = reader["lname"]?.ToString();
                             sex.Text = reader["sex"]?.ToString();
                             title_code.Text = reader["title_code"]?.ToString();
-                            dt_birth.Text = reader["dt_birth"] is DateTime dtb ? dtb.ToString("yyyy-MM-dd") : reader["dt_birth"]?.ToString();
+                            dt_birth.Text = reader["dt_birth"] != DBNull.Value ? Convert.ToDateTime(reader["dt_birth"]).ToString("MM/dd/yyyy") : string.Empty;
                             civil_stat.Text = reader["civil_stat"]?.ToString();
                             sssnum.Text = reader["sssnum"]?.ToString();
                             tin.Text = reader["tin"]?.ToString();
@@ -437,7 +444,7 @@ namespace JTI_Payroll_System
                             bir_stat.Text = reader["bir_stat"]?.ToString();
                             acct_no.Text = reader["acct_no"]?.ToString();
                             atm_card_no.Text = reader["atm_card_no"]?.ToString();
-                            dt_issued.Text = reader["dt_issued"] is DateTime dti ? dti.ToString("yyyy-MM-dd") : reader["dt_issued"]?.ToString();
+                            dt_issued.Text = reader["dt_issued"] is DateTime dti ? dti.ToString("MM/dd/yyyy") : reader["dt_issued"]?.ToString();
                             atm_status.Text = reader["atm_status"]?.ToString();
                             ccode.Text = reader["ccode"]?.ToString();
                             client.Text = reader["client"]?.ToString();
@@ -445,8 +452,8 @@ namespace JTI_Payroll_System
                             department.Text = reader["department"]?.ToString();
                             line_cd.Text = reader["line_cd"]?.ToString();
                             line.Text = reader["line"]?.ToString();
-                            cont_date.Text = reader["cont_date"] is DateTime ctd ? ctd.ToString("yyyy-MM-dd") : reader["cont_date"]?.ToString();
-                            cont_end.Text = reader["cont_end"] is DateTime cte ? cte.ToString("yyyy-MM-dd") : reader["cont_end"]?.ToString();
+                            cont_date.Text = reader["cont_date"] is DateTime ctd ? ctd.ToString("MM/dd/yyyy") : reader["cont_date"]?.ToString();
+                            cont_end.Text = reader["cont_end"] is DateTime cte ? cte.ToString("MM/dd/yyyy") : reader["cont_end"]?.ToString();
                             rate_month.Text = reader["rate_month"]?.ToString();
                             rate_day.Text = reader["rate_day"]?.ToString();
                             cont_rate.Text = reader["cont_rate"]?.ToString();
@@ -459,7 +466,7 @@ namespace JTI_Payroll_System
                             city.Text = reader["city"]?.ToString();
                             province.Text = reader["province"]?.ToString();
                             edu_attaint.Text = reader["edu_attaint"]?.ToString();
-                            dt_expired.Text = reader["dt_expired"] is DateTime dte ? dte.ToString("yyyy-MM-dd") : reader["dt_expired"]?.ToString();
+                            dt_expired.Text = reader["dt_expired"] is DateTime dte ? dte.ToString("MM/dd/yyyy") : reader["dt_expired"]?.ToString();
                             contact_no.Text = reader["contact_no"]?.ToString();
                             zipcode.Text = reader["zipcode"]?.ToString();
                             mfname.Text = reader["mfname"]?.ToString();
@@ -502,6 +509,7 @@ namespace JTI_Payroll_System
         private void edit_Click(object sender, EventArgs e)
         {
             SetControlsReadOnly(false);
+            cancel.Enabled = true;
         }
 
         private void back_Click(object sender, EventArgs e)
@@ -528,6 +536,39 @@ namespace JTI_Payroll_System
         {
             employeesearch employeesearchForm = new employeesearch();
             employeesearchForm.Show();
+        }
+
+        private void AutoFormatDate(object sender, KeyPressEventArgs e)
+        {
+            TextBox textBox = sender as TextBox;
+
+            // Allow only digits and control keys (e.g., backspace)
+            if (!char.IsDigit(e.KeyChar) && !char.IsControl(e.KeyChar))
+            {
+                e.Handled = true;
+                return;
+            }
+
+            // Auto-insert slashes based on the MM/DD/YYYY format
+            if (!char.IsControl(e.KeyChar))
+            {
+                int length = textBox.Text.Length;
+
+                if (length == 2 || length == 5)
+                {
+                    textBox.Text += "/";
+                    textBox.SelectionStart = textBox.Text.Length; // Move the caret to the end
+                }
+            }
+        }
+
+        private void cancel_Click(object sender, EventArgs e)
+        {
+            SetControlsReadOnly(true);
+            cancel.Enabled = false; // Disable cancel after canceling
+                                    // Optionally reload the current employee data to revert changes
+            if (employeeIdList.Count > 0)
+                LoadEmployeeData(employeeIdList[currentEmployeeIndex]);
         }
     }
 }
