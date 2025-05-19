@@ -282,7 +282,7 @@ namespace JTI_Payroll_System
                                 {
                                     textEmpID.Text = selectForm.GetSelectedID();
                                     textFirstName.Text = selectForm.GetSelectedFName();
-                                    textLastName.Text = selectForm.GetSelectedLName(); 
+                                    textLastName.Text = selectForm.GetSelectedLName();
                                 }
                             }
                         }
@@ -293,44 +293,6 @@ namespace JTI_Payroll_System
                     }
                 }
             }
-        }
-
-        private void btnOpenSelectEmployeeForm_Click(object sender, EventArgs e)
-        {
-            // Fetch employee data (Replace with actual database query)
-            DataTable employeeData = GetEmployeeData();
-
-            using (SelectEmployeeForm selectForm = new SelectEmployeeForm(employeeData))
-            {
-                if (selectForm.ShowDialog() == DialogResult.OK)
-                {
-                    textEmpID.Text = selectForm.GetSelectedID();
-                    textFirstName.Text = selectForm.GetSelectedFName();
-                    textLastName.Text = selectForm.GetSelectedLName();
-                }
-            }
-        }
-
-        private DataTable GetEmployeeData()
-        {
-            DataTable dt = new DataTable();
-
-            // Define your SQL query
-            string query = "SELECT id_no, fname, lname FROM employee";
-
-            // Connect to the database
-            using (MySqlConnection connection = DatabaseHelper.GetConnection())
-            {
-                MySqlDataAdapter dataAdapter = new MySqlDataAdapter(query, connection);
-                dataAdapter.Fill(dt);  // Fill the DataTable with data from the database
-            }
-
-            return dt;
-        }
-
-        private void textLastName_TextChanged(object sender, EventArgs e)
-        {
-
         }
     }
 }
