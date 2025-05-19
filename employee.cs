@@ -43,6 +43,19 @@ namespace JTI_Payroll_System
             cont_end.KeyPress += AutoFormatDate;
             dt_expired.KeyPress += AutoFormatDate;
 
+            title_code.Items.Clear();
+            title_code.Items.AddRange(new string[] { "Mr", "Ms", "Mrs" });
+            edu_attaint.Items.Clear();
+            edu_attaint.Items.AddRange(new string[] {
+                "COLLEGE GRADUATE",
+                "COLLEGE LEVEL",
+                "HIGH SCHOOL GRADE",
+                "SENIOR HIGH GRADE",
+                "VOCATIONAL GRADE"
+            });
+            bir_cd.Items.Clear();
+            bir_cd.Items.AddRange(new string[] { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L" });
+
         }
 
         private void employee_Load(object sender, EventArgs e)
