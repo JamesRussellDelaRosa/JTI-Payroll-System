@@ -43,14 +43,12 @@
             label5 = new Label();
             saveEmp = new Button();
             import = new Button();
-            search = new Button();
-            searchbar = new TextBox();
             label6 = new Label();
             label7 = new Label();
             street = new TextBox();
             label8 = new Label();
             label9 = new Label();
-            baranggay = new TextBox();
+            barangay = new TextBox();
             label10 = new Label();
             city = new TextBox();
             label11 = new Label();
@@ -119,6 +117,12 @@
             bir_cd = new ComboBox();
             label39 = new Label();
             bir_stat = new TextBox();
+            label40 = new Label();
+            zipcode = new TextBox();
+            edit = new Button();
+            back = new Button();
+            next = new Button();
+            empsearch = new Button();
             SuspendLayout();
             // 
             // label1
@@ -228,7 +232,7 @@
             // 
             // saveEmp
             // 
-            saveEmp.Location = new Point(447, 534);
+            saveEmp.Location = new Point(486, 538);
             saveEmp.Name = "saveEmp";
             saveEmp.Size = new Size(94, 29);
             saveEmp.TabIndex = 16;
@@ -238,30 +242,13 @@
             // 
             // import
             // 
-            import.Location = new Point(562, 534);
+            import.Location = new Point(1060, 538);
             import.Name = "import";
             import.Size = new Size(94, 29);
             import.TabIndex = 17;
             import.Text = "import";
             import.UseVisualStyleBackColor = true;
             import.Click += import_Click;
-            // 
-            // search
-            // 
-            search.Location = new Point(1062, 12);
-            search.Name = "search";
-            search.Size = new Size(94, 29);
-            search.TabIndex = 18;
-            search.Text = "search";
-            search.UseVisualStyleBackColor = true;
-            search.Click += search_Click;
-            // 
-            // searchbar
-            // 
-            searchbar.Location = new Point(860, 12);
-            searchbar.Name = "searchbar";
-            searchbar.Size = new Size(196, 27);
-            searchbar.TabIndex = 19;
             // 
             // label6
             // 
@@ -307,12 +294,12 @@
             label9.TabIndex = 25;
             label9.Text = "Barangay";
             // 
-            // baranggay
+            // barangay
             // 
-            baranggay.Location = new Point(294, 91);
-            baranggay.Name = "baranggay";
-            baranggay.Size = new Size(218, 27);
-            baranggay.TabIndex = 24;
+            barangay.Location = new Point(294, 91);
+            barangay.Name = "barangay";
+            barangay.Size = new Size(218, 27);
+            barangay.TabIndex = 24;
             // 
             // label10
             // 
@@ -869,14 +856,76 @@
             // 
             bir_stat.Location = new Point(1060, 148);
             bir_stat.Name = "bir_stat";
-            bir_stat.Size = new Size(127, 27);
+            bir_stat.Size = new Size(62, 27);
             bir_stat.TabIndex = 94;
+            // 
+            // label40
+            // 
+            label40.AutoSize = true;
+            label40.Location = new Point(979, 121);
+            label40.Name = "label40";
+            label40.Size = new Size(64, 20);
+            label40.TabIndex = 96;
+            label40.Text = "Zipcode";
+            // 
+            // zipcode
+            // 
+            zipcode.Location = new Point(965, 91);
+            zipcode.Name = "zipcode";
+            zipcode.Size = new Size(94, 27);
+            zipcode.TabIndex = 95;
+            // 
+            // edit
+            // 
+            edit.Location = new Point(386, 538);
+            edit.Name = "edit";
+            edit.Size = new Size(94, 29);
+            edit.TabIndex = 97;
+            edit.Text = "edit";
+            edit.UseVisualStyleBackColor = true;
+            edit.Click += edit_Click;
+            // 
+            // back
+            // 
+            back.Location = new Point(15, 538);
+            back.Name = "back";
+            back.Size = new Size(94, 29);
+            back.TabIndex = 98;
+            back.Text = "<-";
+            back.UseVisualStyleBackColor = true;
+            back.Click += back_Click;
+            // 
+            // next
+            // 
+            next.Location = new Point(119, 538);
+            next.Name = "next";
+            next.Size = new Size(94, 29);
+            next.TabIndex = 99;
+            next.Text = "->";
+            next.UseVisualStyleBackColor = true;
+            next.Click += next_Click;
+            // 
+            // empsearch
+            // 
+            empsearch.Location = new Point(586, 538);
+            empsearch.Name = "empsearch";
+            empsearch.Size = new Size(94, 29);
+            empsearch.TabIndex = 100;
+            empsearch.Text = "search";
+            empsearch.UseVisualStyleBackColor = true;
+            empsearch.Click += empsearch_Click;
             // 
             // employee
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1200, 579);
+            ClientSize = new Size(1166, 579);
+            Controls.Add(empsearch);
+            Controls.Add(next);
+            Controls.Add(back);
+            Controls.Add(edit);
+            Controls.Add(label40);
+            Controls.Add(zipcode);
             Controls.Add(bir_stat);
             Controls.Add(bir_cd);
             Controls.Add(label39);
@@ -946,13 +995,11 @@
             Controls.Add(label10);
             Controls.Add(city);
             Controls.Add(label9);
-            Controls.Add(baranggay);
+            Controls.Add(barangay);
             Controls.Add(label8);
             Controls.Add(street);
             Controls.Add(label7);
             Controls.Add(label6);
-            Controls.Add(searchbar);
-            Controls.Add(search);
             Controls.Add(import);
             Controls.Add(saveEmp);
             Controls.Add(label5);
@@ -991,14 +1038,12 @@
         private Label label5;
         private Button saveEmp;
         private Button import;
-        private Button search;
-        private TextBox searchbar;
         private Label label6;
         private Label label7;
         private TextBox street;
         private Label label8;
         private Label label9;
-        private TextBox baranggay;
+        private TextBox barangay;
         private Label label10;
         private TextBox city;
         private Label label11;
@@ -1067,5 +1112,11 @@
         private ComboBox bir_cd;
         private Label label39;
         private TextBox bir_stat;
+        private Label label40;
+        private TextBox zipcode;
+        private Button edit;
+        private Button back;
+        private Button next;
+        private Button empsearch;
     }
 }

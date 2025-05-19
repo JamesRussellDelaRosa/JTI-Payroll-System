@@ -15,14 +15,171 @@ namespace JTI_Payroll_System
 {
     public partial class employee : Form
     {
+        private void SetControlsReadOnly(bool isReadOnly)
+        {
+            foreach (Control c in Controls)
+            {
+                if (c is TextBox tb)
+                    tb.ReadOnly = isReadOnly;
+                else if (c is ComboBox cb)
+                    cb.Enabled = !isReadOnly;
+                else if (c is CheckBox chk)
+                    chk.Enabled = !isReadOnly;
+            }
+        }
+
+        private List<string> employeeIdList = new();
+        private int currentEmployeeIndex = 0;
         public employee()
         {
             InitializeComponent();
+            SetControlsReadOnly(true);
+            this.Load += employee_Load;
+
+        }
+
+        private void employee_Load(object sender, EventArgs e)
+        {
+            using (MySqlConnection connection = DatabaseHelper.GetConnection())
+            {
+                connection.Open();
+                string query = "SELECT id_no FROM employee ORDER BY fileno ASC";
+                using (MySqlCommand cmd = new MySqlCommand(query, connection))
+                using (MySqlDataReader reader = cmd.ExecuteReader())
+                {
+                    employeeIdList.Clear();
+                    while (reader.Read())
+                    {
+                        employeeIdList.Add(reader["id_no"].ToString());
+                    }
+                }
+            }
+
+            if (employeeIdList.Count > 0)
+            {
+                currentEmployeeIndex = 0;
+                LoadEmployeeData(employeeIdList[currentEmployeeIndex]);
+            }
         }
 
         private void saveEmp_Click(object sender, EventArgs e)
         {
+            if (string.IsNullOrWhiteSpace(id_no.Text))
+            {
+                MessageBox.Show("No employee selected.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
 
+            using (MySqlConnection connection = DatabaseHelper.GetConnection())
+            {
+                connection.Open();
+                string query = @"
+            UPDATE employee SET
+                fname = @fname,
+                mname = @mname,
+                lname = @lname,
+                sex = @sex,
+                dt_birth = @dt_birth,
+                civil_stat = @civil_stat,
+                sssnum = @sssnum,
+                tin = @tin,
+                hdmfnum = @hdmfnum,
+                phnum = @phnum,
+                bir_cd = @bir_cd,
+                bir_stat = @bir_stat,
+                acct_no = @acct_no,
+                atm_card_no = @atm_card_no,
+                dt_issued = @dt_issued,
+                enable_atm = @enable_atm,
+                atm_status = @atm_status,
+                ccode = @ccode,
+                client = @client,
+                dep_code = @dep_code,
+                department = @department,
+                line_cd = @line_cd,
+                line = @line,
+                cont_date = @cont_date,
+                cont_end = @cont_end,
+                rate_month = @rate_month,
+                rate_day = @rate_day,
+                cont_rate = @cont_rate,
+                meal_rate = @meal_rate,
+                allowance = @allowance,
+                position = @position,
+                sil_amt = @sil_amt,
+                street = @street,
+                barangay = @barangay,
+                city = @city,
+                province = @province,
+                edu_attaint = @edu_attaint,
+                dt_expired = @dt_expired,
+                contact_no = @contact_no,
+                zipcode = @zipcode,
+                enable_atm = @enable_atm,
+                staff = @staff,
+                active = @active,
+                active_hmo = @active_hmo,
+                active_sil = @active_sil
+            WHERE id_no = @id_no
+        ";
+
+                using (MySqlCommand cmd = new MySqlCommand(query, connection))
+                {
+                    // TextBoxes
+                    cmd.Parameters.AddWithValue("@id_no", id_no.Text.Trim());
+                    cmd.Parameters.AddWithValue("@fname", fname.Text.Trim());
+                    cmd.Parameters.AddWithValue("@mname", mname.Text.Trim());
+                    cmd.Parameters.AddWithValue("@lname", lname.Text.Trim());
+                    cmd.Parameters.AddWithValue("@sex", sex.Text.Trim());
+                    cmd.Parameters.AddWithValue("@dt_birth", DateTime.TryParse(dt_birth.Text, out DateTime dtb) ? dtb.ToString("yyyy-MM-dd") : (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@civil_stat", civil_stat.Text.Trim());
+                    cmd.Parameters.AddWithValue("@sssnum", sssnum.Text.Trim());
+                    cmd.Parameters.AddWithValue("@tin", tin.Text.Trim());
+                    cmd.Parameters.AddWithValue("@hdmfnum", hdmfnum.Text.Trim());
+                    cmd.Parameters.AddWithValue("@phnum", phnum.Text.Trim());
+                    cmd.Parameters.AddWithValue("@bir_cd", bir_cd.Text.Trim());
+                    cmd.Parameters.AddWithValue("@bir_stat", bir_stat.Text.Trim());
+                    cmd.Parameters.AddWithValue("@acct_no", acct_no.Text.Trim());
+                    cmd.Parameters.AddWithValue("@atm_card_no", atm_card_no.Text.Trim());
+                    cmd.Parameters.AddWithValue("@dt_issued", DateTime.TryParse(dt_issued.Text, out DateTime dti) ? dti.ToString("yyyy-MM-dd") : (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@atm_status", atm_status.Text.Trim());
+                    cmd.Parameters.AddWithValue("@ccode", ccode.Text.Trim());
+                    cmd.Parameters.AddWithValue("@client", client.Text.Trim());
+                    cmd.Parameters.AddWithValue("@dep_code", dep_code.Text.Trim());
+                    cmd.Parameters.AddWithValue("@department", department.Text.Trim());
+                    cmd.Parameters.AddWithValue("@line_cd", line_cd.Text.Trim());
+                    cmd.Parameters.AddWithValue("@line", line.Text.Trim());
+                    cmd.Parameters.AddWithValue("@cont_date", DateTime.TryParse(cont_date.Text, out DateTime ctd) ? ctd.ToString("yyyy-MM-dd") : (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@cont_end", DateTime.TryParse(cont_end.Text, out DateTime cte) ? cte.ToString("yyyy-MM-dd") : (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@rate_month", decimal.TryParse(rate_month.Text, out decimal rm) ? rm : (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@rate_day", decimal.TryParse(rate_day.Text, out decimal rd) ? rd : (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@cont_rate", decimal.TryParse(cont_rate.Text, out decimal cr) ? cr : (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@meal_rate", decimal.TryParse(meal_rate.Text, out decimal mr) ? mr : (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@allowance", decimal.TryParse(allowance.Text, out decimal alw) ? alw : (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@position", position.Text.Trim());
+                    cmd.Parameters.AddWithValue("@sil_amt", decimal.TryParse(sil_amt.Text, out decimal sa) ? sa : (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@street", street.Text.Trim());
+                    cmd.Parameters.AddWithValue("@barangay", barangay.Text.Trim());
+                    cmd.Parameters.AddWithValue("@city", city.Text.Trim());
+                    cmd.Parameters.AddWithValue("@province", province.Text.Trim());
+                    cmd.Parameters.AddWithValue("@edu_attaint", edu_attaint.Text.Trim());
+                    cmd.Parameters.AddWithValue("@dt_expired", DateTime.TryParse(dt_expired.Text, out DateTime dte) ? dte.ToString("yyyy-MM-dd") : (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@contact_no", contact_no.Text.Trim());
+                    cmd.Parameters.AddWithValue("@zipcode", zipcode.Text.Trim());
+
+                    // CheckBoxes
+                    cmd.Parameters.AddWithValue("@enable_atm", enable_atm.Checked);
+                    cmd.Parameters.AddWithValue("@staff", staff.Checked);
+                    cmd.Parameters.AddWithValue("@active", active.Checked);
+                    cmd.Parameters.AddWithValue("@active_hmo", active_hmo.Checked);
+                    cmd.Parameters.AddWithValue("@active_sil", active_sil.Checked);
+
+                    cmd.ExecuteNonQuery();
+                }
+            }
+
+            SetControlsReadOnly(true);
+            MessageBox.Show("Employee data updated successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void import_Click(object sender, EventArgs e)
@@ -240,60 +397,6 @@ namespace JTI_Payroll_System
             }
         }
 
-        private void search_Click(object sender, EventArgs e)
-        {
-            string searchText = searchbar.Text.Trim();
-
-            if (string.IsNullOrEmpty(searchText))
-            {
-                MessageBox.Show("Please enter a search keyword!", "Search Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            using (MySqlConnection connection = DatabaseHelper.GetConnection())
-            {
-                connection.Open();
-
-                string query = @"
-            SELECT id_no, fname, lname
-            FROM employee 
-            WHERE id_no LIKE @search OR fname LIKE @search OR lname LIKE @search";
-
-                using (MySqlCommand cmd = new MySqlCommand(query, connection))
-                {
-                    cmd.Parameters.AddWithValue("@search", "%" + searchText + "%");
-
-                    using (MySqlDataAdapter adapter = new MySqlDataAdapter(cmd))
-                    {
-                        DataTable employeeData = new DataTable();
-                        adapter.Fill(employeeData);
-
-                        if (employeeData.Rows.Count == 1)  // If only one match is found
-                        {
-                            DataRow row = employeeData.Rows[0];
-                            string foundIdNo = row["id_no"].ToString();
-                            LoadEmployeeData(foundIdNo);
-                        }
-                        else if (employeeData.Rows.Count > 1)  // If multiple matches exist
-                        {
-                            using (SelectEmployeeForm selectForm = new SelectEmployeeForm(employeeData))
-                            {
-                                if (selectForm.ShowDialog() == DialogResult.OK)
-                                {
-                                    string selectedIdNo = selectForm.GetSelectedID();
-                                    LoadEmployeeData(selectedIdNo);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            MessageBox.Show("No matching records found!", "Search Result", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        }
-                    }
-                }
-            }
-        }
-
         public void LoadEmployeeData(string idNo)
         {
             using (MySqlConnection connection = DatabaseHelper.GetConnection())
@@ -341,13 +444,13 @@ namespace JTI_Payroll_System
                             position.Text = reader["position"]?.ToString();
                             sil_amt.Text = reader["sil_amt"]?.ToString();
                             street.Text = reader["street"]?.ToString();
-                            // Note: Designer uses "baranggay", DB uses "barangay"
-                            baranggay.Text = reader["barangay"]?.ToString();
+                            barangay.Text = reader["barangay"]?.ToString();
                             city.Text = reader["city"]?.ToString();
                             province.Text = reader["province"]?.ToString();
                             edu_attaint.Text = reader["edu_attaint"]?.ToString();
                             dt_expired.Text = reader["dt_expired"] is DateTime dte ? dte.ToString("yyyy-MM-dd") : reader["dt_expired"]?.ToString();
                             contact_no.Text = reader["contact_no"]?.ToString();
+                            zipcode.Text = reader["zipcode"]?.ToString();
 
                             // CheckBoxes
                             enable_atm.Checked = reader["enable_atm"] != DBNull.Value && Convert.ToBoolean(reader["enable_atm"]);
@@ -375,7 +478,41 @@ namespace JTI_Payroll_System
                     }
                 }
             }
+            // Update current index if found in the list
+            int idx = employeeIdList.IndexOf(idNo);
+            if (idx >= 0)
+                currentEmployeeIndex = idx;
         }
 
+        private void edit_Click(object sender, EventArgs e)
+        {
+            SetControlsReadOnly(false);
+        }
+
+        private void back_Click(object sender, EventArgs e)
+        {
+            if (employeeIdList.Count == 0) return;
+            if (currentEmployeeIndex > 0)
+            {
+                currentEmployeeIndex--;
+                LoadEmployeeData(employeeIdList[currentEmployeeIndex]);
+            }
+        }
+
+        private void next_Click(object sender, EventArgs e)
+        {
+            if (employeeIdList.Count == 0) return;
+            if (currentEmployeeIndex < employeeIdList.Count - 1)
+            {
+                currentEmployeeIndex++;
+                LoadEmployeeData(employeeIdList[currentEmployeeIndex]);
+            }
+        }
+
+        private void empsearch_Click(object sender, EventArgs e)
+        {
+            employeesearch employeesearchForm = new employeesearch();
+            employeesearchForm.Show();
+        }
     }
 }
