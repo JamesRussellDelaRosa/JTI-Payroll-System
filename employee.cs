@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using MySql.Data.MySqlClient;
 using ClosedXML.Excel;
+using System.Reflection.Emit;
 
 namespace JTI_Payroll_System
 {
@@ -254,9 +255,9 @@ namespace JTI_Payroll_System
                 connection.Open();
 
                 string query = @"
-                    SELECT id_no, fname, lname
-                    FROM employee 
-                    WHERE id_no LIKE @search OR fname LIKE @search OR lname LIKE @search";
+            SELECT id_no, fname, lname
+            FROM employee 
+            WHERE id_no LIKE @search OR fname LIKE @search OR lname LIKE @search";
 
                 using (MySqlCommand cmd = new MySqlCommand(query, connection))
                 {
@@ -270,9 +271,8 @@ namespace JTI_Payroll_System
                         if (employeeData.Rows.Count == 1)  // If only one match is found
                         {
                             DataRow row = employeeData.Rows[0];
-                            textEmpID.Text = row["id_no"].ToString();
-                            textFirstName.Text = row["fname"].ToString();
-                            textLastName.Text = row["lname"].ToString();
+                            string foundIdNo = row["id_no"].ToString();
+                            LoadEmployeeData(foundIdNo);
                         }
                         else if (employeeData.Rows.Count > 1)  // If multiple matches exist
                         {
@@ -280,9 +280,8 @@ namespace JTI_Payroll_System
                             {
                                 if (selectForm.ShowDialog() == DialogResult.OK)
                                 {
-                                    textEmpID.Text = selectForm.GetSelectedID();
-                                    textFirstName.Text = selectForm.GetSelectedFName();
-                                    textLastName.Text = selectForm.GetSelectedLName();
+                                    string selectedIdNo = selectForm.GetSelectedID();
+                                    LoadEmployeeData(selectedIdNo);
                                 }
                             }
                         }
@@ -294,5 +293,89 @@ namespace JTI_Payroll_System
                 }
             }
         }
+
+        public void LoadEmployeeData(string idNo)
+        {
+            using (MySqlConnection connection = DatabaseHelper.GetConnection())
+            {
+                connection.Open();
+                string query = "SELECT * FROM employee WHERE id_no = @id_no";
+                using (MySqlCommand cmd = new MySqlCommand(query, connection))
+                {
+                    cmd.Parameters.AddWithValue("@id_no", idNo);
+                    using (MySqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            // TextBoxes
+                            id_no.Text = reader["id_no"]?.ToString();
+                            fname.Text = reader["fname"]?.ToString();
+                            mname.Text = reader["mname"]?.ToString();
+                            lname.Text = reader["lname"]?.ToString();
+                            sex.Text = reader["sex"]?.ToString();
+                            dt_birth.Text = reader["dt_birth"] is DateTime dtb ? dtb.ToString("yyyy-MM-dd") : reader["dt_birth"]?.ToString();
+                            civil_stat.Text = reader["civil_stat"]?.ToString();
+                            sssnum.Text = reader["sssnum"]?.ToString();
+                            tin.Text = reader["tin"]?.ToString();
+                            hdmfnum.Text = reader["hdmfnum"]?.ToString();
+                            phnum.Text = reader["phnum"]?.ToString();
+                            bir_cd.Text = reader["bir_cd"]?.ToString();
+                            bir_stat.Text = reader["bir_stat"]?.ToString();
+                            acct_no.Text = reader["acct_no"]?.ToString();
+                            atm_card_no.Text = reader["atm_card_no"]?.ToString();
+                            dt_issued.Text = reader["dt_issued"] is DateTime dti ? dti.ToString("yyyy-MM-dd") : reader["dt_issued"]?.ToString();
+                            atm_status.Text = reader["atm_status"]?.ToString();
+                            ccode.Text = reader["ccode"]?.ToString();
+                            client.Text = reader["client"]?.ToString();
+                            dep_code.Text = reader["dep_code"]?.ToString();
+                            department.Text = reader["department"]?.ToString();
+                            line_cd.Text = reader["line_cd"]?.ToString();
+                            line.Text = reader["line"]?.ToString();
+                            cont_date.Text = reader["cont_date"] is DateTime ctd ? ctd.ToString("yyyy-MM-dd") : reader["cont_date"]?.ToString();
+                            cont_end.Text = reader["cont_end"] is DateTime cte ? cte.ToString("yyyy-MM-dd") : reader["cont_end"]?.ToString();
+                            rate_month.Text = reader["rate_month"]?.ToString();
+                            rate_day.Text = reader["rate_day"]?.ToString();
+                            cont_rate.Text = reader["cont_rate"]?.ToString();
+                            meal_rate.Text = reader["meal_rate"]?.ToString();
+                            allowance.Text = reader["allowance"]?.ToString();
+                            position.Text = reader["position"]?.ToString();
+                            sil_amt.Text = reader["sil_amt"]?.ToString();
+                            street.Text = reader["street"]?.ToString();
+                            // Note: Designer uses "baranggay", DB uses "barangay"
+                            baranggay.Text = reader["barangay"]?.ToString();
+                            city.Text = reader["city"]?.ToString();
+                            province.Text = reader["province"]?.ToString();
+                            edu_attaint.Text = reader["edu_attaint"]?.ToString();
+                            dt_expired.Text = reader["dt_expired"] is DateTime dte ? dte.ToString("yyyy-MM-dd") : reader["dt_expired"]?.ToString();
+                            contact_no.Text = reader["contact_no"]?.ToString();
+
+                            // CheckBoxes
+                            enable_atm.Checked = reader["enable_atm"] != DBNull.Value && Convert.ToBoolean(reader["enable_atm"]);
+                            staff.Checked = reader["staff"] != DBNull.Value && Convert.ToBoolean(reader["staff"]);
+                            active.Checked = reader["active"] != DBNull.Value && Convert.ToBoolean(reader["active"]);
+                            active_hmo.Checked = reader["active_hmo"] != DBNull.Value && Convert.ToBoolean(reader["active_hmo"]);
+                            active_sil.Checked = reader["active_sil"] != DBNull.Value && Convert.ToBoolean(reader["active_sil"]);
+
+                            // ComboBoxes
+                            if (ccode.Items.Contains(reader["ccode"]?.ToString()))
+                                ccode.SelectedItem = reader["ccode"]?.ToString();
+                            if (dep_code.Items.Contains(reader["dep_code"]?.ToString()))
+                                dep_code.SelectedItem = reader["dep_code"]?.ToString();
+                            if (line_cd.Items.Contains(reader["line_cd"]?.ToString()))
+                                line_cd.SelectedItem = reader["line_cd"]?.ToString();
+                            if (edu_attaint.Items.Contains(reader["edu_attaint"]?.ToString()))
+                                edu_attaint.SelectedItem = reader["edu_attaint"]?.ToString();
+                            if (bir_cd.Items.Contains(reader["bir_cd"]?.ToString()))
+                                bir_cd.SelectedItem = reader["bir_cd"]?.ToString();
+                        }
+                        else
+                        {
+                            MessageBox.Show("Employee not found.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                    }
+                }
+            }
+        }
+
     }
 }

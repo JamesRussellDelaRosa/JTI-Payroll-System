@@ -29,16 +29,16 @@
         private void InitializeComponent()
         {
             label1 = new Label();
-            textEmpID = new TextBox();
-            textFirstName = new TextBox();
+            id_no = new TextBox();
+            fname = new TextBox();
             labelFirstName = new Label();
-            textMiddleName = new TextBox();
+            mname = new TextBox();
             label2 = new Label();
-            textLastName = new TextBox();
+            lname = new TextBox();
             lastname = new Label();
-            textEmail = new TextBox();
+            email = new TextBox();
             label3 = new Label();
-            textPhone = new TextBox();
+            contact_no = new TextBox();
             label4 = new Label();
             label5 = new Label();
             saveEmp = new Button();
@@ -47,75 +47,78 @@
             searchbar = new TextBox();
             label6 = new Label();
             label7 = new Label();
-            address = new TextBox();
+            street = new TextBox();
             label8 = new Label();
             label9 = new Label();
-            textBox1 = new TextBox();
+            baranggay = new TextBox();
             label10 = new Label();
-            textBox2 = new TextBox();
+            city = new TextBox();
             label11 = new Label();
-            textBox3 = new TextBox();
-            textBox4 = new TextBox();
+            province = new TextBox();
+            dt_birth = new TextBox();
             label12 = new Label();
-            comboBox1 = new ComboBox();
-            textBox5 = new TextBox();
+            edu_attaint = new ComboBox();
+            civil_stat = new TextBox();
             label13 = new Label();
-            textBox6 = new TextBox();
+            sssnum = new TextBox();
             label14 = new Label();
-            textBox7 = new TextBox();
+            hdmfnum = new TextBox();
             label15 = new Label();
-            textBox8 = new TextBox();
+            phnum = new TextBox();
             label16 = new Label();
-            textBox9 = new TextBox();
+            sex = new TextBox();
             label17 = new Label();
-            textBox10 = new TextBox();
+            tin = new TextBox();
             label18 = new Label();
             label19 = new Label();
-            textBox11 = new TextBox();
+            acct_no = new TextBox();
             label20 = new Label();
-            textBox12 = new TextBox();
+            atm_card_no = new TextBox();
             label21 = new Label();
-            checkBox1 = new CheckBox();
-            textBox13 = new TextBox();
+            enable_atm = new CheckBox();
+            dt_issued = new TextBox();
             label22 = new Label();
-            textBox14 = new TextBox();
+            dt_expired = new TextBox();
             label23 = new Label();
-            textBox15 = new TextBox();
+            atm_status = new TextBox();
             label24 = new Label();
             label25 = new Label();
-            textBox16 = new TextBox();
+            cont_date = new TextBox();
             label26 = new Label();
-            textBox17 = new TextBox();
+            cont_end = new TextBox();
             label27 = new Label();
-            checkBox2 = new CheckBox();
-            checkBox3 = new CheckBox();
-            checkBox4 = new CheckBox();
-            checkBox5 = new CheckBox();
-            textBox18 = new TextBox();
+            staff = new CheckBox();
+            active = new CheckBox();
+            active_hmo = new CheckBox();
+            active_sil = new CheckBox();
+            sil_amt = new TextBox();
             label28 = new Label();
             label29 = new Label();
-            comboBox2 = new ComboBox();
-            comboBox3 = new ComboBox();
+            ccode = new ComboBox();
+            dep_code = new ComboBox();
             label30 = new Label();
-            comboBox4 = new ComboBox();
+            line_cd = new ComboBox();
             label31 = new Label();
-            textBox19 = new TextBox();
-            textBox20 = new TextBox();
-            textBox21 = new TextBox();
-            textBox22 = new TextBox();
+            client = new TextBox();
+            department = new TextBox();
+            line = new TextBox();
+            position = new TextBox();
             label32 = new Label();
             textBox23 = new TextBox();
             label33 = new Label();
-            textBox24 = new TextBox();
+            rate_month = new TextBox();
             label34 = new Label();
-            textBox25 = new TextBox();
+            rate_day = new TextBox();
             label35 = new Label();
-            textBox26 = new TextBox();
+            cont_rate = new TextBox();
             label36 = new Label();
-            textBox27 = new TextBox();
+            meal_rate = new TextBox();
             label37 = new Label();
-            textBox28 = new TextBox();
+            allowance = new TextBox();
             label38 = new Label();
+            bir_cd = new ComboBox();
+            label39 = new Label();
+            bir_stat = new TextBox();
             SuspendLayout();
             // 
             // label1
@@ -127,19 +130,19 @@
             label1.TabIndex = 0;
             label1.Text = "ID Number";
             // 
-            // textEmpID
+            // id_no
             // 
-            textEmpID.Location = new Point(100, 58);
-            textEmpID.Name = "textEmpID";
-            textEmpID.Size = new Size(125, 27);
-            textEmpID.TabIndex = 1;
+            id_no.Location = new Point(100, 58);
+            id_no.Name = "id_no";
+            id_no.Size = new Size(125, 27);
+            id_no.TabIndex = 1;
             // 
-            // textFirstName
+            // fname
             // 
-            textFirstName.Location = new Point(311, 58);
-            textFirstName.Name = "textFirstName";
-            textFirstName.Size = new Size(125, 27);
-            textFirstName.TabIndex = 3;
+            fname.Location = new Point(311, 58);
+            fname.Name = "fname";
+            fname.Size = new Size(125, 27);
+            fname.TabIndex = 3;
             // 
             // labelFirstName
             // 
@@ -150,12 +153,12 @@
             labelFirstName.TabIndex = 2;
             labelFirstName.Text = "FirstName";
             // 
-            // textMiddleName
+            // mname
             // 
-            textMiddleName.Location = new Point(559, 58);
-            textMiddleName.Name = "textMiddleName";
-            textMiddleName.Size = new Size(125, 27);
-            textMiddleName.TabIndex = 5;
+            mname.Location = new Point(559, 58);
+            mname.Name = "mname";
+            mname.Size = new Size(125, 27);
+            mname.TabIndex = 5;
             // 
             // label2
             // 
@@ -166,12 +169,12 @@
             label2.TabIndex = 4;
             label2.Text = "MiddleName";
             // 
-            // textLastName
+            // lname
             // 
-            textLastName.Location = new Point(789, 61);
-            textLastName.Name = "textLastName";
-            textLastName.Size = new Size(125, 27);
-            textLastName.TabIndex = 7;
+            lname.Location = new Point(789, 61);
+            lname.Name = "lname";
+            lname.Size = new Size(125, 27);
+            lname.TabIndex = 7;
             // 
             // lastname
             // 
@@ -182,12 +185,12 @@
             lastname.TabIndex = 6;
             lastname.Text = "LastName";
             // 
-            // textEmail
+            // email
             // 
-            textEmail.Location = new Point(503, 148);
-            textEmail.Name = "textEmail";
-            textEmail.Size = new Size(164, 27);
-            textEmail.TabIndex = 9;
+            email.Location = new Point(503, 148);
+            email.Name = "email";
+            email.Size = new Size(164, 27);
+            email.TabIndex = 9;
             // 
             // label3
             // 
@@ -198,12 +201,12 @@
             label3.TabIndex = 8;
             label3.Text = "EMAIL";
             // 
-            // textPhone
+            // contact_no
             // 
-            textPhone.Location = new Point(315, 147);
-            textPhone.Name = "textPhone";
-            textPhone.Size = new Size(125, 27);
-            textPhone.TabIndex = 11;
+            contact_no.Location = new Point(315, 147);
+            contact_no.Name = "contact_no";
+            contact_no.Size = new Size(125, 27);
+            contact_no.TabIndex = 11;
             // 
             // label4
             // 
@@ -279,12 +282,12 @@
             label7.TabIndex = 21;
             label7.Text = "Address";
             // 
-            // address
+            // street
             // 
-            address.Location = new Point(70, 91);
-            address.Name = "address";
-            address.Size = new Size(218, 27);
-            address.TabIndex = 22;
+            street.Location = new Point(70, 91);
+            street.Name = "street";
+            street.Size = new Size(218, 27);
+            street.TabIndex = 22;
             // 
             // label8
             // 
@@ -304,12 +307,12 @@
             label9.TabIndex = 25;
             label9.Text = "Barangay";
             // 
-            // textBox1
+            // baranggay
             // 
-            textBox1.Location = new Point(294, 91);
-            textBox1.Name = "textBox1";
-            textBox1.Size = new Size(218, 27);
-            textBox1.TabIndex = 24;
+            baranggay.Location = new Point(294, 91);
+            baranggay.Name = "baranggay";
+            baranggay.Size = new Size(218, 27);
+            baranggay.TabIndex = 24;
             // 
             // label10
             // 
@@ -320,12 +323,12 @@
             label10.TabIndex = 27;
             label10.Text = "City";
             // 
-            // textBox2
+            // city
             // 
-            textBox2.Location = new Point(518, 91);
-            textBox2.Name = "textBox2";
-            textBox2.Size = new Size(218, 27);
-            textBox2.TabIndex = 26;
+            city.Location = new Point(518, 91);
+            city.Name = "city";
+            city.Size = new Size(218, 27);
+            city.TabIndex = 26;
             // 
             // label11
             // 
@@ -336,19 +339,19 @@
             label11.TabIndex = 29;
             label11.Text = "Province";
             // 
-            // textBox3
+            // province
             // 
-            textBox3.Location = new Point(742, 91);
-            textBox3.Name = "textBox3";
-            textBox3.Size = new Size(218, 27);
-            textBox3.TabIndex = 28;
+            province.Location = new Point(742, 91);
+            province.Name = "province";
+            province.Size = new Size(218, 27);
+            province.TabIndex = 28;
             // 
-            // textBox4
+            // dt_birth
             // 
-            textBox4.Location = new Point(82, 145);
-            textBox4.Name = "textBox4";
-            textBox4.Size = new Size(122, 27);
-            textBox4.TabIndex = 30;
+            dt_birth.Location = new Point(82, 145);
+            dt_birth.Name = "dt_birth";
+            dt_birth.Size = new Size(122, 27);
+            dt_birth.TabIndex = 30;
             // 
             // label12
             // 
@@ -359,20 +362,20 @@
             label12.TabIndex = 31;
             label12.Text = "Edu. Attain";
             // 
-            // comboBox1
+            // edu_attaint
             // 
-            comboBox1.FormattingEnabled = true;
-            comboBox1.Location = new Point(760, 148);
-            comboBox1.Name = "comboBox1";
-            comboBox1.Size = new Size(151, 28);
-            comboBox1.TabIndex = 32;
+            edu_attaint.FormattingEnabled = true;
+            edu_attaint.Location = new Point(760, 148);
+            edu_attaint.Name = "edu_attaint";
+            edu_attaint.Size = new Size(151, 28);
+            edu_attaint.TabIndex = 32;
             // 
-            // textBox5
+            // civil_stat
             // 
-            textBox5.Location = new Point(92, 178);
-            textBox5.Name = "textBox5";
-            textBox5.Size = new Size(35, 27);
-            textBox5.TabIndex = 34;
+            civil_stat.Location = new Point(92, 178);
+            civil_stat.Name = "civil_stat";
+            civil_stat.Size = new Size(35, 27);
+            civil_stat.TabIndex = 34;
             // 
             // label13
             // 
@@ -383,12 +386,12 @@
             label13.TabIndex = 33;
             label13.Text = "Civil Status";
             // 
-            // textBox6
+            // sssnum
             // 
-            textBox6.Location = new Point(194, 178);
-            textBox6.Name = "textBox6";
-            textBox6.Size = new Size(148, 27);
-            textBox6.TabIndex = 36;
+            sssnum.Location = new Point(194, 178);
+            sssnum.Name = "sssnum";
+            sssnum.Size = new Size(148, 27);
+            sssnum.TabIndex = 36;
             // 
             // label14
             // 
@@ -399,12 +402,12 @@
             label14.TabIndex = 35;
             label14.Text = "SSS NO.";
             // 
-            // textBox7
+            // hdmfnum
             // 
-            textBox7.Location = new Point(421, 178);
-            textBox7.Name = "textBox7";
-            textBox7.Size = new Size(148, 27);
-            textBox7.TabIndex = 38;
+            hdmfnum.Location = new Point(421, 178);
+            hdmfnum.Name = "hdmfnum";
+            hdmfnum.Size = new Size(148, 27);
+            hdmfnum.TabIndex = 38;
             // 
             // label15
             // 
@@ -415,12 +418,12 @@
             label15.TabIndex = 37;
             label15.Text = "HDMF NO.";
             // 
-            // textBox8
+            // phnum
             // 
-            textBox8.Location = new Point(630, 178);
-            textBox8.Name = "textBox8";
-            textBox8.Size = new Size(148, 27);
-            textBox8.TabIndex = 40;
+            phnum.Location = new Point(630, 178);
+            phnum.Name = "phnum";
+            phnum.Size = new Size(148, 27);
+            phnum.TabIndex = 40;
             // 
             // label16
             // 
@@ -431,12 +434,12 @@
             label16.TabIndex = 39;
             label16.Text = "PH NO.";
             // 
-            // textBox9
+            // sex
             // 
-            textBox9.Location = new Point(960, 58);
-            textBox9.Name = "textBox9";
-            textBox9.Size = new Size(37, 27);
-            textBox9.TabIndex = 42;
+            sex.Location = new Point(960, 58);
+            sex.Name = "sex";
+            sex.Size = new Size(37, 27);
+            sex.TabIndex = 42;
             // 
             // label17
             // 
@@ -447,12 +450,12 @@
             label17.TabIndex = 41;
             label17.Text = "SEX";
             // 
-            // textBox10
+            // tin
             // 
-            textBox10.Location = new Point(815, 180);
-            textBox10.Name = "textBox10";
-            textBox10.Size = new Size(148, 27);
-            textBox10.TabIndex = 44;
+            tin.Location = new Point(815, 180);
+            tin.Name = "tin";
+            tin.Size = new Size(148, 27);
+            tin.TabIndex = 44;
             // 
             // label18
             // 
@@ -473,12 +476,12 @@
             label19.TabIndex = 45;
             label19.Text = "Bank Account Info";
             // 
-            // textBox11
+            // acct_no
             // 
-            textBox11.Location = new Point(107, 249);
-            textBox11.Name = "textBox11";
-            textBox11.Size = new Size(218, 27);
-            textBox11.TabIndex = 47;
+            acct_no.Location = new Point(107, 249);
+            acct_no.Name = "acct_no";
+            acct_no.Size = new Size(218, 27);
+            acct_no.TabIndex = 47;
             // 
             // label20
             // 
@@ -489,12 +492,12 @@
             label20.TabIndex = 46;
             label20.Text = "Bank Acct. No.";
             // 
-            // textBox12
+            // atm_card_no
             // 
-            textBox12.Location = new Point(397, 252);
-            textBox12.Name = "textBox12";
-            textBox12.Size = new Size(218, 27);
-            textBox12.TabIndex = 49;
+            atm_card_no.Location = new Point(397, 252);
+            atm_card_no.Name = "atm_card_no";
+            atm_card_no.Size = new Size(218, 27);
+            atm_card_no.TabIndex = 49;
             // 
             // label21
             // 
@@ -505,22 +508,22 @@
             label21.TabIndex = 48;
             label21.Text = "Card No.";
             // 
-            // checkBox1
+            // enable_atm
             // 
-            checkBox1.AutoSize = true;
-            checkBox1.Location = new Point(12, 282);
-            checkBox1.Name = "checkBox1";
-            checkBox1.Size = new Size(110, 24);
-            checkBox1.TabIndex = 50;
-            checkBox1.Text = "Enable ATM";
-            checkBox1.UseVisualStyleBackColor = true;
+            enable_atm.AutoSize = true;
+            enable_atm.Location = new Point(12, 282);
+            enable_atm.Name = "enable_atm";
+            enable_atm.Size = new Size(110, 24);
+            enable_atm.TabIndex = 50;
+            enable_atm.Text = "Enable ATM";
+            enable_atm.UseVisualStyleBackColor = true;
             // 
-            // textBox13
+            // dt_issued
             // 
-            textBox13.Location = new Point(703, 253);
-            textBox13.Name = "textBox13";
-            textBox13.Size = new Size(111, 27);
-            textBox13.TabIndex = 52;
+            dt_issued.Location = new Point(703, 253);
+            dt_issued.Name = "dt_issued";
+            dt_issued.Size = new Size(111, 27);
+            dt_issued.TabIndex = 52;
             // 
             // label22
             // 
@@ -531,12 +534,12 @@
             label22.TabIndex = 51;
             label22.Text = "Date Issued";
             // 
-            // textBox14
+            // dt_expired
             // 
-            textBox14.Location = new Point(913, 252);
-            textBox14.Name = "textBox14";
-            textBox14.Size = new Size(116, 27);
-            textBox14.TabIndex = 54;
+            dt_expired.Location = new Point(913, 252);
+            dt_expired.Name = "dt_expired";
+            dt_expired.Size = new Size(116, 27);
+            dt_expired.TabIndex = 54;
             // 
             // label23
             // 
@@ -547,12 +550,12 @@
             label23.TabIndex = 53;
             label23.Text = "Date Expired";
             // 
-            // textBox15
+            // atm_status
             // 
-            textBox15.Location = new Point(211, 282);
-            textBox15.Name = "textBox15";
-            textBox15.Size = new Size(111, 27);
-            textBox15.TabIndex = 56;
+            atm_status.Location = new Point(211, 282);
+            atm_status.Name = "atm_status";
+            atm_status.Size = new Size(111, 27);
+            atm_status.TabIndex = 56;
             // 
             // label24
             // 
@@ -573,12 +576,12 @@
             label25.TabIndex = 57;
             label25.Text = "Employment Info";
             // 
-            // textBox16
+            // cont_date
             // 
-            textBox16.Location = new Point(97, 353);
-            textBox16.Name = "textBox16";
-            textBox16.Size = new Size(115, 27);
-            textBox16.TabIndex = 59;
+            cont_date.Location = new Point(97, 353);
+            cont_date.Name = "cont_date";
+            cont_date.Size = new Size(115, 27);
+            cont_date.TabIndex = 59;
             // 
             // label26
             // 
@@ -589,12 +592,12 @@
             label26.TabIndex = 58;
             label26.Text = "Cont. Date";
             // 
-            // textBox17
+            // cont_end
             // 
-            textBox17.Location = new Point(285, 354);
-            textBox17.Name = "textBox17";
-            textBox17.Size = new Size(115, 27);
-            textBox17.TabIndex = 61;
+            cont_end.Location = new Point(285, 354);
+            cont_end.Name = "cont_end";
+            cont_end.Size = new Size(115, 27);
+            cont_end.TabIndex = 61;
             // 
             // label27
             // 
@@ -605,52 +608,52 @@
             label27.TabIndex = 60;
             label27.Text = "Cont. End";
             // 
-            // checkBox2
+            // staff
             // 
-            checkBox2.AutoSize = true;
-            checkBox2.Location = new Point(246, 321);
-            checkBox2.Name = "checkBox2";
-            checkBox2.Size = new Size(69, 24);
-            checkBox2.TabIndex = 62;
-            checkBox2.Text = "Staff?";
-            checkBox2.UseVisualStyleBackColor = true;
+            staff.AutoSize = true;
+            staff.Location = new Point(246, 321);
+            staff.Name = "staff";
+            staff.Size = new Size(69, 24);
+            staff.TabIndex = 62;
+            staff.Text = "Staff?";
+            staff.UseVisualStyleBackColor = true;
             // 
-            // checkBox3
+            // active
             // 
-            checkBox3.AutoSize = true;
-            checkBox3.Location = new Point(315, 321);
-            checkBox3.Name = "checkBox3";
-            checkBox3.Size = new Size(72, 24);
-            checkBox3.TabIndex = 63;
-            checkBox3.Text = "Active";
-            checkBox3.UseVisualStyleBackColor = true;
+            active.AutoSize = true;
+            active.Location = new Point(315, 321);
+            active.Name = "active";
+            active.Size = new Size(72, 24);
+            active.TabIndex = 63;
+            active.Text = "Active";
+            active.UseVisualStyleBackColor = true;
             // 
-            // checkBox4
+            // active_hmo
             // 
-            checkBox4.AutoSize = true;
-            checkBox4.Location = new Point(393, 321);
-            checkBox4.Name = "checkBox4";
-            checkBox4.Size = new Size(66, 24);
-            checkBox4.TabIndex = 64;
-            checkBox4.Text = "HMO";
-            checkBox4.UseVisualStyleBackColor = true;
+            active_hmo.AutoSize = true;
+            active_hmo.Location = new Point(393, 321);
+            active_hmo.Name = "active_hmo";
+            active_hmo.Size = new Size(66, 24);
+            active_hmo.TabIndex = 64;
+            active_hmo.Text = "HMO";
+            active_hmo.UseVisualStyleBackColor = true;
             // 
-            // checkBox5
+            // active_sil
             // 
-            checkBox5.AutoSize = true;
-            checkBox5.Location = new Point(459, 321);
-            checkBox5.Name = "checkBox5";
-            checkBox5.Size = new Size(50, 24);
-            checkBox5.TabIndex = 65;
-            checkBox5.Text = "SIL";
-            checkBox5.UseVisualStyleBackColor = true;
+            active_sil.AutoSize = true;
+            active_sil.Location = new Point(459, 321);
+            active_sil.Name = "active_sil";
+            active_sil.Size = new Size(50, 24);
+            active_sil.TabIndex = 65;
+            active_sil.Text = "SIL";
+            active_sil.UseVisualStyleBackColor = true;
             // 
-            // textBox18
+            // sil_amt
             // 
-            textBox18.Location = new Point(572, 318);
-            textBox18.Name = "textBox18";
-            textBox18.Size = new Size(115, 27);
-            textBox18.TabIndex = 67;
+            sil_amt.Location = new Point(572, 318);
+            sil_amt.Name = "sil_amt";
+            sil_amt.Size = new Size(115, 27);
+            sil_amt.TabIndex = 67;
             // 
             // label28
             // 
@@ -670,21 +673,21 @@
             label29.TabIndex = 68;
             label29.Text = "CLIENTCODE";
             // 
-            // comboBox2
+            // ccode
             // 
-            comboBox2.FormattingEnabled = true;
-            comboBox2.Location = new Point(116, 386);
-            comboBox2.Name = "comboBox2";
-            comboBox2.Size = new Size(124, 28);
-            comboBox2.TabIndex = 69;
+            ccode.FormattingEnabled = true;
+            ccode.Location = new Point(116, 386);
+            ccode.Name = "ccode";
+            ccode.Size = new Size(124, 28);
+            ccode.TabIndex = 69;
             // 
-            // comboBox3
+            // dep_code
             // 
-            comboBox3.FormattingEnabled = true;
-            comboBox3.Location = new Point(116, 420);
-            comboBox3.Name = "comboBox3";
-            comboBox3.Size = new Size(124, 28);
-            comboBox3.TabIndex = 71;
+            dep_code.FormattingEnabled = true;
+            dep_code.Location = new Point(116, 420);
+            dep_code.Name = "dep_code";
+            dep_code.Size = new Size(124, 28);
+            dep_code.TabIndex = 71;
             // 
             // label30
             // 
@@ -695,13 +698,13 @@
             label30.TabIndex = 70;
             label30.Text = "DEPTCODE";
             // 
-            // comboBox4
+            // line_cd
             // 
-            comboBox4.FormattingEnabled = true;
-            comboBox4.Location = new Point(116, 454);
-            comboBox4.Name = "comboBox4";
-            comboBox4.Size = new Size(124, 28);
-            comboBox4.TabIndex = 73;
+            line_cd.FormattingEnabled = true;
+            line_cd.Location = new Point(116, 454);
+            line_cd.Name = "line_cd";
+            line_cd.Size = new Size(124, 28);
+            line_cd.TabIndex = 73;
             // 
             // label31
             // 
@@ -712,33 +715,33 @@
             label31.TabIndex = 72;
             label31.Text = "LINECODE";
             // 
-            // textBox19
+            // client
             // 
-            textBox19.Location = new Point(246, 387);
-            textBox19.Name = "textBox19";
-            textBox19.Size = new Size(640, 27);
-            textBox19.TabIndex = 74;
+            client.Location = new Point(246, 387);
+            client.Name = "client";
+            client.Size = new Size(640, 27);
+            client.TabIndex = 74;
             // 
-            // textBox20
+            // department
             // 
-            textBox20.Location = new Point(246, 421);
-            textBox20.Name = "textBox20";
-            textBox20.Size = new Size(640, 27);
-            textBox20.TabIndex = 75;
+            department.Location = new Point(246, 421);
+            department.Name = "department";
+            department.Size = new Size(640, 27);
+            department.TabIndex = 75;
             // 
-            // textBox21
+            // line
             // 
-            textBox21.Location = new Point(246, 454);
-            textBox21.Name = "textBox21";
-            textBox21.Size = new Size(640, 27);
-            textBox21.TabIndex = 76;
+            line.Location = new Point(246, 454);
+            line.Name = "line";
+            line.Size = new Size(640, 27);
+            line.TabIndex = 76;
             // 
-            // textBox22
+            // position
             // 
-            textBox22.Location = new Point(959, 391);
-            textBox22.Name = "textBox22";
-            textBox22.Size = new Size(163, 27);
-            textBox22.TabIndex = 78;
+            position.Location = new Point(959, 391);
+            position.Name = "position";
+            position.Size = new Size(163, 27);
+            position.TabIndex = 78;
             // 
             // label32
             // 
@@ -765,12 +768,12 @@
             label33.TabIndex = 79;
             label33.Text = "Emp Status";
             // 
-            // textBox24
+            // rate_month
             // 
-            textBox24.Location = new Point(100, 488);
-            textBox24.Name = "textBox24";
-            textBox24.Size = new Size(143, 27);
-            textBox24.TabIndex = 82;
+            rate_month.Location = new Point(100, 488);
+            rate_month.Name = "rate_month";
+            rate_month.Size = new Size(143, 27);
+            rate_month.TabIndex = 82;
             // 
             // label34
             // 
@@ -781,28 +784,28 @@
             label34.TabIndex = 81;
             label34.Text = "Rate/Month";
             // 
-            // textBox25
+            // rate_day
             // 
-            textBox25.Location = new Point(331, 487);
-            textBox25.Name = "textBox25";
-            textBox25.Size = new Size(143, 27);
-            textBox25.TabIndex = 84;
+            rate_day.Location = new Point(331, 487);
+            rate_day.Name = "rate_day";
+            rate_day.Size = new Size(143, 27);
+            rate_day.TabIndex = 84;
             // 
             // label35
             // 
             label35.AutoSize = true;
             label35.Location = new Point(246, 490);
             label35.Name = "label35";
-            label35.Size = new Size(88, 20);
+            label35.Size = new Size(71, 20);
             label35.TabIndex = 83;
-            label35.Text = "Rate/Month";
+            label35.Text = "Rate/Day";
             // 
-            // textBox26
+            // cont_rate
             // 
-            textBox26.Location = new Point(562, 488);
-            textBox26.Name = "textBox26";
-            textBox26.Size = new Size(143, 27);
-            textBox26.TabIndex = 86;
+            cont_rate.Location = new Point(562, 488);
+            cont_rate.Name = "cont_rate";
+            cont_rate.Size = new Size(143, 27);
+            cont_rate.TabIndex = 86;
             // 
             // label36
             // 
@@ -813,12 +816,12 @@
             label36.TabIndex = 85;
             label36.Text = "Cont. Rate";
             // 
-            // textBox27
+            // meal_rate
             // 
-            textBox27.Location = new Point(782, 488);
-            textBox27.Name = "textBox27";
-            textBox27.Size = new Size(143, 27);
-            textBox27.TabIndex = 88;
+            meal_rate.Location = new Point(782, 488);
+            meal_rate.Name = "meal_rate";
+            meal_rate.Size = new Size(143, 27);
+            meal_rate.TabIndex = 88;
             // 
             // label37
             // 
@@ -829,12 +832,12 @@
             label37.TabIndex = 87;
             label37.Text = "Meal/Day";
             // 
-            // textBox28
+            // allowance
             // 
-            textBox28.Location = new Point(1018, 491);
-            textBox28.Name = "textBox28";
-            textBox28.Size = new Size(143, 27);
-            textBox28.TabIndex = 90;
+            allowance.Location = new Point(1018, 491);
+            allowance.Name = "allowance";
+            allowance.Size = new Size(143, 27);
+            allowance.TabIndex = 90;
             // 
             // label38
             // 
@@ -845,80 +848,107 @@
             label38.TabIndex = 89;
             label38.Text = "Allow/Month";
             // 
+            // bir_cd
+            // 
+            bir_cd.FormattingEnabled = true;
+            bir_cd.Location = new Point(989, 147);
+            bir_cd.Name = "bir_cd";
+            bir_cd.Size = new Size(65, 28);
+            bir_cd.TabIndex = 92;
+            // 
+            // label39
+            // 
+            label39.AutoSize = true;
+            label39.Location = new Point(913, 150);
+            label39.Name = "label39";
+            label39.Size = new Size(70, 20);
+            label39.TabIndex = 91;
+            label39.Text = "BIRCODE";
+            // 
+            // bir_stat
+            // 
+            bir_stat.Location = new Point(1060, 148);
+            bir_stat.Name = "bir_stat";
+            bir_stat.Size = new Size(127, 27);
+            bir_stat.TabIndex = 94;
+            // 
             // employee
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1168, 579);
-            Controls.Add(textBox28);
+            ClientSize = new Size(1200, 579);
+            Controls.Add(bir_stat);
+            Controls.Add(bir_cd);
+            Controls.Add(label39);
+            Controls.Add(allowance);
             Controls.Add(label38);
-            Controls.Add(textBox27);
+            Controls.Add(meal_rate);
             Controls.Add(label37);
-            Controls.Add(textBox26);
+            Controls.Add(cont_rate);
             Controls.Add(label36);
-            Controls.Add(textBox25);
+            Controls.Add(rate_day);
             Controls.Add(label35);
-            Controls.Add(textBox24);
+            Controls.Add(rate_month);
             Controls.Add(label34);
             Controls.Add(textBox23);
             Controls.Add(label33);
-            Controls.Add(textBox22);
+            Controls.Add(position);
             Controls.Add(label32);
-            Controls.Add(textBox21);
-            Controls.Add(textBox20);
-            Controls.Add(textBox19);
-            Controls.Add(comboBox4);
+            Controls.Add(line);
+            Controls.Add(department);
+            Controls.Add(client);
+            Controls.Add(line_cd);
             Controls.Add(label31);
-            Controls.Add(comboBox3);
+            Controls.Add(dep_code);
             Controls.Add(label30);
-            Controls.Add(comboBox2);
+            Controls.Add(ccode);
             Controls.Add(label29);
-            Controls.Add(textBox18);
+            Controls.Add(sil_amt);
             Controls.Add(label28);
-            Controls.Add(checkBox5);
-            Controls.Add(checkBox4);
-            Controls.Add(checkBox3);
-            Controls.Add(checkBox2);
-            Controls.Add(textBox17);
+            Controls.Add(active_sil);
+            Controls.Add(active_hmo);
+            Controls.Add(active);
+            Controls.Add(staff);
+            Controls.Add(cont_end);
             Controls.Add(label27);
-            Controls.Add(textBox16);
+            Controls.Add(cont_date);
             Controls.Add(label26);
             Controls.Add(label25);
-            Controls.Add(textBox15);
+            Controls.Add(atm_status);
             Controls.Add(label24);
-            Controls.Add(textBox14);
+            Controls.Add(dt_expired);
             Controls.Add(label23);
-            Controls.Add(textBox13);
+            Controls.Add(dt_issued);
             Controls.Add(label22);
-            Controls.Add(checkBox1);
-            Controls.Add(textBox12);
+            Controls.Add(enable_atm);
+            Controls.Add(atm_card_no);
             Controls.Add(label21);
-            Controls.Add(textBox11);
+            Controls.Add(acct_no);
             Controls.Add(label20);
             Controls.Add(label19);
-            Controls.Add(textBox10);
+            Controls.Add(tin);
             Controls.Add(label18);
-            Controls.Add(textBox9);
+            Controls.Add(sex);
             Controls.Add(label17);
-            Controls.Add(textBox8);
+            Controls.Add(phnum);
             Controls.Add(label16);
-            Controls.Add(textBox7);
+            Controls.Add(hdmfnum);
             Controls.Add(label15);
-            Controls.Add(textBox6);
+            Controls.Add(sssnum);
             Controls.Add(label14);
-            Controls.Add(textBox5);
+            Controls.Add(civil_stat);
             Controls.Add(label13);
-            Controls.Add(comboBox1);
+            Controls.Add(edu_attaint);
             Controls.Add(label12);
-            Controls.Add(textBox4);
+            Controls.Add(dt_birth);
             Controls.Add(label11);
-            Controls.Add(textBox3);
+            Controls.Add(province);
             Controls.Add(label10);
-            Controls.Add(textBox2);
+            Controls.Add(city);
             Controls.Add(label9);
-            Controls.Add(textBox1);
+            Controls.Add(baranggay);
             Controls.Add(label8);
-            Controls.Add(address);
+            Controls.Add(street);
             Controls.Add(label7);
             Controls.Add(label6);
             Controls.Add(searchbar);
@@ -926,17 +956,17 @@
             Controls.Add(import);
             Controls.Add(saveEmp);
             Controls.Add(label5);
-            Controls.Add(textPhone);
+            Controls.Add(contact_no);
             Controls.Add(label4);
-            Controls.Add(textEmail);
+            Controls.Add(email);
             Controls.Add(label3);
-            Controls.Add(textLastName);
+            Controls.Add(lname);
             Controls.Add(lastname);
-            Controls.Add(textMiddleName);
+            Controls.Add(mname);
             Controls.Add(label2);
-            Controls.Add(textFirstName);
+            Controls.Add(fname);
             Controls.Add(labelFirstName);
-            Controls.Add(textEmpID);
+            Controls.Add(id_no);
             Controls.Add(label1);
             Name = "employee";
             Text = "employee";
@@ -947,16 +977,16 @@
         #endregion
 
         private Label label1;
-        private TextBox textEmpID;
-        private TextBox textFirstName;
+        private TextBox id_no;
+        private TextBox fname;
         private Label labelFirstName;
-        private TextBox textMiddleName;
+        private TextBox mname;
         private Label label2;
-        private TextBox textLastName;
+        private TextBox lname;
         private Label lastname;
-        private TextBox textEmail;
+        private TextBox email;
         private Label label3;
-        private TextBox textPhone;
+        private TextBox contact_no;
         private Label label4;
         private Label label5;
         private Button saveEmp;
@@ -965,74 +995,77 @@
         private TextBox searchbar;
         private Label label6;
         private Label label7;
-        private TextBox address;
+        private TextBox street;
         private Label label8;
         private Label label9;
-        private TextBox textBox1;
+        private TextBox baranggay;
         private Label label10;
-        private TextBox textBox2;
+        private TextBox city;
         private Label label11;
-        private TextBox textBox3;
-        private TextBox textBox4;
+        private TextBox province;
+        private TextBox dt_birth;
         private Label label12;
-        private ComboBox comboBox1;
-        private TextBox textBox5;
+        private ComboBox edu_attaint;
+        private TextBox civil_stat;
         private Label label13;
-        private TextBox textBox6;
+        private TextBox sssnum;
         private Label label14;
-        private TextBox textBox7;
+        private TextBox hdmfnum;
         private Label label15;
-        private TextBox textBox8;
+        private TextBox phnum;
         private Label label16;
-        private TextBox textBox9;
+        private TextBox sex;
         private Label label17;
-        private TextBox textBox10;
+        private TextBox tin;
         private Label label18;
         private Label label19;
-        private TextBox textBox11;
+        private TextBox acct_no;
         private Label label20;
-        private TextBox textBox12;
+        private TextBox atm_card_no;
         private Label label21;
-        private CheckBox checkBox1;
-        private TextBox textBox13;
+        private CheckBox enable_atm;
+        private TextBox dt_issued;
         private Label label22;
-        private TextBox textBox14;
+        private TextBox dt_expired;
         private Label label23;
-        private TextBox textBox15;
+        private TextBox atm_status;
         private Label label24;
         private Label label25;
-        private TextBox textBox16;
+        private TextBox cont_date;
         private Label label26;
-        private TextBox textBox17;
+        private TextBox cont_end;
         private Label label27;
-        private CheckBox checkBox2;
-        private CheckBox checkBox3;
-        private CheckBox checkBox4;
-        private CheckBox checkBox5;
-        private TextBox textBox18;
+        private CheckBox staff;
+        private CheckBox active;
+        private CheckBox active_hmo;
+        private CheckBox active_sil;
+        private TextBox sil_amt;
         private Label label28;
         private Label label29;
-        private ComboBox comboBox2;
-        private ComboBox comboBox3;
+        private ComboBox ccode;
+        private ComboBox dep_code;
         private Label label30;
-        private ComboBox comboBox4;
+        private ComboBox line_cd;
         private Label label31;
-        private TextBox textBox19;
-        private TextBox textBox20;
-        private TextBox textBox21;
-        private TextBox textBox22;
+        private TextBox client;
+        private TextBox department;
+        private TextBox line;
+        private TextBox position;
         private Label label32;
         private TextBox textBox23;
         private Label label33;
-        private TextBox textBox24;
+        private TextBox rate_month;
         private Label label34;
-        private TextBox textBox25;
+        private TextBox rate_day;
         private Label label35;
-        private TextBox textBox26;
+        private TextBox cont_rate;
         private Label label36;
-        private TextBox textBox27;
+        private TextBox meal_rate;
         private Label label37;
-        private TextBox textBox28;
+        private TextBox allowance;
         private Label label38;
+        private ComboBox bir_cd;
+        private Label label39;
+        private TextBox bir_stat;
     }
 }
