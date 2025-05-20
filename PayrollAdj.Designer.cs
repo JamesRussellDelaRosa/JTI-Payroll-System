@@ -36,6 +36,7 @@
             dgvDTR = new DataGridView();
             post = new Button();
             refresh = new Button();
+            chkReliever = new CheckBox();
             ((System.ComponentModel.ISupportInitialize)dgvDTR).BeginInit();
             SuspendLayout();
             // 
@@ -110,11 +111,22 @@
             refresh.UseVisualStyleBackColor = true;
             refresh.Click += refresh_Click;
             // 
+            // chkReliever
+            // 
+            chkReliever.AutoSize = true;
+            chkReliever.Location = new Point(685, 15);
+            chkReliever.Name = "chkReliever";
+            chkReliever.Size = new Size(91, 24);
+            chkReliever.TabIndex = 12;
+            chkReliever.Text = "Reliever?";
+            chkReliever.UseVisualStyleBackColor = true;
+            // 
             // PayrollAdj
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1517, 605);
+            Controls.Add(chkReliever);
             Controls.Add(refresh);
             Controls.Add(post);
             Controls.Add(dgvDTR);
@@ -140,5 +152,6 @@
         private DataGridView dgvDTR;
         private Button post;
         private Button refresh;
+        private CheckBox chkReliever;
     }
 }

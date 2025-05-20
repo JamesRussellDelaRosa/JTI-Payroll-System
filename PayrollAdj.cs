@@ -48,12 +48,15 @@ namespace JTI_Payroll_System
             using (MySqlConnection conn = DatabaseHelper.GetConnection())
             {
                 conn.Open();
-                string query = @"
+                // Adjust the reliever filter based on the checkbox
+                string relieverCondition = chkReliever.Checked ? "reliever = 1" : "reliever = 0";
+                string query = $@"
             SELECT 
                 employee_id,
                 mname,
                 fname,
                 lname,
+                rate,
                 adj_days,
                 adj_tdut,
                 adj_lh,
@@ -78,7 +81,7 @@ namespace JTI_Payroll_System
             FROM payroll
             WHERE pay_period_start >= @startDate 
               AND pay_period_end <= @endDate
-              AND reliever = 0
+              AND {relieverCondition}
         ";
 
                 using (var cmd = new MySql.Data.MySqlClient.MySqlCommand(query, conn))
