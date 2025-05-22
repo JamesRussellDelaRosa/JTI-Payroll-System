@@ -645,37 +645,6 @@ namespace JTI_Payroll_System
                                                 ndpay + ndotpay + ndrdpay + ndshpay + ndshrdpay + ndlhpay + ndlhrdpay;
 
                                     grossPay = totalBasicPay + totalOTPay;
-
-                                    // Calculate SSS based on the gross pay only if not a reliever
-                                    if (!isReliever)
-                                    {
-                                        sss = CalculateSSS(grossPay);
-                                    }
-
-                                    // Calculate PhilHealth based on the rate and control period only if not a reliever
-                                    if (controlPeriod == 1 && !isReliever)
-                                    {
-                                        philhealth = rate * 313 / 12 * 0.05m / 2;
-                                    }
-                                    else
-                                    {
-                                        philhealth = 0; // Set to zero for relievers or when control period is not 1
-                                    }
-
-                                    // Calculate HDMF (Pag-IBIG)
-                                    if (!isReliever)
-                                    {
-                                        if (controlPeriod == 1)
-                                        {
-                                            // For the first half, use the formula
-                                            hdmf = totalBasicPay >= 10000 ? 200 : (totalBasicPay * 0.02m);
-                                        }
-                                        else if (controlPeriod == 2)
-                                        {
-                                            // For the second half, calculate the difference
-                                            hdmf = CalculateSecondHalfHDMF(employeeID, month, payrollyear, totalBasicPay);
-                                        }
-                                    }
                                 }
                             }
 
@@ -795,91 +764,6 @@ namespace JTI_Payroll_System
             {
                 MessageBox.Show("Error calculating payroll amounts: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-        }
-        private decimal CalculateSecondHalfHDMF(string employeeID, int month, int payrollyear, decimal currentBasicPay)
-        {
-            decimal hdmf = 0;
-            decimal firstHalfHDMF = 0;
-
-            try
-            {
-                using (MySqlConnection conn = DatabaseHelper.GetConnection())
-                {
-                    conn.Open();
-
-                    // First get the first half's HDMF amount
-                    string firstHalfQuery = @"
-                SELECT hdmf
-                FROM payroll
-                WHERE employee_id = @employeeID
-                AND month = @month
-                AND payrollyear = @payrollyear
-                AND control_period = 1
-                AND reliever = 0";
-
-                    using (MySqlCommand cmd = new MySqlCommand(firstHalfQuery, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@employeeID", employeeID);
-                        cmd.Parameters.AddWithValue("@month", month);
-                        cmd.Parameters.AddWithValue("@payrollyear", payrollyear);
-
-                        using (MySqlDataReader reader = cmd.ExecuteReader())
-                        {
-                            if (reader.Read())
-                            {
-                                firstHalfHDMF = reader.GetDecimal("hdmf");
-
-                                // Simple calculation: 2nd half hdmf = 200 - 1st half hdmf
-                                hdmf = 200 - firstHalfHDMF;
-
-                                // Ensure we don't have negative HDMF
-                                if (hdmf < 0) hdmf = 0;
-                            }
-                            else
-                            {
-                                // If no first half record found, calculate based on current basic pay
-                                hdmf = currentBasicPay >= 10000 ? 200 : (currentBasicPay * 0.02m);
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error calculating HDMF for second half: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-
-            return hdmf;
-        }
-        private decimal CalculateSSS(decimal grossPay)
-        {
-            decimal sss = 0;
-
-            using (MySqlConnection conn = DatabaseHelper.GetConnection())
-            {
-                conn.Open();
-                string query = "SELECT salary1, salary2, EETotal FROM sssgovdues";
-                using (MySqlCommand command = new MySqlCommand(query, conn))
-                {
-                    using (MySqlDataReader reader = command.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            decimal salary1 = reader.GetDecimal("salary1");
-                            decimal salary2 = reader.GetDecimal("salary2");
-                            decimal eeTotal = reader.GetDecimal("EETotal");
-
-                            if (grossPay >= salary1 && grossPay <= salary2)
-                            {
-                                sss = eeTotal;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-
-            return sss;
         }
         private void btnSavePayroll_Click_1(object sender, EventArgs e)
         {

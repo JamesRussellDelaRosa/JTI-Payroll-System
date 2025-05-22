@@ -110,6 +110,7 @@
             Panel sssloanPanel = CreateClickablePanel("SSS LOAN", sssloan_Click);
             Panel hdmfloanPanel = CreateClickablePanel("HDMF LOAN", hdmfloan_Click);
             Panel autodeducthdmfsssloanPanel = CreateClickablePanel("Auto Deduct SSS/HDMF Loan", autodeducthdmfsssloan_Click);
+            Panel govduesPanel = CreateClickablePanel("Post Government Dues", govdues_Click);
             Panel payrollAdjPanel = CreateClickablePanel("Payroll Adjustments", payrollAdj_Click);
 
             // Add Panels to FlowLayoutPanel
@@ -120,6 +121,7 @@
             menuFlowLayoutPanel.Controls.Add(sssloanPanel);
             menuFlowLayoutPanel.Controls.Add(hdmfloanPanel);
             menuFlowLayoutPanel.Controls.Add(autodeducthdmfsssloanPanel);
+            menuFlowLayoutPanel.Controls.Add(govduesPanel);
             menuFlowLayoutPanel.Controls.Add(payrollAdjPanel);
         }
 

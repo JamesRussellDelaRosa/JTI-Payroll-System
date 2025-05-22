@@ -239,6 +239,12 @@ namespace JTI_Payroll_System
             autodeductssshdmfloanForm.Show();
         }
 
+        private void govdues_Click(object sender, EventArgs e)
+        {
+            govdues govduesForm = new govdues();
+            govduesForm.Show();
+        }
+
         private void editUsers_Click(object sender, EventArgs e)
         {
             editUsers editUsersForm = new editUsers();

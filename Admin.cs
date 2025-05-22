@@ -258,6 +258,12 @@ namespace JTI_Payroll_System
             payrollAjdForm.Show();
         }
 
+        private void govdues_Click(object sender, EventArgs e)
+        {
+            govdues govduesForm = new govdues();
+            govduesForm.Show();
+        }
+
         private void btnLogout_Click(object sender, EventArgs e)
         {
             UserSession.Clear(); // Clear the session
