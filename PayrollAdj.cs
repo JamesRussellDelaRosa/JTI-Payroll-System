@@ -17,6 +17,10 @@ namespace JTI_Payroll_System
         {
             InitializeComponent();
 
+            dgvDTR.CurrentCellChanged += dgvDTR_CurrentCellChanged;
+            dgvDTR.KeyDown += dgvDTR_KeyDown;
+            dgvDTR.EditingControlShowing += dgvDTR_EditingControlShowing;
+
             // Add event handlers for placeholder text
             textStartDate.Enter += TextBox_Enter;
             textStartDate.Leave += TextBox_Leave;
@@ -94,6 +98,7 @@ namespace JTI_Payroll_System
                     var dt = new DataTable();
                     adapter.Fill(dt);
                     dgvDTR.DataSource = dt;
+                    dgvDTR.AllowUserToAddRows = false;
 
                     // Make grid editable except for id and name columns
                     dgvDTR.ReadOnly = false;
@@ -127,6 +132,10 @@ namespace JTI_Payroll_System
                 AutoComplete = true,
                 DisplayStyle = DataGridViewComboBoxDisplayStyle.ComboBox
             };
+
+            // Set highlight color for selection
+            adjRateColumn.DefaultCellStyle.SelectionBackColor = Color.DodgerBlue;
+            adjRateColumn.DefaultCellStyle.SelectionForeColor = Color.White;
 
             // Insert after the "rate" column
             int rateColIndex = dgvDTR.Columns["rate"].Index;
@@ -175,7 +184,29 @@ namespace JTI_Payroll_System
                 foreach (DataGridViewRow row in dgvDTR.Rows)
                 {
                     if (row.IsNewRow) continue;
-                    if (row.Cells["id"].Value == null) continue;
+
+                    // Check for required fields before processing
+                    string[] requiredFields = new string[]
+                    {
+                "id", "adj_rate", "adj_days", "adj_tdut", "adj_lh", "adj_ot", "adj_rd", "adj_rdot",
+                "adj_lhhrs", "adj_lhot", "adj_lhrd", "adj_lhrdot", "adj_sh", "adj_shot", "adj_shrd",
+                "adj_shrdot", "adj_nd", "adj_ndot", "adj_ndrd", "adj_ndsh", "adj_ndshrd", "adj_ndlh", "adj_ndlhrd"
+                    };
+
+                    foreach (var field in requiredFields)
+                    {
+                        if (!dgvDTR.Columns.Contains(field) || row.Cells[field].Value == null || row.Cells[field].Value == DBNull.Value)
+                        {
+                            MessageBox.Show(
+                                "One or more rows are incomplete. Please fill in all required fields before posting.",
+                                "Incomplete Row",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Warning
+                            );
+                            return;
+                        }
+                    }
+
                     int id = Convert.ToInt32(row.Cells["id"].Value);
 
                     // 1. Update adjustment columns as before, including adj_rate
@@ -443,6 +474,76 @@ namespace JTI_Payroll_System
                 {
                     e.Graphics.DrawString("MM/DD/YYYY", textBox.Font, brush, new PointF(0, 0));
                 }
+            }
+        }
+        private void dgvDTR_CurrentCellChanged(object sender, EventArgs e)
+        {
+            if (dgvDTR.CurrentCell != null && dgvDTR.CurrentCell.OwningColumn != null &&
+                dgvDTR.CurrentCell.OwningColumn.Name == "adj_rate")
+            {
+                dgvDTR.BeginEdit(true);
+            }
+        }
+        private void dgvDTR_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (dgvDTR.CurrentCell != null &&
+                dgvDTR.CurrentCell.OwningColumn != null &&
+                dgvDTR.CurrentCell.OwningColumn.Name == "adj_rate" &&
+                (e.KeyCode == Keys.Up || e.KeyCode == Keys.Down))
+            {
+                if (dgvDTR.IsCurrentCellInEditMode)
+                {
+                    if (dgvDTR.EditingControl is ComboBox comboBox)
+                    {
+                        // Let ComboBox handle the arrow key
+                        comboBox.DroppedDown = true;
+                    }
+                }
+                else
+                {
+                    dgvDTR.BeginEdit(true);
+                    e.Handled = true;
+                }
+            }
+        }
+        private void dgvDTR_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
+        {
+            if (dgvDTR.CurrentCell != null &&
+                dgvDTR.CurrentCell.OwningColumn != null &&
+                dgvDTR.CurrentCell.OwningColumn.Name == "adj_rate" &&
+                e.Control is ComboBox comboBox)
+            {
+                // Set DropDown style so user can type and select
+                comboBox.DropDownStyle = ComboBoxStyle.DropDown;
+
+                // Remove any previous event handlers to avoid duplication
+                comboBox.Enter -= ComboBox_Enter_SelectAll;
+                comboBox.Enter += ComboBox_Enter_SelectAll;
+
+                // Optionally, select all text immediately
+                comboBox.SelectAll();
+
+                // Optionally, highlight the ComboBox background
+                comboBox.BackColor = Color.DodgerBlue;
+                comboBox.ForeColor = Color.White;
+
+                // Ensure arrow keys open the dropdown
+                comboBox.KeyDown -= ComboBox_KeyDown_DropDown;
+                comboBox.KeyDown += ComboBox_KeyDown_DropDown;
+            }
+        }
+        private void ComboBox_Enter_SelectAll(object sender, EventArgs e)
+        {
+            if (sender is ComboBox cb)
+            {
+                cb.SelectAll();
+            }
+        }
+        private void ComboBox_KeyDown_DropDown(object sender, KeyEventArgs e)
+        {
+            if (sender is ComboBox cb && (e.KeyCode == Keys.Up || e.KeyCode == Keys.Down))
+            {
+                cb.DroppedDown = true;
             }
         }
     }

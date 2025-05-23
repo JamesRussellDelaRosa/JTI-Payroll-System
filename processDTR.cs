@@ -339,6 +339,7 @@ namespace JTI_Payroll_System
 
                 dt.DefaultView.Sort = "Date ASC";
                 dgvDTR.DataSource = dt;
+                dgvDTR.AllowUserToAddRows = false;
                 SetupRateDropdown();
                 SetupShiftCodeDropdown();
 
