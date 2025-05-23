@@ -430,7 +430,7 @@ namespace JTI_Payroll_System
                                     special_holiday_overtime_hours, special_holiday_restday_hours, special_holiday_restday_overtime_hours, 
                                     nd_hrs, ndot_hrs, ndrd_hrs, ndrdot_hrs, ndsh_hrs, ndshot_hrs, ndshrd_hrs, ndshrdot_hrs, 
                                     ndlh_hrs, ndlhot_hrs, ndlhrd_hrs, ndlhrdot_hrs, month, payrollyear, control_period, 
-                                    td_ut, working_hours, legal_holiday_count, non_working_day_count, rate, reliever, SSS, philhealth, hdmf
+                                    td_ut, working_hours, legal_holiday_count, non_working_day_count, rate, reliever, SSS, philhealth, hdmf, adj_rate
                                 )
                                 VALUES (
                                     @employeeID, @lname, @fname, @mname, @ccode, @startDate, @endDate, @totalDays, @overtimeHours, 
@@ -443,7 +443,7 @@ namespace JTI_Payroll_System
                                     @nightDifferentialLegalHolidayHours, @nightDifferentialLegalHolidayOtHours, 
                                     @nightDifferentialLegalHolidayRestDayHours, @nightDifferentialLegalHolidayRestDayOtHours, 
                                     @month, @payrollyear, @controlPeriod, @totalTardinessUndertime, @totalWorkingHours,
-                                    @legalHolidayCount, @nonWorkingDayCount, @rate, @reliever, @sss, @philhealth, @hdmf
+                                    @legalHolidayCount, @nonWorkingDayCount, @rate, @reliever, @sss, @philhealth, @hdmf, @adj_rate
                                 )";
 
                                     using (MySqlCommand insertCmd = new MySqlCommand(insertQuery, conn))
@@ -489,9 +489,10 @@ namespace JTI_Payroll_System
                                         insertCmd.Parameters.AddWithValue("@nonWorkingDayCount", nonWorkingDayCount);
                                         insertCmd.Parameters.AddWithValue("@rate", rate);
                                         insertCmd.Parameters.AddWithValue("@reliever", isReliever);
-                                        insertCmd.Parameters.AddWithValue("@sss", 0); // Initial value, will be updated by CalculatePayrollAmounts
-                                        insertCmd.Parameters.AddWithValue("@philhealth", 0); // Initial value, will be updated by CalculatePayrollAmounts
-                                        insertCmd.Parameters.AddWithValue("@hdmf", 0); // Initial value, will be updated by CalculatePayrollAmounts
+                                        insertCmd.Parameters.AddWithValue("@sss", 0); 
+                                        insertCmd.Parameters.AddWithValue("@philhealth", 0); 
+                                        insertCmd.Parameters.AddWithValue("@hdmf", 0);
+                                        insertCmd.Parameters.AddWithValue("@adj_rate", 0);
 
                                         insertCmd.ExecuteNonQuery();
                                     }
