@@ -104,6 +104,23 @@ namespace JTI_Payroll_System
 
                                 deleteCmd.ExecuteNonQuery();
                             }
+                            // Also clear reliever table for repost
+                            string deleteRelieverQuery = @"
+                        DELETE FROM payroll_reliever 
+                        WHERE pay_period_start = @startDate 
+                        AND pay_period_end = @endDate
+                        AND month = @month
+                        AND payrollyear = @payrollyear
+                        AND control_period = @controlPeriod";
+                            using (MySqlCommand deleteRelieverCmd = new MySqlCommand(deleteRelieverQuery, conn))
+                            {
+                                deleteRelieverCmd.Parameters.AddWithValue("@startDate", startDate);
+                                deleteRelieverCmd.Parameters.AddWithValue("@endDate", endDate);
+                                deleteRelieverCmd.Parameters.AddWithValue("@month", month);
+                                deleteRelieverCmd.Parameters.AddWithValue("@payrollyear", payrollyear);
+                                deleteRelieverCmd.Parameters.AddWithValue("@controlPeriod", controlPeriod);
+                                deleteRelieverCmd.ExecuteNonQuery();
+                            }
                         }
                     }
 
@@ -309,8 +326,119 @@ namespace JTI_Payroll_System
                                 }
                             }
 
-                            // Check if payroll data already exists for this employee, rate, and reliever status
-                            string checkQuery = @"
+                            if (isReliever)
+                            {
+                                // Only insert/update to payroll_reliever
+                                string relieverInsertQuery = @"
+                                INSERT INTO payroll_reliever (
+                                    employee_id, lname, fname, mname, ccode, pay_period_start, pay_period_end, total_days, overtime_hours, 
+                                    total_earnings, restday_hours, restday_overtime_hours, legal_holiday_hours, 
+                                    legal_holiday_overtime_hours, lhrd_hours, lhrd_overtime_hours, special_holiday_hours, 
+                                    special_holiday_overtime_hours, special_holiday_restday_hours, special_holiday_restday_overtime_hours, 
+                                    nd_hrs, ndot_hrs, ndrd_hrs, ndrdot_hrs, ndsh_hrs, ndshot_hrs, ndshrd_hrs, ndshrdot_hrs, 
+                                    ndlh_hrs, ndlhot_hrs, ndlhrd_hrs, ndlhrdot_hrs, month, payrollyear, control_period, 
+                                    td_ut, working_hours, legal_holiday_count, non_working_day_count, rate, reliever
+                                )
+                                VALUES (
+                                    @employeeID, @lname, @fname, @mname, @ccode, @startDate, @endDate, @totalDays, @overtimeHours, 
+                                    @totalEarnings, @restdayHours, @restdayOvertimeHours, @legalHolidayHours, 
+                                    @legalHolidayOvertimeHours, @lhrdHours, @lhrdOvertimeHours, @specialHolidayHours, 
+                                    @specialHolidayOvertimeHours, @specialHolidayRestDayHours, @specialHolidayRestDayOvertimeHours, 
+                                    @nightDifferentialHours, @nightDifferentialOtHours, @nightDifferentialRestDayHours, @nightDifferentialRestDayOtHours, 
+                                    @nightDifferentialSpecialHolidayHours, @nightDifferentialSpecialHolidayOtHours, 
+                                    @nightDifferentialSpecialHolidayRestDayHours, @nightDifferentialSpecialHolidayRestDayOtHours, 
+                                    @nightDifferentialLegalHolidayHours, @nightDifferentialLegalHolidayOtHours, 
+                                    @nightDifferentialLegalHolidayRestDayHours, @nightDifferentialLegalHolidayRestDayOtHours, 
+                                    @month, @payrollyear, @controlPeriod, @totalTardinessUndertime, @totalWorkingHours,
+                                    @legalHolidayCount, @nonWorkingDayCount, @rate, @reliever
+                                )
+                                ON DUPLICATE KEY UPDATE
+                                    lname = @lname, fname = @fname, mname = @mname, ccode = @ccode,
+                                    total_days = @totalDays, 
+                                    overtime_hours = @overtimeHours, 
+                                    total_earnings = @totalEarnings, 
+                                    restday_hours = @restdayHours, 
+                                    restday_overtime_hours = @restdayOvertimeHours, 
+                                    legal_holiday_hours = @legalHolidayHours, 
+                                    legal_holiday_overtime_hours = @legalHolidayOvertimeHours, 
+                                    lhrd_hours = @lhrdHours, 
+                                    lhrd_overtime_hours = @lhrdOvertimeHours, 
+                                    special_holiday_hours = @specialHolidayHours, 
+                                    special_holiday_overtime_hours = @specialHolidayOvertimeHours, 
+                                    special_holiday_restday_hours = @specialHolidayRestDayHours, 
+                                    special_holiday_restday_overtime_hours = @specialHolidayRestDayOvertimeHours, 
+                                    nd_hrs = @nightDifferentialHours, 
+                                    ndot_hrs = @nightDifferentialOtHours, 
+                                    ndrd_hrs = @nightDifferentialRestDayHours, 
+                                    ndrdot_hrs = @nightDifferentialRestDayOtHours, 
+                                    ndsh_hrs = @nightDifferentialSpecialHolidayHours, 
+                                    ndshot_hrs = @nightDifferentialSpecialHolidayOtHours, 
+                                    ndshrd_hrs = @nightDifferentialSpecialHolidayRestDayHours, 
+                                    ndshrdot_hrs = @nightDifferentialSpecialHolidayRestDayOtHours, 
+                                    ndlh_hrs = @nightDifferentialLegalHolidayHours, 
+                                    ndlhot_hrs = @nightDifferentialLegalHolidayOtHours, 
+                                    ndlhrd_hrs = @nightDifferentialLegalHolidayRestDayHours, 
+                                    ndlhrdot_hrs = @nightDifferentialLegalHolidayRestDayOtHours, 
+                                    month = @month, 
+                                    payrollyear = @payrollyear, 
+                                    control_period = @controlPeriod, 
+                                    td_ut = @totalTardinessUndertime, 
+                                    working_hours = @totalWorkingHours,
+                                    legal_holiday_count = @legalHolidayCount,
+                                    non_working_day_count = @nonWorkingDayCount,
+                                    rate = @rate,
+                                    reliever = @reliever
+                                ;";
+                                using (MySqlCommand relieverCmd = new MySqlCommand(relieverInsertQuery, conn))
+                                {
+                                    relieverCmd.Parameters.AddWithValue("@employeeID", employeeID);
+                                    relieverCmd.Parameters.AddWithValue("@lname", lname);
+                                    relieverCmd.Parameters.AddWithValue("@fname", fname);
+                                    relieverCmd.Parameters.AddWithValue("@mname", mname);
+                                    relieverCmd.Parameters.AddWithValue("@ccode", ccode);
+                                    relieverCmd.Parameters.AddWithValue("@startDate", startDate);
+                                    relieverCmd.Parameters.AddWithValue("@endDate", endDate);
+                                    relieverCmd.Parameters.AddWithValue("@totalDays", totalDays);
+                                    relieverCmd.Parameters.AddWithValue("@overtimeHours", overtimeHours);
+                                    relieverCmd.Parameters.AddWithValue("@totalEarnings", totalEarnings);
+                                    relieverCmd.Parameters.AddWithValue("@restdayHours", restdayHours);
+                                    relieverCmd.Parameters.AddWithValue("@restdayOvertimeHours", restdayOvertimeHours);
+                                    relieverCmd.Parameters.AddWithValue("@legalHolidayHours", legalHolidayHours);
+                                    relieverCmd.Parameters.AddWithValue("@legalHolidayOvertimeHours", legalHolidayOvertimeHours);
+                                    relieverCmd.Parameters.AddWithValue("@lhrdHours", lhrdHours);
+                                    relieverCmd.Parameters.AddWithValue("@lhrdOvertimeHours", lhrdOvertimeHours);
+                                    relieverCmd.Parameters.AddWithValue("@specialHolidayHours", specialHolidayHours);
+                                    relieverCmd.Parameters.AddWithValue("@specialHolidayOvertimeHours", specialHolidayOvertimeHours);
+                                    relieverCmd.Parameters.AddWithValue("@specialHolidayRestDayHours", specialHolidayRestDayHours);
+                                    relieverCmd.Parameters.AddWithValue("@specialHolidayRestDayOvertimeHours", specialHolidayRestDayOvertimeHours);
+                                    relieverCmd.Parameters.AddWithValue("@nightDifferentialHours", nightDifferentialHours);
+                                    relieverCmd.Parameters.AddWithValue("@nightDifferentialOtHours", nightDifferentialOtHours);
+                                    relieverCmd.Parameters.AddWithValue("@nightDifferentialRestDayHours", nightDifferentialRestDayHours);
+                                    relieverCmd.Parameters.AddWithValue("@nightDifferentialRestDayOtHours", nightDifferentialRestDayOtHours);
+                                    relieverCmd.Parameters.AddWithValue("@nightDifferentialSpecialHolidayHours", nightDifferentialSpecialHolidayHours);
+                                    relieverCmd.Parameters.AddWithValue("@nightDifferentialSpecialHolidayOtHours", nightDifferentialSpecialHolidayOtHours);
+                                    relieverCmd.Parameters.AddWithValue("@nightDifferentialSpecialHolidayRestDayHours", nightDifferentialSpecialHolidayRestDayHours);
+                                    relieverCmd.Parameters.AddWithValue("@nightDifferentialSpecialHolidayRestDayOtHours", nightDifferentialSpecialHolidayRestDayOtHours);
+                                    relieverCmd.Parameters.AddWithValue("@nightDifferentialLegalHolidayHours", nightDifferentialLegalHolidayHours);
+                                    relieverCmd.Parameters.AddWithValue("@nightDifferentialLegalHolidayOtHours", nightDifferentialLegalHolidayOtHours);
+                                    relieverCmd.Parameters.AddWithValue("@nightDifferentialLegalHolidayRestDayHours", nightDifferentialLegalHolidayRestDayHours);
+                                    relieverCmd.Parameters.AddWithValue("@nightDifferentialLegalHolidayRestDayOtHours", nightDifferentialLegalHolidayRestDayOtHours);
+                                    relieverCmd.Parameters.AddWithValue("@month", month);
+                                    relieverCmd.Parameters.AddWithValue("@payrollyear", payrollyear);
+                                    relieverCmd.Parameters.AddWithValue("@controlPeriod", controlPeriod);
+                                    relieverCmd.Parameters.AddWithValue("@totalTardinessUndertime", totalTardinessUndertime);
+                                    relieverCmd.Parameters.AddWithValue("@totalWorkingHours", totalWorkingHours);
+                                    relieverCmd.Parameters.AddWithValue("@legalHolidayCount", legalHolidayCount);
+                                    relieverCmd.Parameters.AddWithValue("@nonWorkingDayCount", nonWorkingDayCount);
+                                    relieverCmd.Parameters.AddWithValue("@rate", rate);
+                                    relieverCmd.Parameters.AddWithValue("@reliever", isReliever);
+                                    relieverCmd.ExecuteNonQuery();
+                                }
+                            }
+                            else
+                            {
+                                // Only insert/update to payroll (non-reliever)
+                                string checkQuery = @"
                         SELECT COUNT(*) 
                         FROM payroll 
                         WHERE employee_id = @employeeID 
@@ -319,19 +447,19 @@ namespace JTI_Payroll_System
                           AND rate = @rate 
                           AND reliever = @reliever";
 
-                            using (MySqlCommand checkCmd = new MySqlCommand(checkQuery, conn))
-                            {
-                                checkCmd.Parameters.AddWithValue("@employeeID", employeeID);
-                                checkCmd.Parameters.AddWithValue("@startDate", startDate);
-                                checkCmd.Parameters.AddWithValue("@endDate", endDate);
-                                checkCmd.Parameters.AddWithValue("@rate", rate);
-                                checkCmd.Parameters.AddWithValue("@reliever", isReliever);
-
-                                int count = Convert.ToInt32(checkCmd.ExecuteScalar());
-                                if (count > 0)
+                                using (MySqlCommand checkCmd = new MySqlCommand(checkQuery, conn))
                                 {
-                                    // Record already exists, perform update
-                                    string updateQuery = @"
+                                    checkCmd.Parameters.AddWithValue("@employeeID", employeeID);
+                                    checkCmd.Parameters.AddWithValue("@startDate", startDate);
+                                    checkCmd.Parameters.AddWithValue("@endDate", endDate);
+                                    checkCmd.Parameters.AddWithValue("@rate", rate);
+                                    checkCmd.Parameters.AddWithValue("@reliever", isReliever);
+
+                                    int count = Convert.ToInt32(checkCmd.ExecuteScalar());
+                                    if (count > 0)
+                                    {
+                                        // Record already exists, perform update
+                                        string updateQuery = @"
                                 UPDATE payroll 
                                 SET lname = @lname, fname = @fname, mname = @mname, ccode = @ccode,
                                     total_days = @totalDays, 
@@ -372,57 +500,57 @@ namespace JTI_Payroll_System
                                   AND rate = @rate
                                   AND reliever = @reliever";
 
-                                    using (MySqlCommand updateCmd = new MySqlCommand(updateQuery, conn))
-                                    {
-                                        updateCmd.Parameters.AddWithValue("@lname", lname);
-                                        updateCmd.Parameters.AddWithValue("@fname", fname);
-                                        updateCmd.Parameters.AddWithValue("@mname", mname);
-                                        updateCmd.Parameters.AddWithValue("@ccode", ccode);
-                                        updateCmd.Parameters.AddWithValue("@totalDays", totalDays);
-                                        updateCmd.Parameters.AddWithValue("@overtimeHours", overtimeHours);
-                                        updateCmd.Parameters.AddWithValue("@totalEarnings", totalEarnings);
-                                        updateCmd.Parameters.AddWithValue("@restdayHours", restdayHours);
-                                        updateCmd.Parameters.AddWithValue("@restdayOvertimeHours", restdayOvertimeHours);
-                                        updateCmd.Parameters.AddWithValue("@legalHolidayHours", legalHolidayHours);
-                                        updateCmd.Parameters.AddWithValue("@legalHolidayOvertimeHours", legalHolidayOvertimeHours);
-                                        updateCmd.Parameters.AddWithValue("@lhrdHours", lhrdHours);
-                                        updateCmd.Parameters.AddWithValue("@lhrdOvertimeHours", lhrdOvertimeHours);
-                                        updateCmd.Parameters.AddWithValue("@specialHolidayHours", specialHolidayHours);
-                                        updateCmd.Parameters.AddWithValue("@specialHolidayOvertimeHours", specialHolidayOvertimeHours);
-                                        updateCmd.Parameters.AddWithValue("@specialHolidayRestDayHours", specialHolidayRestDayHours);
-                                        updateCmd.Parameters.AddWithValue("@specialHolidayRestDayOvertimeHours", specialHolidayRestDayOvertimeHours);
-                                        updateCmd.Parameters.AddWithValue("@nightDifferentialHours", nightDifferentialHours);
-                                        updateCmd.Parameters.AddWithValue("@nightDifferentialOtHours", nightDifferentialOtHours);
-                                        updateCmd.Parameters.AddWithValue("@nightDifferentialRestDayHours", nightDifferentialRestDayHours);
-                                        updateCmd.Parameters.AddWithValue("@nightDifferentialRestDayOtHours", nightDifferentialRestDayOtHours);
-                                        updateCmd.Parameters.AddWithValue("@nightDifferentialSpecialHolidayHours", nightDifferentialSpecialHolidayHours);
-                                        updateCmd.Parameters.AddWithValue("@nightDifferentialSpecialHolidayOtHours", nightDifferentialSpecialHolidayOtHours);
-                                        updateCmd.Parameters.AddWithValue("@nightDifferentialSpecialHolidayRestDayHours", nightDifferentialSpecialHolidayRestDayHours);
-                                        updateCmd.Parameters.AddWithValue("@nightDifferentialSpecialHolidayRestDayOtHours", nightDifferentialSpecialHolidayRestDayOtHours);
-                                        updateCmd.Parameters.AddWithValue("@nightDifferentialLegalHolidayHours", nightDifferentialLegalHolidayHours);
-                                        updateCmd.Parameters.AddWithValue("@nightDifferentialLegalHolidayOtHours", nightDifferentialLegalHolidayOtHours);
-                                        updateCmd.Parameters.AddWithValue("@nightDifferentialLegalHolidayRestDayHours", nightDifferentialLegalHolidayRestDayHours);
-                                        updateCmd.Parameters.AddWithValue("@nightDifferentialLegalHolidayRestDayOtHours", nightDifferentialLegalHolidayRestDayOtHours);
-                                        updateCmd.Parameters.AddWithValue("@month", month);
-                                        updateCmd.Parameters.AddWithValue("@payrollyear", payrollyear);
-                                        updateCmd.Parameters.AddWithValue("@controlPeriod", controlPeriod);
-                                        updateCmd.Parameters.AddWithValue("@totalTardinessUndertime", totalTardinessUndertime);
-                                        updateCmd.Parameters.AddWithValue("@totalWorkingHours", totalWorkingHours);
-                                        updateCmd.Parameters.AddWithValue("@legalHolidayCount", legalHolidayCount);
-                                        updateCmd.Parameters.AddWithValue("@nonWorkingDayCount", nonWorkingDayCount);
-                                        updateCmd.Parameters.AddWithValue("@employeeID", employeeID);
-                                        updateCmd.Parameters.AddWithValue("@startDate", startDate);
-                                        updateCmd.Parameters.AddWithValue("@endDate", endDate);
-                                        updateCmd.Parameters.AddWithValue("@rate", rate);
-                                        updateCmd.Parameters.AddWithValue("@reliever", isReliever);
+                                        using (MySqlCommand updateCmd = new MySqlCommand(updateQuery, conn))
+                                        {
+                                            updateCmd.Parameters.AddWithValue("@lname", lname);
+                                            updateCmd.Parameters.AddWithValue("@fname", fname);
+                                            updateCmd.Parameters.AddWithValue("@mname", mname);
+                                            updateCmd.Parameters.AddWithValue("@ccode", ccode);
+                                            updateCmd.Parameters.AddWithValue("@totalDays", totalDays);
+                                            updateCmd.Parameters.AddWithValue("@overtimeHours", overtimeHours);
+                                            updateCmd.Parameters.AddWithValue("@totalEarnings", totalEarnings);
+                                            updateCmd.Parameters.AddWithValue("@restdayHours", restdayHours);
+                                            updateCmd.Parameters.AddWithValue("@restdayOvertimeHours", restdayOvertimeHours);
+                                            updateCmd.Parameters.AddWithValue("@legalHolidayHours", legalHolidayHours);
+                                            updateCmd.Parameters.AddWithValue("@legalHolidayOvertimeHours", legalHolidayOvertimeHours);
+                                            updateCmd.Parameters.AddWithValue("@lhrdHours", lhrdHours);
+                                            updateCmd.Parameters.AddWithValue("@lhrdOvertimeHours", lhrdOvertimeHours);
+                                            updateCmd.Parameters.AddWithValue("@specialHolidayHours", specialHolidayHours);
+                                            updateCmd.Parameters.AddWithValue("@specialHolidayOvertimeHours", specialHolidayOvertimeHours);
+                                            updateCmd.Parameters.AddWithValue("@specialHolidayRestDayHours", specialHolidayRestDayHours);
+                                            updateCmd.Parameters.AddWithValue("@specialHolidayRestDayOvertimeHours", specialHolidayRestDayOvertimeHours);
+                                            updateCmd.Parameters.AddWithValue("@nightDifferentialHours", nightDifferentialHours);
+                                            updateCmd.Parameters.AddWithValue("@nightDifferentialOtHours", nightDifferentialOtHours);
+                                            updateCmd.Parameters.AddWithValue("@nightDifferentialRestDayHours", nightDifferentialRestDayHours);
+                                            updateCmd.Parameters.AddWithValue("@nightDifferentialRestDayOtHours", nightDifferentialRestDayOtHours);
+                                            updateCmd.Parameters.AddWithValue("@nightDifferentialSpecialHolidayHours", nightDifferentialSpecialHolidayHours);
+                                            updateCmd.Parameters.AddWithValue("@nightDifferentialSpecialHolidayOtHours", nightDifferentialSpecialHolidayOtHours);
+                                            updateCmd.Parameters.AddWithValue("@nightDifferentialSpecialHolidayRestDayHours", nightDifferentialSpecialHolidayRestDayHours);
+                                            updateCmd.Parameters.AddWithValue("@nightDifferentialSpecialHolidayRestDayOtHours", nightDifferentialSpecialHolidayRestDayOtHours);
+                                            updateCmd.Parameters.AddWithValue("@nightDifferentialLegalHolidayHours", nightDifferentialLegalHolidayHours);
+                                            updateCmd.Parameters.AddWithValue("@nightDifferentialLegalHolidayOtHours", nightDifferentialLegalHolidayOtHours);
+                                            updateCmd.Parameters.AddWithValue("@nightDifferentialLegalHolidayRestDayHours", nightDifferentialLegalHolidayRestDayHours);
+                                            updateCmd.Parameters.AddWithValue("@nightDifferentialLegalHolidayRestDayOtHours", nightDifferentialLegalHolidayRestDayOtHours);
+                                            updateCmd.Parameters.AddWithValue("@month", month);
+                                            updateCmd.Parameters.AddWithValue("@payrollyear", payrollyear);
+                                            updateCmd.Parameters.AddWithValue("@controlPeriod", controlPeriod);
+                                            updateCmd.Parameters.AddWithValue("@totalTardinessUndertime", totalTardinessUndertime);
+                                            updateCmd.Parameters.AddWithValue("@totalWorkingHours", totalWorkingHours);
+                                            updateCmd.Parameters.AddWithValue("@legalHolidayCount", legalHolidayCount);
+                                            updateCmd.Parameters.AddWithValue("@nonWorkingDayCount", nonWorkingDayCount);
+                                            updateCmd.Parameters.AddWithValue("@employeeID", employeeID);
+                                            updateCmd.Parameters.AddWithValue("@startDate", startDate);
+                                            updateCmd.Parameters.AddWithValue("@endDate", endDate);
+                                            updateCmd.Parameters.AddWithValue("@rate", rate);
+                                            updateCmd.Parameters.AddWithValue("@reliever", isReliever);
 
-                                        updateCmd.ExecuteNonQuery();
+                                            updateCmd.ExecuteNonQuery();
+                                        }
                                     }
-                                }
-                                else
-                                {
-                                    // Record does not exist, perform insert
-                                    string insertQuery = @"
+                                    else
+                                    {
+                                        // Record does not exist, perform insert
+                                        string insertQuery = @"
                                 INSERT INTO payroll (
                                     employee_id, lname, fname, mname, ccode, pay_period_start, pay_period_end, total_days, overtime_hours, 
                                     total_earnings, restday_hours, restday_overtime_hours, legal_holiday_hours, 
@@ -446,61 +574,62 @@ namespace JTI_Payroll_System
                                     @legalHolidayCount, @nonWorkingDayCount, @rate, @reliever, @sss, @philhealth, @hdmf, @adj_rate
                                 )";
 
-                                    using (MySqlCommand insertCmd = new MySqlCommand(insertQuery, conn))
-                                    {
-                                        insertCmd.Parameters.AddWithValue("@employeeID", employeeID);
-                                        insertCmd.Parameters.AddWithValue("@lname", lname);
-                                        insertCmd.Parameters.AddWithValue("@fname", fname);
-                                        insertCmd.Parameters.AddWithValue("@mname", mname);
-                                        insertCmd.Parameters.AddWithValue("@ccode", ccode);
-                                        insertCmd.Parameters.AddWithValue("@startDate", startDate);
-                                        insertCmd.Parameters.AddWithValue("@endDate", endDate);
-                                        insertCmd.Parameters.AddWithValue("@totalDays", totalDays);
-                                        insertCmd.Parameters.AddWithValue("@overtimeHours", overtimeHours);
-                                        insertCmd.Parameters.AddWithValue("@totalEarnings", totalEarnings);
-                                        insertCmd.Parameters.AddWithValue("@restdayHours", restdayHours);
-                                        insertCmd.Parameters.AddWithValue("@restdayOvertimeHours", restdayOvertimeHours);
-                                        insertCmd.Parameters.AddWithValue("@legalHolidayHours", legalHolidayHours);
-                                        insertCmd.Parameters.AddWithValue("@legalHolidayOvertimeHours", legalHolidayOvertimeHours);
-                                        insertCmd.Parameters.AddWithValue("@lhrdHours", lhrdHours);
-                                        insertCmd.Parameters.AddWithValue("@lhrdOvertimeHours", lhrdOvertimeHours);
-                                        insertCmd.Parameters.AddWithValue("@specialHolidayHours", specialHolidayHours);
-                                        insertCmd.Parameters.AddWithValue("@specialHolidayOvertimeHours", specialHolidayOvertimeHours);
-                                        insertCmd.Parameters.AddWithValue("@specialHolidayRestDayHours", specialHolidayRestDayHours);
-                                        insertCmd.Parameters.AddWithValue("@specialHolidayRestDayOvertimeHours", specialHolidayRestDayOvertimeHours);
-                                        insertCmd.Parameters.AddWithValue("@nightDifferentialHours", nightDifferentialHours);
-                                        insertCmd.Parameters.AddWithValue("@nightDifferentialOtHours", nightDifferentialOtHours);
-                                        insertCmd.Parameters.AddWithValue("@nightDifferentialRestDayHours", nightDifferentialRestDayHours);
-                                        insertCmd.Parameters.AddWithValue("@nightDifferentialRestDayOtHours", nightDifferentialRestDayOtHours);
-                                        insertCmd.Parameters.AddWithValue("@nightDifferentialSpecialHolidayHours", nightDifferentialSpecialHolidayHours);
-                                        insertCmd.Parameters.AddWithValue("@nightDifferentialSpecialHolidayOtHours", nightDifferentialSpecialHolidayOtHours);
-                                        insertCmd.Parameters.AddWithValue("@nightDifferentialSpecialHolidayRestDayHours", nightDifferentialSpecialHolidayRestDayHours);
-                                        insertCmd.Parameters.AddWithValue("@nightDifferentialSpecialHolidayRestDayOtHours", nightDifferentialSpecialHolidayRestDayOtHours);
-                                        insertCmd.Parameters.AddWithValue("@nightDifferentialLegalHolidayHours", nightDifferentialLegalHolidayHours);
-                                        insertCmd.Parameters.AddWithValue("@nightDifferentialLegalHolidayOtHours", nightDifferentialLegalHolidayOtHours);
-                                        insertCmd.Parameters.AddWithValue("@nightDifferentialLegalHolidayRestDayHours", nightDifferentialLegalHolidayRestDayHours);
-                                        insertCmd.Parameters.AddWithValue("@nightDifferentialLegalHolidayRestDayOtHours", nightDifferentialLegalHolidayRestDayOtHours);
-                                        insertCmd.Parameters.AddWithValue("@month", month);
-                                        insertCmd.Parameters.AddWithValue("@payrollyear", payrollyear);
-                                        insertCmd.Parameters.AddWithValue("@controlPeriod", controlPeriod);
-                                        insertCmd.Parameters.AddWithValue("@totalTardinessUndertime", totalTardinessUndertime);
-                                        insertCmd.Parameters.AddWithValue("@totalWorkingHours", totalWorkingHours);
-                                        insertCmd.Parameters.AddWithValue("@legalHolidayCount", legalHolidayCount);
-                                        insertCmd.Parameters.AddWithValue("@nonWorkingDayCount", nonWorkingDayCount);
-                                        insertCmd.Parameters.AddWithValue("@rate", rate);
-                                        insertCmd.Parameters.AddWithValue("@reliever", isReliever);
-                                        insertCmd.Parameters.AddWithValue("@sss", 0); 
-                                        insertCmd.Parameters.AddWithValue("@philhealth", 0); 
-                                        insertCmd.Parameters.AddWithValue("@hdmf", 0);
-                                        insertCmd.Parameters.AddWithValue("@adj_rate", 0);
+                                        using (MySqlCommand insertCmd = new MySqlCommand(insertQuery, conn))
+                                        {
+                                            insertCmd.Parameters.AddWithValue("@employeeID", employeeID);
+                                            insertCmd.Parameters.AddWithValue("@lname", lname);
+                                            insertCmd.Parameters.AddWithValue("@fname", fname);
+                                            insertCmd.Parameters.AddWithValue("@mname", mname);
+                                            insertCmd.Parameters.AddWithValue("@ccode", ccode);
+                                            insertCmd.Parameters.AddWithValue("@startDate", startDate);
+                                            insertCmd.Parameters.AddWithValue("@endDate", endDate);
+                                            insertCmd.Parameters.AddWithValue("@totalDays", totalDays);
+                                            insertCmd.Parameters.AddWithValue("@overtimeHours", overtimeHours);
+                                            insertCmd.Parameters.AddWithValue("@totalEarnings", totalEarnings);
+                                            insertCmd.Parameters.AddWithValue("@restdayHours", restdayHours);
+                                            insertCmd.Parameters.AddWithValue("@restdayOvertimeHours", restdayOvertimeHours);
+                                            insertCmd.Parameters.AddWithValue("@legalHolidayHours", legalHolidayHours);
+                                            insertCmd.Parameters.AddWithValue("@legalHolidayOvertimeHours", legalHolidayOvertimeHours);
+                                            insertCmd.Parameters.AddWithValue("@lhrdHours", lhrdHours);
+                                            insertCmd.Parameters.AddWithValue("@lhrdOvertimeHours", lhrdOvertimeHours);
+                                            insertCmd.Parameters.AddWithValue("@specialHolidayHours", specialHolidayHours);
+                                            insertCmd.Parameters.AddWithValue("@specialHolidayOvertimeHours", specialHolidayOvertimeHours);
+                                            insertCmd.Parameters.AddWithValue("@specialHolidayRestDayHours", specialHolidayRestDayHours);
+                                            insertCmd.Parameters.AddWithValue("@specialHolidayRestDayOvertimeHours", specialHolidayRestDayOvertimeHours);
+                                            insertCmd.Parameters.AddWithValue("@nightDifferentialHours", nightDifferentialHours);
+                                            insertCmd.Parameters.AddWithValue("@nightDifferentialOtHours", nightDifferentialOtHours);
+                                            insertCmd.Parameters.AddWithValue("@nightDifferentialRestDayHours", nightDifferentialRestDayHours);
+                                            insertCmd.Parameters.AddWithValue("@nightDifferentialRestDayOtHours", nightDifferentialRestDayOtHours);
+                                            insertCmd.Parameters.AddWithValue("@nightDifferentialSpecialHolidayHours", nightDifferentialSpecialHolidayHours);
+                                            insertCmd.Parameters.AddWithValue("@nightDifferentialSpecialHolidayOtHours", nightDifferentialSpecialHolidayOtHours);
+                                            insertCmd.Parameters.AddWithValue("@nightDifferentialSpecialHolidayRestDayHours", nightDifferentialSpecialHolidayRestDayHours);
+                                            insertCmd.Parameters.AddWithValue("@nightDifferentialSpecialHolidayRestDayOtHours", nightDifferentialSpecialHolidayRestDayOtHours);
+                                            insertCmd.Parameters.AddWithValue("@nightDifferentialLegalHolidayHours", nightDifferentialLegalHolidayHours);
+                                            insertCmd.Parameters.AddWithValue("@nightDifferentialLegalHolidayOtHours", nightDifferentialLegalHolidayOtHours);
+                                            insertCmd.Parameters.AddWithValue("@nightDifferentialLegalHolidayRestDayHours", nightDifferentialLegalHolidayRestDayHours);
+                                            insertCmd.Parameters.AddWithValue("@nightDifferentialLegalHolidayRestDayOtHours", nightDifferentialLegalHolidayRestDayOtHours);
+                                            insertCmd.Parameters.AddWithValue("@month", month);
+                                            insertCmd.Parameters.AddWithValue("@payrollyear", payrollyear);
+                                            insertCmd.Parameters.AddWithValue("@controlPeriod", controlPeriod);
+                                            insertCmd.Parameters.AddWithValue("@totalTardinessUndertime", totalTardinessUndertime);
+                                            insertCmd.Parameters.AddWithValue("@totalWorkingHours", totalWorkingHours);
+                                            insertCmd.Parameters.AddWithValue("@legalHolidayCount", legalHolidayCount);
+                                            insertCmd.Parameters.AddWithValue("@nonWorkingDayCount", nonWorkingDayCount);
+                                            insertCmd.Parameters.AddWithValue("@rate", rate);
+                                            insertCmd.Parameters.AddWithValue("@reliever", isReliever);
+                                            insertCmd.Parameters.AddWithValue("@sss", 0);
+                                            insertCmd.Parameters.AddWithValue("@philhealth", 0);
+                                            insertCmd.Parameters.AddWithValue("@hdmf", 0);
+                                            insertCmd.Parameters.AddWithValue("@adj_rate", 0);
 
-                                        insertCmd.ExecuteNonQuery();
+                                            insertCmd.ExecuteNonQuery();
+                                        }
                                     }
                                 }
-
-                                // Now calculate and update the pay amounts based on the rate configuration
-                                CalculatePayrollAmounts(employeeID, startDate, endDate, rate, isReliever);
                             }
+
+                            // Now calculate and update the pay amounts based on the rate configuration
+                            CalculatePayrollAmounts(employeeID, startDate, endDate, rate, isReliever);
                         }
                     }
 
@@ -520,9 +649,12 @@ namespace JTI_Payroll_System
                 {
                     conn.Open();
 
-                    // First, get the payroll record
-                    string payrollQuery = @"
-                SELECT * FROM payroll 
+                    // Select the correct table based on isReliever
+                    string payrollTable = isReliever ? "payroll_reliever" : "payroll";
+
+                    // Get the payroll record from the correct table
+                    string payrollQuery = $@"
+                SELECT * FROM {payrollTable}
                 WHERE employee_id = @employeeID 
                 AND pay_period_start = @startDate 
                 AND pay_period_end = @endDate
@@ -638,20 +770,18 @@ namespace JTI_Payroll_System
                                     ndlhpay = ndlh * ndlh_hrs;
                                     ndlhrdpay = ndlhrd * ndlhrd_hrs;
 
-                                    // Calculate total pay components as specified
+                                    // You can customize the calculation for relievers here if needed
                                     totalBasicPay = basicpay + trdypay + lhpay;
-
                                     totalOTPay = rdpay + rdotpay + regotpay + lhhrspay + lhothrspay +
-                                                lhrdpay + lhrdotpay + shpay + shotpay + shrdpay + shrdotpay +
-                                                ndpay + ndotpay + ndrdpay + ndshpay + ndshrdpay + ndlhpay + ndlhrdpay;
-
+                                                 lhrdpay + lhrdotpay + shpay + shotpay + shrdpay + shrdotpay +
+                                                 ndpay + ndotpay + ndrdpay + ndshpay + ndshrdpay + ndlhpay + ndlhrdpay;
                                     grossPay = totalBasicPay + totalOTPay;
                                 }
                             }
 
-                            // Update the payroll record with the calculated amounts
-                            string updateQuery = @"
-                        UPDATE payroll SET
+                            // Update the correct table with the calculated amounts
+                            string updateQuery = $@"
+                        UPDATE {payrollTable} SET
                             basicpay = @basicpay,
                             rdpay = @rdpay,
                             rdotpay = @rdotpay, 
@@ -675,83 +805,88 @@ namespace JTI_Payroll_System
                             ndlhrdpay = @ndlhrdpay,
                             total_basic_pay = @totalBasicPay,
                             total_ot_pay = @totalOTPay,
-                            gross_pay = @grossPay,
-                            SSS = @sss,
-                            philhealth = @philhealth,
-                            hdmf = @hdmf
+                            gross_pay = @grossPay
+                            {(!isReliever ? ", SSS = @sss, philhealth = @philhealth, hdmf = @hdmf" : "")}
                         WHERE employee_id = @employeeID 
                         AND pay_period_start = @startDate 
                         AND pay_period_end = @endDate
                         AND rate = @rate
                         AND reliever = @reliever";
 
-                            MySqlCommand updateCmd = new MySqlCommand(updateQuery, conn);
-                            updateCmd.Parameters.AddWithValue("@basicpay", basicpay);
-                            updateCmd.Parameters.AddWithValue("@rdpay", rdpay);
-                            updateCmd.Parameters.AddWithValue("@rdotpay", rdotpay);
-                            updateCmd.Parameters.AddWithValue("@lhpay", lhpay);
-                            updateCmd.Parameters.AddWithValue("@regotpay", regotpay);
-                            updateCmd.Parameters.AddWithValue("@trdypay", trdypay);
-                            updateCmd.Parameters.AddWithValue("@lhhrspay", lhhrspay);
-                            updateCmd.Parameters.AddWithValue("@lhothrspay", lhothrspay);
-                            updateCmd.Parameters.AddWithValue("@lhrdpay", lhrdpay);
-                            updateCmd.Parameters.AddWithValue("@lhrdotpay", lhrdotpay);
-                            updateCmd.Parameters.AddWithValue("@shpay", shpay);
-                            updateCmd.Parameters.AddWithValue("@shotpay", shotpay);
-                            updateCmd.Parameters.AddWithValue("@shrdpay", shrdpay);
-                            updateCmd.Parameters.AddWithValue("@shrdotpay", shrdotpay);
-                            updateCmd.Parameters.AddWithValue("@ndpay", ndpay);
-                            updateCmd.Parameters.AddWithValue("@ndotpay", ndotpay);
-                            updateCmd.Parameters.AddWithValue("@ndrdpay", ndrdpay);
-                            updateCmd.Parameters.AddWithValue("@ndshpay", ndshpay);
-                            updateCmd.Parameters.AddWithValue("@ndshrdpay", ndshrdpay);
-                            updateCmd.Parameters.AddWithValue("@ndlhpay", ndlhpay);
-                            updateCmd.Parameters.AddWithValue("@ndlhrdpay", ndlhrdpay);
-                            updateCmd.Parameters.AddWithValue("@totalBasicPay", totalBasicPay);
-                            updateCmd.Parameters.AddWithValue("@totalOTPay", totalOTPay);
-                            updateCmd.Parameters.AddWithValue("@grossPay", grossPay);
-                            updateCmd.Parameters.AddWithValue("@sss", sss);
-                            updateCmd.Parameters.AddWithValue("@philhealth", philhealth);
-                            updateCmd.Parameters.AddWithValue("@hdmf", hdmf);
-                            updateCmd.Parameters.AddWithValue("@employeeID", employeeID);
-                            updateCmd.Parameters.AddWithValue("@startDate", startDate);
-                            updateCmd.Parameters.AddWithValue("@endDate", endDate);
-                            updateCmd.Parameters.AddWithValue("@rate", rate);
-                            updateCmd.Parameters.AddWithValue("@reliever", isReliever);
+                            using (MySqlCommand updateCmd = new MySqlCommand(updateQuery, conn))
+                            {
+                                updateCmd.Parameters.AddWithValue("@basicpay", basicpay);
+                                updateCmd.Parameters.AddWithValue("@rdpay", rdpay);
+                                updateCmd.Parameters.AddWithValue("@rdotpay", rdotpay);
+                                updateCmd.Parameters.AddWithValue("@lhpay", lhpay);
+                                updateCmd.Parameters.AddWithValue("@regotpay", regotpay);
+                                updateCmd.Parameters.AddWithValue("@trdypay", trdypay);
+                                updateCmd.Parameters.AddWithValue("@lhhrspay", lhhrspay);
+                                updateCmd.Parameters.AddWithValue("@lhothrspay", lhothrspay);
+                                updateCmd.Parameters.AddWithValue("@lhrdpay", lhrdpay);
+                                updateCmd.Parameters.AddWithValue("@lhrdotpay", lhrdotpay);
+                                updateCmd.Parameters.AddWithValue("@shpay", shpay);
+                                updateCmd.Parameters.AddWithValue("@shotpay", shotpay);
+                                updateCmd.Parameters.AddWithValue("@shrdpay", shrdpay);
+                                updateCmd.Parameters.AddWithValue("@shrdotpay", shrdotpay);
+                                updateCmd.Parameters.AddWithValue("@ndpay", ndpay);
+                                updateCmd.Parameters.AddWithValue("@ndotpay", ndotpay);
+                                updateCmd.Parameters.AddWithValue("@ndrdpay", ndrdpay);
+                                updateCmd.Parameters.AddWithValue("@ndshpay", ndshpay);
+                                updateCmd.Parameters.AddWithValue("@ndshrdpay", ndshrdpay);
+                                updateCmd.Parameters.AddWithValue("@ndlhpay", ndlhpay);
+                                updateCmd.Parameters.AddWithValue("@ndlhrdpay", ndlhrdpay);
+                                updateCmd.Parameters.AddWithValue("@totalBasicPay", totalBasicPay);
+                                updateCmd.Parameters.AddWithValue("@totalOTPay", totalOTPay);
+                                updateCmd.Parameters.AddWithValue("@grossPay", grossPay);
+                                updateCmd.Parameters.AddWithValue("@employeeID", employeeID);
+                                updateCmd.Parameters.AddWithValue("@startDate", startDate);
+                                updateCmd.Parameters.AddWithValue("@endDate", endDate);
+                                updateCmd.Parameters.AddWithValue("@rate", rate);
+                                updateCmd.Parameters.AddWithValue("@reliever", isReliever);
+                                if (!isReliever)
+                                {
+                                    updateCmd.Parameters.AddWithValue("@sss", sss);
+                                    updateCmd.Parameters.AddWithValue("@philhealth", philhealth);
+                                    updateCmd.Parameters.AddWithValue("@hdmf", hdmf);
+                                }
+                                updateCmd.ExecuteNonQuery();
+                            }
 
-                            updateCmd.ExecuteNonQuery();
+                            // If not reliever, update netpay as before
+                            if (!isReliever)
+                            {
+                                string sumGrossPayQuery = @"
+                            SELECT SUM(gross_pay) AS total_gross_pay
+                            FROM payroll
+                            WHERE employee_id = @employeeID
+                            AND pay_period_start = @startDate
+                            AND pay_period_end = @endDate";
 
-                            // Sum gross pay for reliever and non-reliever days
-                            string sumGrossPayQuery = @"
-                        SELECT SUM(gross_pay) AS total_gross_pay
-                        FROM payroll
-                        WHERE employee_id = @employeeID
-                        AND pay_period_start = @startDate
-                        AND pay_period_end = @endDate";
+                                MySqlCommand sumGrossPayCmd = new MySqlCommand(sumGrossPayQuery, conn);
+                                sumGrossPayCmd.Parameters.AddWithValue("@employeeID", employeeID);
+                                sumGrossPayCmd.Parameters.AddWithValue("@startDate", startDate);
+                                sumGrossPayCmd.Parameters.AddWithValue("@endDate", endDate);
 
-                            MySqlCommand sumGrossPayCmd = new MySqlCommand(sumGrossPayQuery, conn);
-                            sumGrossPayCmd.Parameters.AddWithValue("@employeeID", employeeID);
-                            sumGrossPayCmd.Parameters.AddWithValue("@startDate", startDate);
-                            sumGrossPayCmd.Parameters.AddWithValue("@endDate", endDate);
+                                decimal totalGrossPay = Convert.ToDecimal(sumGrossPayCmd.ExecuteScalar());
 
-                            decimal totalGrossPay = Convert.ToDecimal(sumGrossPayCmd.ExecuteScalar());
+                                // Update netpay for non-reliever day
+                                string updateNetPayQuery = @"
+                            UPDATE payroll
+                            SET netpay = @totalGrossPay
+                            WHERE employee_id = @employeeID
+                            AND pay_period_start = @startDate
+                            AND pay_period_end = @endDate
+                            AND reliever = 0";
 
-                            // Update netpay for non-reliever day
-                            string updateNetPayQuery = @"
-                        UPDATE payroll
-                        SET netpay = @totalGrossPay
-                        WHERE employee_id = @employeeID
-                        AND pay_period_start = @startDate
-                        AND pay_period_end = @endDate
-                        AND reliever = 0";
+                                MySqlCommand updateNetPayCmd = new MySqlCommand(updateNetPayQuery, conn);
+                                updateNetPayCmd.Parameters.AddWithValue("@totalGrossPay", totalGrossPay);
+                                updateNetPayCmd.Parameters.AddWithValue("@employeeID", employeeID);
+                                updateNetPayCmd.Parameters.AddWithValue("@startDate", startDate);
+                                updateNetPayCmd.Parameters.AddWithValue("@endDate", endDate);
 
-                            MySqlCommand updateNetPayCmd = new MySqlCommand(updateNetPayQuery, conn);
-                            updateNetPayCmd.Parameters.AddWithValue("@totalGrossPay", totalGrossPay);
-                            updateNetPayCmd.Parameters.AddWithValue("@employeeID", employeeID);
-                            updateNetPayCmd.Parameters.AddWithValue("@startDate", startDate);
-                            updateNetPayCmd.Parameters.AddWithValue("@endDate", endDate);
-
-                            updateNetPayCmd.ExecuteNonQuery();
+                                updateNetPayCmd.ExecuteNonQuery();
+                            }
                         }
                         else
                         {
