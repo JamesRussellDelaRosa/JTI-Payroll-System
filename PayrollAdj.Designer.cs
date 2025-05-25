@@ -33,11 +33,7 @@
             textEndDate = new TextBox();
             textStartDate = new TextBox();
             filter = new Button();
-            dgvDTR = new DataGridView();
-            post = new Button();
-            refresh = new Button();
-            chkReliever = new CheckBox();
-            ((System.ComponentModel.ISupportInitialize)dgvDTR).BeginInit();
+            employees = new FlowLayoutPanel();
             SuspendLayout();
             // 
             // label2
@@ -74,7 +70,7 @@
             // 
             // filter
             // 
-            filter.Location = new Point(385, 11);
+            filter.Location = new Point(383, 10);
             filter.Name = "filter";
             filter.Size = new Size(94, 29);
             filter.TabIndex = 8;
@@ -82,54 +78,19 @@
             filter.UseVisualStyleBackColor = true;
             filter.Click += filter_Click;
             // 
-            // dgvDTR
+            // employees
             // 
-            dgvDTR.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dgvDTR.Location = new Point(12, 47);
-            dgvDTR.Name = "dgvDTR";
-            dgvDTR.RowHeadersWidth = 51;
-            dgvDTR.Size = new Size(1493, 546);
-            dgvDTR.TabIndex = 9;
-            // 
-            // post
-            // 
-            post.Location = new Point(485, 12);
-            post.Name = "post";
-            post.Size = new Size(94, 29);
-            post.TabIndex = 10;
-            post.Text = "POST";
-            post.UseVisualStyleBackColor = true;
-            post.Click += post_Click;
-            // 
-            // refresh
-            // 
-            refresh.Location = new Point(585, 12);
-            refresh.Name = "refresh";
-            refresh.Size = new Size(94, 29);
-            refresh.TabIndex = 11;
-            refresh.Text = "REFRESH";
-            refresh.UseVisualStyleBackColor = true;
-            refresh.Click += refresh_Click;
-            // 
-            // chkReliever
-            // 
-            chkReliever.AutoSize = true;
-            chkReliever.Location = new Point(685, 15);
-            chkReliever.Name = "chkReliever";
-            chkReliever.Size = new Size(91, 24);
-            chkReliever.TabIndex = 12;
-            chkReliever.Text = "Reliever?";
-            chkReliever.UseVisualStyleBackColor = true;
+            employees.Location = new Point(12, 66);
+            employees.Name = "employees";
+            employees.Size = new Size(667, 527);
+            employees.TabIndex = 9;
             // 
             // PayrollAdj
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1517, 605);
-            Controls.Add(chkReliever);
-            Controls.Add(refresh);
-            Controls.Add(post);
-            Controls.Add(dgvDTR);
+            ClientSize = new Size(691, 605);
+            Controls.Add(employees);
             Controls.Add(filter);
             Controls.Add(label2);
             Controls.Add(label1);
@@ -137,7 +98,6 @@
             Controls.Add(textStartDate);
             Name = "PayrollAdj";
             Text = "PayrollAdj";
-            ((System.ComponentModel.ISupportInitialize)dgvDTR).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -149,9 +109,6 @@
         private TextBox textEndDate;
         private TextBox textStartDate;
         private Button filter;
-        private DataGridView dgvDTR;
-        private Button post;
-        private Button refresh;
-        private CheckBox chkReliever;
+        private FlowLayoutPanel employees;
     }
 }

@@ -13,13 +13,11 @@ namespace JTI_Payroll_System
 {
     public partial class PayrollAdj : Form
     {
+        private Panel selectedPanel = null;
+
         public PayrollAdj()
         {
             InitializeComponent();
-
-            dgvDTR.CurrentCellChanged += dgvDTR_CurrentCellChanged;
-            dgvDTR.KeyDown += dgvDTR_KeyDown;
-            dgvDTR.EditingControlShowing += dgvDTR_EditingControlShowing;
 
             // Add event handlers for placeholder text
             textStartDate.Enter += TextBox_Enter;
@@ -38,382 +36,6 @@ namespace JTI_Payroll_System
             // Set initial placeholder text
             SetPlaceholderText(textStartDate, "MM/DD/YYYY");
             SetPlaceholderText(textEndDate, "MM/DD/YYYY");
-        }
-
-        private void LoadPayrollAdjustments()
-        {
-            if (!DateTime.TryParse(textStartDate.Text, out DateTime startDate) ||
-                !DateTime.TryParse(textEndDate.Text, out DateTime endDate))
-            {
-                MessageBox.Show("Please enter valid start and end dates (YYYY-MM-DD).");
-                return;
-            }
-
-            using (MySqlConnection conn = DatabaseHelper.GetConnection())
-            {
-                conn.Open();
-                string relieverCondition = chkReliever.Checked ? "reliever = 1" : "reliever = 0";
-                string query = $@"
-            SELECT 
-                id,
-                employee_id,
-                mname,
-                fname,
-                lname,
-                rate,
-                adj_rate,
-                adj_days,
-                adj_tdut,
-                adj_lh,
-                adj_ot,
-                adj_rd,
-                adj_rdot,
-                adj_lhhrs,
-                adj_lhot,
-                adj_lhrd,
-                adj_lhrdot,
-                adj_sh,
-                adj_shot,
-                adj_shrd,
-                adj_shrdot,
-                adj_nd,
-                adj_ndot,
-                adj_ndrd,
-                adj_ndsh,
-                adj_ndshrd,
-                adj_ndlh,
-                adj_ndlhrd
-            FROM payroll
-            WHERE pay_period_start >= @startDate 
-              AND pay_period_end <= @endDate
-              AND {relieverCondition}
-        ";
-
-                using (var cmd = new MySqlCommand(query, conn))
-                {
-                    cmd.Parameters.AddWithValue("@startDate", startDate);
-                    cmd.Parameters.AddWithValue("@endDate", endDate);
-
-                    var adapter = new MySqlDataAdapter(cmd);
-                    var dt = new DataTable();
-                    adapter.Fill(dt);
-                    dgvDTR.DataSource = dt;
-                    dgvDTR.AllowUserToAddRows = false;
-
-                    // Make grid editable except for id and name columns
-                    dgvDTR.ReadOnly = false;
-                    if (dgvDTR.Columns["id"] != null) dgvDTR.Columns["id"].ReadOnly = true;
-                    if (dgvDTR.Columns["mname"] != null) dgvDTR.Columns["mname"].ReadOnly = true;
-                    if (dgvDTR.Columns["fname"] != null) dgvDTR.Columns["fname"].ReadOnly = true;
-                    if (dgvDTR.Columns["lname"] != null) dgvDTR.Columns["lname"].ReadOnly = true;
-
-                    // Setup adj_rate ComboBox column
-                    SetupAdjRateDropdown();
-                }
-            }
-        }
-        private void SetupAdjRateDropdown()
-        {
-            // Remove existing adj_rate column if present
-            if (dgvDTR.Columns.Contains("adj_rate"))
-                dgvDTR.Columns.Remove("adj_rate");
-
-            // Fetch rate values from the database
-            List<decimal> rateValues = GetRateValuesFromDatabase();
-            rateValues.Insert(0, 0.00m);
-
-            // Create ComboBox Column for adj_rate
-            DataGridViewComboBoxColumn adjRateColumn = new DataGridViewComboBoxColumn
-            {
-                Name = "adj_rate",
-                HeaderText = "Adj. Rate",
-                DataPropertyName = "adj_rate",
-                DataSource = rateValues,
-                AutoComplete = true,
-                DisplayStyle = DataGridViewComboBoxDisplayStyle.ComboBox
-            };
-
-            // Set highlight color for selection
-            adjRateColumn.DefaultCellStyle.SelectionBackColor = Color.DodgerBlue;
-            adjRateColumn.DefaultCellStyle.SelectionForeColor = Color.White;
-
-            // Insert after the "rate" column
-            int rateColIndex = dgvDTR.Columns["rate"].Index;
-            dgvDTR.Columns.Insert(rateColIndex + 1, adjRateColumn);
-        }
-        private List<decimal> GetRateValuesFromDatabase()
-        {
-            List<decimal> rates = new List<decimal>();
-            using (MySqlConnection conn = DatabaseHelper.GetConnection())
-            {
-                string query = "SELECT defaultrate FROM Rate ORDER BY defaultrate ASC";
-                using (MySqlCommand cmd = new MySqlCommand(query, conn))
-                {
-                    conn.Open();
-                    using (MySqlDataReader reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            rates.Add(reader.GetDecimal(0));
-                        }
-                    }
-                }
-            }
-            return rates;
-        }
-        private void filter_Click(object sender, EventArgs e)
-        {
-            LoadPayrollAdjustments();
-        }
-        private void refresh_Click(object sender, EventArgs e)
-        {
-            LoadPayrollAdjustments();
-        }
-        private void post_Click(object sender, EventArgs e)
-        {
-            if (dgvDTR.DataSource == null)
-            {
-                MessageBox.Show("No data to post.");
-                return;
-            }
-
-            using (MySqlConnection conn = DatabaseHelper.GetConnection())
-            {
-                conn.Open();
-
-                foreach (DataGridViewRow row in dgvDTR.Rows)
-                {
-                    if (row.IsNewRow) continue;
-
-                    // Check for required fields before processing
-                    string[] requiredFields = new string[]
-                    {
-                "id", "adj_rate", "adj_days", "adj_tdut", "adj_lh", "adj_ot", "adj_rd", "adj_rdot",
-                "adj_lhhrs", "adj_lhot", "adj_lhrd", "adj_lhrdot", "adj_sh", "adj_shot", "adj_shrd",
-                "adj_shrdot", "adj_nd", "adj_ndot", "adj_ndrd", "adj_ndsh", "adj_ndshrd", "adj_ndlh", "adj_ndlhrd"
-                    };
-
-                    foreach (var field in requiredFields)
-                    {
-                        if (!dgvDTR.Columns.Contains(field) || row.Cells[field].Value == null || row.Cells[field].Value == DBNull.Value)
-                        {
-                            MessageBox.Show(
-                                "One or more rows are incomplete. Please fill in all required fields before posting.",
-                                "Incomplete Row",
-                                MessageBoxButtons.OK,
-                                MessageBoxIcon.Warning
-                            );
-                            return;
-                        }
-                    }
-
-                    int id = Convert.ToInt32(row.Cells["id"].Value);
-
-                    // 1. Update adjustment columns as before, including adj_rate
-                    string updateAdjQuery = @"
-                UPDATE payroll SET
-                    adj_days = @adj_days,
-                    adj_tdut = @adj_tdut,
-                    adj_lh = @adj_lh,
-                    adj_ot = @adj_ot,
-                    adj_rd = @adj_rd,
-                    adj_rdot = @adj_rdot,
-                    adj_lhhrs = @adj_lhhrs,
-                    adj_lhot = @adj_lhot,
-                    adj_lhrd = @adj_lhrd,
-                    adj_lhrdot = @adj_lhrdot,
-                    adj_sh = @adj_sh,
-                    adj_shot = @adj_shot,
-                    adj_shrd = @adj_shrd,
-                    adj_shrdot = @adj_shrdot,
-                    adj_nd = @adj_nd,
-                    adj_ndot = @adj_ndot,
-                    adj_ndrd = @adj_ndrd,
-                    adj_ndsh = @adj_ndsh,
-                    adj_ndshrd = @adj_ndshrd,
-                    adj_ndlh = @adj_ndlh,
-                    adj_ndlhrd = @adj_ndlhrd,
-                    adj_rate = @adj_rate
-                WHERE id = @id
-            ";
-                    using (var cmd = new MySqlCommand(updateAdjQuery, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@adj_days", row.Cells["adj_days"].Value ?? 0);
-                        cmd.Parameters.AddWithValue("@adj_tdut", row.Cells["adj_tdut"].Value ?? 0);
-                        cmd.Parameters.AddWithValue("@adj_lh", row.Cells["adj_lh"].Value ?? 0);
-                        cmd.Parameters.AddWithValue("@adj_ot", row.Cells["adj_ot"].Value ?? 0);
-                        cmd.Parameters.AddWithValue("@adj_rd", row.Cells["adj_rd"].Value ?? 0);
-                        cmd.Parameters.AddWithValue("@adj_rdot", row.Cells["adj_rdot"].Value ?? 0);
-                        cmd.Parameters.AddWithValue("@adj_lhhrs", row.Cells["adj_lhhrs"].Value ?? 0);
-                        cmd.Parameters.AddWithValue("@adj_lhot", row.Cells["adj_lhot"].Value ?? 0);
-                        cmd.Parameters.AddWithValue("@adj_lhrd", row.Cells["adj_lhrd"].Value ?? 0);
-                        cmd.Parameters.AddWithValue("@adj_lhrdot", row.Cells["adj_lhrdot"].Value ?? 0);
-                        cmd.Parameters.AddWithValue("@adj_sh", row.Cells["adj_sh"].Value ?? 0);
-                        cmd.Parameters.AddWithValue("@adj_shot", row.Cells["adj_shot"].Value ?? 0);
-                        cmd.Parameters.AddWithValue("@adj_shrd", row.Cells["adj_shrd"].Value ?? 0);
-                        cmd.Parameters.AddWithValue("@adj_shrdot", row.Cells["adj_shrdot"].Value ?? 0);
-                        cmd.Parameters.AddWithValue("@adj_nd", row.Cells["adj_nd"].Value ?? 0);
-                        cmd.Parameters.AddWithValue("@adj_ndot", row.Cells["adj_ndot"].Value ?? 0);
-                        cmd.Parameters.AddWithValue("@adj_ndrd", row.Cells["adj_ndrd"].Value ?? 0);
-                        cmd.Parameters.AddWithValue("@adj_ndsh", row.Cells["adj_ndsh"].Value ?? 0);
-                        cmd.Parameters.AddWithValue("@adj_ndshrd", row.Cells["adj_ndshrd"].Value ?? 0);
-                        cmd.Parameters.AddWithValue("@adj_ndlh", row.Cells["adj_ndlh"].Value ?? 0);
-                        cmd.Parameters.AddWithValue("@adj_ndlhrd", row.Cells["adj_ndlhrd"].Value ?? 0);
-                        cmd.Parameters.AddWithValue("@adj_rate", row.Cells["adj_rate"].Value ?? 0);
-                        cmd.Parameters.AddWithValue("@id", id);
-                        cmd.ExecuteNonQuery();
-                    }
-
-                    // 2. Fetch the adj_rate for this row
-                    decimal rate = Convert.ToDecimal(row.Cells["adj_rate"].Value ?? 0);
-                    string rateQuery = "SELECT * FROM rate WHERE defaultrate = @rate ORDER BY id DESC LIMIT 1";
-                    decimal basic = 0, rd = 0, rdot = 0, lh = 0, regot = 0, trdy = 0, lhhrs = 0, lhothrs = 0, lhrd = 0, lhrdot = 0;
-                    decimal sh = 0, shot = 0, shrd = 0, shrdot = 0, nd = 0, ndot = 0, ndrd = 0, ndsh = 0, ndshrd = 0, ndlh = 0, ndlhrd = 0;
-                    using (var rateCmd = new MySqlCommand(rateQuery, conn))
-                    {
-                        rateCmd.Parameters.AddWithValue("@rate", rate);
-                        using (var reader = rateCmd.ExecuteReader())
-                        {
-                            if (reader.Read())
-                            {
-                                basic = reader.GetDecimal("basic");
-                                rd = reader.GetDecimal("rd");
-                                rdot = reader.GetDecimal("rdot");
-                                lh = reader.GetDecimal("lh");
-                                regot = reader.GetDecimal("regot");
-                                trdy = reader.GetDecimal("trdy");
-                                lhhrs = reader.GetDecimal("lhhrs");
-                                lhothrs = reader.GetDecimal("lhothrs");
-                                lhrd = reader.GetDecimal("lhrd");
-                                lhrdot = reader.GetDecimal("lhrdot");
-                                sh = reader.GetDecimal("sh");
-                                shot = reader.GetDecimal("shot");
-                                shrd = reader.GetDecimal("shrd");
-                                shrdot = reader.GetDecimal("shrdot");
-                                nd = reader.GetDecimal("nd");
-                                ndot = reader.GetDecimal("ndot");
-                                ndrd = reader.GetDecimal("ndrd");
-                                ndsh = reader.GetDecimal("ndsh");
-                                ndshrd = reader.GetDecimal("ndshrd");
-                                ndlh = reader.GetDecimal("ndlh");
-                                ndlhrd = reader.GetDecimal("ndlhrd");
-                            }
-                        }
-                    }
-
-                    // 3. Compute adjustment pay amounts using adj_rate
-                    decimal adj_days = Convert.ToDecimal(row.Cells["adj_days"].Value ?? 0);
-                    decimal adj_tdut = Convert.ToDecimal(row.Cells["adj_tdut"].Value ?? 0);
-                    decimal adj_lh = Convert.ToDecimal(row.Cells["adj_lh"].Value ?? 0);
-                    decimal adj_ot = Convert.ToDecimal(row.Cells["adj_ot"].Value ?? 0);
-                    decimal adj_rd = Convert.ToDecimal(row.Cells["adj_rd"].Value ?? 0);
-                    decimal adj_rdot = Convert.ToDecimal(row.Cells["adj_rdot"].Value ?? 0);
-                    decimal adj_lhhrs = Convert.ToDecimal(row.Cells["adj_lhhrs"].Value ?? 0);
-                    decimal adj_lhot = Convert.ToDecimal(row.Cells["adj_lhot"].Value ?? 0);
-                    decimal adj_lhrd = Convert.ToDecimal(row.Cells["adj_lhrd"].Value ?? 0);
-                    decimal adj_lhrdot = Convert.ToDecimal(row.Cells["adj_lhrdot"].Value ?? 0);
-                    decimal adj_sh = Convert.ToDecimal(row.Cells["adj_sh"].Value ?? 0);
-                    decimal adj_shot = Convert.ToDecimal(row.Cells["adj_shot"].Value ?? 0);
-                    decimal adj_shrd = Convert.ToDecimal(row.Cells["adj_shrd"].Value ?? 0);
-                    decimal adj_shrdot = Convert.ToDecimal(row.Cells["adj_shrdot"].Value ?? 0);
-                    decimal adj_nd = Convert.ToDecimal(row.Cells["adj_nd"].Value ?? 0);
-                    decimal adj_ndot = Convert.ToDecimal(row.Cells["adj_ndot"].Value ?? 0);
-                    decimal adj_ndrd = Convert.ToDecimal(row.Cells["adj_ndrd"].Value ?? 0);
-                    decimal adj_ndsh = Convert.ToDecimal(row.Cells["adj_ndsh"].Value ?? 0);
-                    decimal adj_ndshrd = Convert.ToDecimal(row.Cells["adj_ndshrd"].Value ?? 0);
-                    decimal adj_ndlh = Convert.ToDecimal(row.Cells["adj_ndlh"].Value ?? 0);
-                    decimal adj_ndlhrd = Convert.ToDecimal(row.Cells["adj_ndlhrd"].Value ?? 0);
-
-                    decimal adj_basicpay = adj_days * basic;
-                    decimal adj_rdpay = adj_rd * rd;
-                    decimal adj_rdotpay = adj_rdot * rdot;
-                    decimal adj_lhpay = adj_lh * lh;
-                    decimal adj_regotpay = adj_ot * regot;
-                    decimal adj_trdypay = adj_tdut * trdy;
-                    decimal adj_lhhrspay = adj_lhhrs * lhhrs;
-                    decimal adj_lhothrspay = adj_lhot * lhothrs;
-                    decimal adj_lhrdpay = adj_lhrd * lhrd;
-                    decimal adj_lhrdotpay = adj_lhrdot * lhrdot;
-                    decimal adj_shpay = adj_sh * sh;
-                    decimal adj_shotpay = adj_shot * shot;
-                    decimal adj_shrdpay = adj_shrd * shrd;
-                    decimal adj_shrdotpay = adj_shrdot * shrdot;
-                    decimal adj_ndpay = adj_nd * nd;
-                    decimal adj_ndotpay = adj_ndot * ndot;
-                    decimal adj_ndrdpay = adj_ndrd * ndrd;
-                    decimal adj_ndshpay = adj_ndsh * ndsh;
-                    decimal adj_ndshrdpay = adj_ndshrd * ndshrd;
-                    decimal adj_ndlhpay = adj_ndlh * ndlh;
-                    decimal adj_ndlhrdpay = adj_ndlhrd * ndlhrd;
-
-                    decimal adj_totalBasicPay = adj_basicpay + adj_trdypay + adj_lhpay;
-                    decimal adj_totalOTPay = adj_rdpay + adj_rdotpay + adj_regotpay + adj_lhhrspay + adj_lhothrspay +
-                                             adj_lhrdpay + adj_lhrdotpay + adj_shpay + adj_shotpay + adj_shrdpay + adj_shrdotpay +
-                                             adj_ndpay + adj_ndotpay + adj_ndrdpay + adj_ndshpay + adj_ndshrdpay + adj_ndlhpay + adj_ndlhrdpay;
-                    decimal adj_grossPay = adj_totalBasicPay + adj_totalOTPay;
-
-                    // 4. Update payroll with adjustment pay fields
-                    string updatePayQuery = @"
-                UPDATE payroll SET
-                    adj_basicpay = @adj_basicpay,
-                    adj_rdpay = @adj_rdpay,
-                    adj_rdotpay = @adj_rdotpay,
-                    adj_lhpay = @adj_lhpay,
-                    adj_regotpay = @adj_regotpay,
-                    adj_trdypay = @adj_trdypay,
-                    adj_lhhrspay = @adj_lhhrspay,
-                    adj_lhothrspay = @adj_lhothrspay,
-                    adj_lhrdpay = @adj_lhrdpay,
-                    adj_lhrdotpay = @adj_lhrdotpay,
-                    adj_shpay = @adj_shpay,
-                    adj_shotpay = @adj_shotpay,
-                    adj_shrdpay = @adj_shrdpay,
-                    adj_shrdotpay = @adj_shrdotpay,
-                    adj_ndpay = @adj_ndpay,
-                    adj_ndotpay = @adj_ndotpay,
-                    adj_ndrdpay = @adj_ndrdpay,
-                    adj_ndshpay = @adj_ndshpay,
-                    adj_ndshrdpay = @adj_ndshrdpay,
-                    adj_ndlhpay = @adj_ndlhpay,
-                    adj_ndlhrdpay = @adj_ndlhrdpay,
-                    adj_total_basic_pay = @adj_totalBasicPay,
-                    adj_total_ot_pay = @adj_totalOTPay,
-                    adj_gross_pay = @adj_grossPay
-                WHERE id = @id
-            ";
-                    using (var payCmd = new MySqlCommand(updatePayQuery, conn))
-                    {
-                        payCmd.Parameters.AddWithValue("@adj_basicpay", adj_basicpay);
-                        payCmd.Parameters.AddWithValue("@adj_rdpay", adj_rdpay);
-                        payCmd.Parameters.AddWithValue("@adj_rdotpay", adj_rdotpay);
-                        payCmd.Parameters.AddWithValue("@adj_lhpay", adj_lhpay);
-                        payCmd.Parameters.AddWithValue("@adj_regotpay", adj_regotpay);
-                        payCmd.Parameters.AddWithValue("@adj_trdypay", adj_trdypay);
-                        payCmd.Parameters.AddWithValue("@adj_lhhrspay", adj_lhhrspay);
-                        payCmd.Parameters.AddWithValue("@adj_lhothrspay", adj_lhothrspay);
-                        payCmd.Parameters.AddWithValue("@adj_lhrdpay", adj_lhrdpay);
-                        payCmd.Parameters.AddWithValue("@adj_lhrdotpay", adj_lhrdotpay);
-                        payCmd.Parameters.AddWithValue("@adj_shpay", adj_shpay);
-                        payCmd.Parameters.AddWithValue("@adj_shotpay", adj_shotpay);
-                        payCmd.Parameters.AddWithValue("@adj_shrdpay", adj_shrdpay);
-                        payCmd.Parameters.AddWithValue("@adj_shrdotpay", adj_shrdotpay);
-                        payCmd.Parameters.AddWithValue("@adj_ndpay", adj_ndpay);
-                        payCmd.Parameters.AddWithValue("@adj_ndotpay", adj_ndotpay);
-                        payCmd.Parameters.AddWithValue("@adj_ndrdpay", adj_ndrdpay);
-                        payCmd.Parameters.AddWithValue("@adj_ndshpay", adj_ndshpay);
-                        payCmd.Parameters.AddWithValue("@adj_ndshrdpay", adj_ndshrdpay);
-                        payCmd.Parameters.AddWithValue("@adj_ndlhpay", adj_ndlhpay);
-                        payCmd.Parameters.AddWithValue("@adj_ndlhrdpay", adj_ndlhrdpay);
-                        payCmd.Parameters.AddWithValue("@adj_totalBasicPay", adj_totalBasicPay);
-                        payCmd.Parameters.AddWithValue("@adj_totalOTPay", adj_totalOTPay);
-                        payCmd.Parameters.AddWithValue("@adj_grossPay", adj_grossPay);
-                        payCmd.Parameters.AddWithValue("@id", id);
-                        payCmd.ExecuteNonQuery();
-                    }
-                }
-            }
-
-            MessageBox.Show("Adjustments have been posted and calculated successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
         private void TextBox_Enter(object sender, EventArgs e)
         {
@@ -476,75 +98,111 @@ namespace JTI_Payroll_System
                 }
             }
         }
-        private void dgvDTR_CurrentCellChanged(object sender, EventArgs e)
+        private void filter_Click(object sender, EventArgs e)
         {
-            if (dgvDTR.CurrentCell != null && dgvDTR.CurrentCell.OwningColumn != null &&
-                dgvDTR.CurrentCell.OwningColumn.Name == "adj_rate")
+            employees.Controls.Clear();
+            if (!DateTime.TryParse(textStartDate.Text, out DateTime startDate) ||
+                !DateTime.TryParse(textEndDate.Text, out DateTime endDate))
             {
-                dgvDTR.BeginEdit(true);
+                MessageBox.Show("Please enter valid start and end dates.", "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
             }
+            LoadEmployeesByDateRange(startDate, endDate);
         }
-        private void dgvDTR_KeyDown(object sender, KeyEventArgs e)
+        private void LoadEmployeesByDateRange(DateTime startDate, DateTime endDate)
         {
-            if (dgvDTR.CurrentCell != null &&
-                dgvDTR.CurrentCell.OwningColumn != null &&
-                dgvDTR.CurrentCell.OwningColumn.Name == "adj_rate" &&
-                (e.KeyCode == Keys.Up || e.KeyCode == Keys.Down))
+            try
             {
-                if (dgvDTR.IsCurrentCellInEditMode)
+                using (var conn = DatabaseHelper.GetConnection())
                 {
-                    if (dgvDTR.EditingControl is ComboBox comboBox)
+                    conn.Open();
+                    string query = @"SELECT employee_id, lname, fname, mname, ccode, pay_period_start, pay_period_end FROM payroll WHERE pay_period_start = @start AND pay_period_end = @end GROUP BY employee_id, lname, fname, mname, ccode, pay_period_start, pay_period_end ORDER BY lname, fname, mname";
+                    using (var cmd = new MySqlCommand(query, conn))
                     {
-                        // Let ComboBox handle the arrow key
-                        comboBox.DroppedDown = true;
+                        cmd.Parameters.AddWithValue("@start", startDate);
+                        cmd.Parameters.AddWithValue("@end", endDate);
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                Panel panel = new Panel
+                                {
+                                    Height = 32,
+                                    Width = employees.Width - 25,
+                                    BorderStyle = BorderStyle.FixedSingle,
+                                    Margin = new Padding(2),
+                                    BackColor = Color.White
+                                };
+                                int x = 5;
+                                int[] widths = { 80, 100, 100, 80, 60, 110, 110 };
+                                string[] values = {
+                                    reader["employee_id"].ToString(),
+                                    reader["lname"].ToString(),
+                                    reader["fname"].ToString(),
+                                    reader["mname"].ToString(),
+                                    reader["ccode"].ToString(),
+                                    Convert.ToDateTime(reader["pay_period_start"]).ToString("MM/dd/yyyy"),
+                                    Convert.ToDateTime(reader["pay_period_end"]).ToString("MM/dd/yyyy")
+                                };
+                                for (int i = 0; i < values.Length; i++)
+                                {
+                                    Label lbl = new Label
+                                    {
+                                        Text = values[i],
+                                        Location = new Point(x, 7),
+                                        Width = widths[i],
+                                        AutoSize = false,
+                                        BackColor = Color.Transparent
+                                    };
+                                    lbl.Click += (s, e) => EmployeePanel_Click(panel, e); // Make label clickable
+                                    panel.Controls.Add(lbl);
+                                    x += widths[i] + 5;
+                                }
+                                panel.Tag = new {
+                                    employee_id = reader["employee_id"].ToString(),
+                                    lname = reader["lname"].ToString(),
+                                    fname = reader["fname"].ToString(),
+                                    mname = reader["mname"].ToString(),
+                                    ccode = reader["ccode"].ToString(),
+                                    pay_period_start = Convert.ToDateTime(reader["pay_period_start"]),
+                                    pay_period_end = Convert.ToDateTime(reader["pay_period_end"])
+                                };
+                                panel.Cursor = Cursors.Hand;
+                                panel.Click += EmployeePanel_Click;
+                                employees.Controls.Add(panel);
+                            }
+                        }
                     }
                 }
-                else
-                {
-                    dgvDTR.BeginEdit(true);
-                    e.Handled = true;
-                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error loading employees: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-        private void dgvDTR_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
+        private void EmployeePanel_Click(object sender, EventArgs e)
         {
-            if (dgvDTR.CurrentCell != null &&
-                dgvDTR.CurrentCell.OwningColumn != null &&
-                dgvDTR.CurrentCell.OwningColumn.Name == "adj_rate" &&
-                e.Control is ComboBox comboBox)
-            {
-                // Set DropDown style so user can type and select
-                comboBox.DropDownStyle = ComboBoxStyle.DropDown;
-
-                // Remove any previous event handlers to avoid duplication
-                comboBox.Enter -= ComboBox_Enter_SelectAll;
-                comboBox.Enter += ComboBox_Enter_SelectAll;
-
-                // Optionally, select all text immediately
-                comboBox.SelectAll();
-
-                // Optionally, highlight the ComboBox background
-                comboBox.BackColor = Color.DodgerBlue;
-                comboBox.ForeColor = Color.White;
-
-                // Ensure arrow keys open the dropdown
-                comboBox.KeyDown -= ComboBox_KeyDown_DropDown;
-                comboBox.KeyDown += ComboBox_KeyDown_DropDown;
-            }
-        }
-        private void ComboBox_Enter_SelectAll(object sender, EventArgs e)
-        {
-            if (sender is ComboBox cb)
-            {
-                cb.SelectAll();
-            }
-        }
-        private void ComboBox_KeyDown_DropDown(object sender, KeyEventArgs e)
-        {
-            if (sender is ComboBox cb && (e.KeyCode == Keys.Up || e.KeyCode == Keys.Down))
-            {
-                cb.DroppedDown = true;
-            }
+            Panel panel = sender as Panel;
+            if (panel == null && sender is Label lbl && lbl.Parent is Panel p) panel = p;
+            if (panel?.Tag == null) return;
+            // Highlight selection
+            if (selectedPanel != null) selectedPanel.BackColor = Color.White;
+            panel.BackColor = Color.LightBlue;
+            selectedPanel = panel;
+            dynamic tag = panel.Tag;
+            var adjForm = new adjustment_input(
+                tag.employee_id,
+                tag.lname,
+                tag.fname,
+                tag.mname,
+                tag.ccode,
+                tag.pay_period_start,
+                tag.pay_period_end
+            );
+            adjForm.ShowDialog();
+            // Optionally, remove highlight after closing
+            panel.BackColor = Color.White;
+            selectedPanel = null;
         }
     }
 }
