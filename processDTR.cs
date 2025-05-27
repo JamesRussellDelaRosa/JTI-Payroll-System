@@ -1155,13 +1155,19 @@ namespace JTI_Payroll_System
             if (timeIn > startTime)
             {
                 // Calculate tardiness
-                tardiness = (timeIn - startTime).TotalMinutes / 60.0;
+                TimeSpan tardinessDifference = timeIn - startTime;
+                double tardyHours = tardinessDifference.Hours;
+                double tardyMinutesFraction = (double)tardinessDifference.Minutes / 60.0;
+                tardiness = tardyHours + tardyMinutesFraction;
             }
 
             if (timeOut < endTime)
             {
                 // Calculate undertime
-                undertime = (endTime - timeOut).TotalMinutes / 60.0;
+                TimeSpan undertimeDifference = endTime - timeOut;
+                double undertimeHours = undertimeDifference.Hours;
+                double undertimeMinutesFraction = (double)undertimeDifference.Minutes / 60.0;
+                undertime = undertimeHours + undertimeMinutesFraction;
             }
 
             double total = tardiness + undertime;
@@ -1207,13 +1213,19 @@ namespace JTI_Payroll_System
             if (timeIn > startTime)
             {
                 // Calculate tardiness
-                tardiness = (timeIn - startTime).TotalMinutes / 60.0;
+                TimeSpan tardinessDifference = timeIn - startTime;
+                double tardyHours = tardinessDifference.Hours;
+                double tardyMinutesFraction = (double)tardinessDifference.Minutes / 60.0;
+                tardiness = tardyHours + tardyMinutesFraction;
             }
 
             if (timeOut < endTime)
             {
                 // Calculate undertime
-                undertime = (endTime - timeOut).TotalMinutes / 60.0;
+                TimeSpan undertimeDifference = endTime - timeOut;
+                double undertimeHours = undertimeDifference.Hours;
+                double undertimeMinutesFraction = (double)undertimeDifference.Minutes / 60.0;
+                undertime = undertimeHours + undertimeMinutesFraction;
             }
 
             double total = tardiness + undertime;
