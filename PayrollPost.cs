@@ -558,7 +558,7 @@ namespace JTI_Payroll_System
                                     special_holiday_overtime_hours, special_holiday_restday_hours, special_holiday_restday_overtime_hours, 
                                     nd_hrs, ndot_hrs, ndrd_hrs, ndrdot_hrs, ndsh_hrs, ndshot_hrs, ndshrd_hrs, ndshrdot_hrs, 
                                     ndlh_hrs, ndlhot_hrs, ndlhrd_hrs, ndlhrdot_hrs, month, payrollyear, control_period, 
-                                    td_ut, working_hours, legal_holiday_count, non_working_day_count, rate, reliever, SSS, philhealth, hdmf, adj_rate
+                                    td_ut, working_hours, legal_holiday_count, non_working_day_count, rate, reliever
                                 )
                                 VALUES (
                                     @employeeID, @lname, @fname, @mname, @ccode, @startDate, @endDate, @totalDays, @overtimeHours, 
@@ -571,7 +571,7 @@ namespace JTI_Payroll_System
                                     @nightDifferentialLegalHolidayHours, @nightDifferentialLegalHolidayOtHours, 
                                     @nightDifferentialLegalHolidayRestDayHours, @nightDifferentialLegalHolidayRestDayOtHours, 
                                     @month, @payrollyear, @controlPeriod, @totalTardinessUndertime, @totalWorkingHours,
-                                    @legalHolidayCount, @nonWorkingDayCount, @rate, @reliever, @sss, @philhealth, @hdmf, @adj_rate
+                                    @legalHolidayCount, @nonWorkingDayCount, @rate, @reliever
                                 )";
 
                                         using (MySqlCommand insertCmd = new MySqlCommand(insertQuery, conn))
@@ -617,10 +617,6 @@ namespace JTI_Payroll_System
                                             insertCmd.Parameters.AddWithValue("@nonWorkingDayCount", nonWorkingDayCount);
                                             insertCmd.Parameters.AddWithValue("@rate", rate);
                                             insertCmd.Parameters.AddWithValue("@reliever", isReliever);
-                                            insertCmd.Parameters.AddWithValue("@sss", 0);
-                                            insertCmd.Parameters.AddWithValue("@philhealth", 0);
-                                            insertCmd.Parameters.AddWithValue("@hdmf", 0);
-                                            insertCmd.Parameters.AddWithValue("@adj_rate", 0);
 
                                             insertCmd.ExecuteNonQuery();
                                         }
@@ -683,7 +679,6 @@ namespace JTI_Payroll_System
                     decimal ndpay = 0, ndotpay = 0, ndrdpay = 0, ndshpay = 0, ndshrdpay = 0;
                     decimal ndlhpay = 0, ndlhrdpay = 0;
                     decimal totalBasicPay = 0, totalOTPay = 0, grossPay = 0;
-                    decimal sss = 0, philhealth = 0, hdmf = 0;
                     int controlPeriod = 0;
                     int month = 0, payrollyear = 0;
 
@@ -806,7 +801,6 @@ namespace JTI_Payroll_System
                             total_basic_pay = @totalBasicPay,
                             total_ot_pay = @totalOTPay,
                             gross_pay = @grossPay
-                            {(!isReliever ? ", SSS = @sss, philhealth = @philhealth, hdmf = @hdmf" : "")}
                         WHERE employee_id = @employeeID 
                         AND pay_period_start = @startDate 
                         AND pay_period_end = @endDate
@@ -844,48 +838,7 @@ namespace JTI_Payroll_System
                                 updateCmd.Parameters.AddWithValue("@endDate", endDate);
                                 updateCmd.Parameters.AddWithValue("@rate", rate);
                                 updateCmd.Parameters.AddWithValue("@reliever", isReliever);
-                                if (!isReliever)
-                                {
-                                    updateCmd.Parameters.AddWithValue("@sss", sss);
-                                    updateCmd.Parameters.AddWithValue("@philhealth", philhealth);
-                                    updateCmd.Parameters.AddWithValue("@hdmf", hdmf);
-                                }
                                 updateCmd.ExecuteNonQuery();
-                            }
-
-                            // If not reliever, update netpay as before
-                            if (!isReliever)
-                            {
-                                string sumGrossPayQuery = @"
-                            SELECT SUM(gross_pay) AS total_gross_pay
-                            FROM payroll
-                            WHERE employee_id = @employeeID
-                            AND pay_period_start = @startDate
-                            AND pay_period_end = @endDate";
-
-                                MySqlCommand sumGrossPayCmd = new MySqlCommand(sumGrossPayQuery, conn);
-                                sumGrossPayCmd.Parameters.AddWithValue("@employeeID", employeeID);
-                                sumGrossPayCmd.Parameters.AddWithValue("@startDate", startDate);
-                                sumGrossPayCmd.Parameters.AddWithValue("@endDate", endDate);
-
-                                decimal totalGrossPay = Convert.ToDecimal(sumGrossPayCmd.ExecuteScalar());
-
-                                // Update netpay for non-reliever day
-                                string updateNetPayQuery = @"
-                            UPDATE payroll
-                            SET netpay = @totalGrossPay
-                            WHERE employee_id = @employeeID
-                            AND pay_period_start = @startDate
-                            AND pay_period_end = @endDate
-                            AND reliever = 0";
-
-                                MySqlCommand updateNetPayCmd = new MySqlCommand(updateNetPayQuery, conn);
-                                updateNetPayCmd.Parameters.AddWithValue("@totalGrossPay", totalGrossPay);
-                                updateNetPayCmd.Parameters.AddWithValue("@employeeID", employeeID);
-                                updateNetPayCmd.Parameters.AddWithValue("@startDate", startDate);
-                                updateNetPayCmd.Parameters.AddWithValue("@endDate", endDate);
-
-                                updateNetPayCmd.ExecuteNonQuery();
                             }
                         }
                         else
