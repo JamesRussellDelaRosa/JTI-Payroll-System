@@ -272,6 +272,13 @@ namespace JTI_Payroll_System
             this.Close();
         }
 
+        private void cooploan_Click(object sender, EventArgs e)
+        {
+            UserSession.Clear(); // Clear the session
+            COOPLOAN cooploanForm = new COOPLOAN();
+            cooploanForm.Show();
+        }
+
         private void buttonClose_Click(object sender, EventArgs e)
         {
             Application.Exit();

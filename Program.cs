@@ -1,3 +1,5 @@
+using System; // Added for STAThread if not already present, and ApplicationConfiguration
+
 namespace JTI_Payroll_System
 {
     internal static class Program

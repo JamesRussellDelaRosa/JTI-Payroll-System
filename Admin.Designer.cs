@@ -115,6 +115,7 @@
             Panel ssstestPanel = CreateClickablePanel("SSSTEST", ssstest_Click);
             Panel sssloanPanel = CreateClickablePanel("SSS LOAN", sssloan_Click);
             Panel hdmfloanPanel = CreateClickablePanel("HDMF LOAN", hdmfloan_Click);
+            Panel cooploanPanel = CreateClickablePanel("COOP LOAN", cooploan_Click);
             Panel autodeducthdmfsssloanPanel = CreateClickablePanel("Auto Deduct SSS/HDMF Loan", autodeducthdmfsssloan_Click);
             Panel govduesPanel = CreateClickablePanel("Post Government Dues", govdues_Click);
             Panel editUsersPanel = CreateClickablePanel("EditUsers", editUsers_Click);
@@ -130,6 +131,7 @@
             menuFlowLayoutPanel.Controls.Add(ssstestPanel);
             menuFlowLayoutPanel.Controls.Add(sssloanPanel);
             menuFlowLayoutPanel.Controls.Add(hdmfloanPanel);
+            menuFlowLayoutPanel.Controls.Add(cooploanPanel);
             menuFlowLayoutPanel.Controls.Add(autodeducthdmfsssloanPanel);
             menuFlowLayoutPanel.Controls.Add(govduesPanel);
             menuFlowLayoutPanel.Controls.Add(editUsersPanel);
@@ -250,6 +252,7 @@
         private Panel ssstestPanel;
         private Panel sssloanPanel;
         private Panel hdmfloanPanel;
+        private Panel cooploanPanel;
         private Panel autodeducthdmfsssloanPanel;
         private Panel editUsersPanel;
         private Label lblFullName;
