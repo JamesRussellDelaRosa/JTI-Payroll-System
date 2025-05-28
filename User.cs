@@ -245,6 +245,12 @@ namespace JTI_Payroll_System
             deducts_addsForm.Show();
         }
 
+        private void govdues_13thmonth_Click(object sender, EventArgs e)
+        {
+            govdues_13thmonth govdues13thmonthForm = new govdues_13thmonth();
+            govdues13thmonthForm.Show();
+        }
+
         private void autodeducthdmfsssloan_Click(object sender, EventArgs e)
         {
             autodeductssshdmfloan autodeductssshdmfloanForm = new autodeductssshdmfloan();
