@@ -49,7 +49,7 @@ namespace JTI_Payroll_System
 
                     // Select all payroll records for the given period, including existing dues
                     string selectQuery = @"
-                        SELECT id, employee_id, total_basic_pay, gross_pay, rate, reliever,
+                        SELECT id, employee_id, govdues_13thmonth_basic, govdues_13thmonth_gross, rate, reliever,
                                SSS, philhealth, hdmf
                         FROM payroll
                         WHERE pay_period_start = @fromDate
@@ -72,8 +72,8 @@ namespace JTI_Payroll_System
                             {
                                 int id = reader.GetInt32("id");
                                 string employeeId = reader.GetString("employee_id");
-                                decimal grossPay = reader.GetDecimal("gross_pay");
-                                decimal basicPay = reader.GetDecimal("total_basic_pay");
+                                decimal grossPay = reader.GetDecimal("govdues_13thmonth_gross");
+                                decimal basicPay = reader.GetDecimal("govdues_13thmonth_basic");
                                 decimal rate = reader.GetDecimal("rate");
                                 bool reliever = reader.GetBoolean("reliever");
 
