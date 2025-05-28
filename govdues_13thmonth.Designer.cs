@@ -28,29 +28,29 @@
         /// </summary>
         private void InitializeComponent()
         {
-            repost = new CheckBox();
+            reprocessdata = new CheckBox();
             process = new Button();
             label5 = new Label();
             todate = new TextBox();
             label4 = new Label();
             fromdate = new TextBox();
             label3 = new Label();
-            controlPeriod = new TextBox();
+            controlperiod_textbox = new TextBox();
             label2 = new Label();
-            payrollyear = new TextBox();
+            payrollyear_textbox = new TextBox();
             label1 = new Label();
-            month = new TextBox();
+            month_textbox = new TextBox();
             SuspendLayout();
             // 
-            // repost
+            // reprocessdata
             // 
-            repost.AutoSize = true;
-            repost.Location = new Point(245, 327);
-            repost.Name = "repost";
-            repost.Size = new Size(109, 24);
-            repost.TabIndex = 23;
-            repost.Text = "REPROCESS";
-            repost.UseVisualStyleBackColor = true;
+            reprocessdata.AutoSize = true;
+            reprocessdata.Location = new Point(245, 327);
+            reprocessdata.Name = "reprocessdata";
+            reprocessdata.Size = new Size(109, 24);
+            reprocessdata.TabIndex = 23;
+            reprocessdata.Text = "REPROCESS";
+            reprocessdata.UseVisualStyleBackColor = true;
             // 
             // process
             // 
@@ -60,6 +60,7 @@
             process.TabIndex = 22;
             process.Text = "PROCESS";
             process.UseVisualStyleBackColor = true;
+            process.Click += process_Click;
             // 
             // label5
             // 
@@ -102,12 +103,12 @@
             label3.TabIndex = 17;
             label3.Text = "Control Period";
             // 
-            // controlPeriod
+            // controlperiod_textbox
             // 
-            controlPeriod.Location = new Point(468, 98);
-            controlPeriod.Name = "controlPeriod";
-            controlPeriod.Size = new Size(32, 27);
-            controlPeriod.TabIndex = 16;
+            controlperiod_textbox.Location = new Point(468, 98);
+            controlperiod_textbox.Name = "controlperiod_textbox";
+            controlperiod_textbox.Size = new Size(32, 27);
+            controlperiod_textbox.TabIndex = 16;
             // 
             // label2
             // 
@@ -118,12 +119,12 @@
             label2.TabIndex = 15;
             label2.Text = "Payroll year";
             // 
-            // payrollyear
+            // payrollyear_textbox
             // 
-            payrollyear.Location = new Point(320, 153);
-            payrollyear.Name = "payrollyear";
-            payrollyear.Size = new Size(125, 27);
-            payrollyear.TabIndex = 14;
+            payrollyear_textbox.Location = new Point(320, 153);
+            payrollyear_textbox.Name = "payrollyear_textbox";
+            payrollyear_textbox.Size = new Size(125, 27);
+            payrollyear_textbox.TabIndex = 14;
             // 
             // label1
             // 
@@ -134,30 +135,30 @@
             label1.TabIndex = 13;
             label1.Text = "For the Month of";
             // 
-            // month
+            // month_textbox
             // 
-            month.Location = new Point(320, 98);
-            month.Name = "month";
-            month.Size = new Size(32, 27);
-            month.TabIndex = 12;
+            month_textbox.Location = new Point(320, 98);
+            month_textbox.Name = "month_textbox";
+            month_textbox.Size = new Size(32, 27);
+            month_textbox.TabIndex = 12;
             // 
             // govdues_13thmonth
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
-            Controls.Add(repost);
+            Controls.Add(reprocessdata);
             Controls.Add(process);
             Controls.Add(label5);
             Controls.Add(todate);
             Controls.Add(label4);
             Controls.Add(fromdate);
             Controls.Add(label3);
-            Controls.Add(controlPeriod);
+            Controls.Add(controlperiod_textbox);
             Controls.Add(label2);
-            Controls.Add(payrollyear);
+            Controls.Add(payrollyear_textbox);
             Controls.Add(label1);
-            Controls.Add(month);
+            Controls.Add(month_textbox);
             Name = "govdues_13thmonth";
             Text = "govdues_13thmonth";
             ResumeLayout(false);
@@ -166,17 +167,17 @@
 
         #endregion
 
-        private CheckBox repost;
+        private CheckBox reprocessdata;
         private Button process;
         private Label label5;
         private TextBox todate;
         private Label label4;
         private TextBox fromdate;
         private Label label3;
-        private TextBox controlPeriod;
+        private TextBox controlperiod_textbox;
         private Label label2;
-        private TextBox payrollyear;
+        private TextBox payrollyear_textbox;
         private Label label1;
-        private TextBox month;
+        private TextBox month_textbox;
     }
 }
