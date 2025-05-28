@@ -264,19 +264,24 @@ namespace JTI_Payroll_System
             govduesForm.Show();
         }
 
+        private void cooploan_Click(object sender, EventArgs e)
+        {
+            COOPLOAN cooploanForm = new COOPLOAN();
+            cooploanForm.Show();
+        }
+
+        private void deducts_adds_Click(object sender, EventArgs e)
+        {
+            deducts_adds deducts_addsForm = new deducts_adds();
+            deducts_addsForm.Show();
+        }
+
         private void btnLogout_Click(object sender, EventArgs e)
         {
             UserSession.Clear(); // Clear the session
             Form1 loginForm = new Form1();
             loginForm.Show();
             this.Close();
-        }
-
-        private void cooploan_Click(object sender, EventArgs e)
-        {
-            UserSession.Clear(); // Clear the session
-            COOPLOAN cooploanForm = new COOPLOAN();
-            cooploanForm.Show();
         }
 
         private void buttonClose_Click(object sender, EventArgs e)

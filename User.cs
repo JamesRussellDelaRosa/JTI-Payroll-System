@@ -233,6 +233,18 @@ namespace JTI_Payroll_System
             HDMFLOANForm.Show();
         }
 
+        private void cooploan_Click(object sender, EventArgs e)
+        {
+            COOPLOAN cooploanForm = new COOPLOAN();
+            cooploanForm.Show();
+        }
+
+        private void deducts_adds_Click(object sender, EventArgs e)
+        {
+            deducts_adds deducts_addsForm = new deducts_adds();
+            deducts_addsForm.Show();
+        }
+
         private void autodeducthdmfsssloan_Click(object sender, EventArgs e)
         {
             autodeductssshdmfloan autodeductssshdmfloanForm = new autodeductssshdmfloan();

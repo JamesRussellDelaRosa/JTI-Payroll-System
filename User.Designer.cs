@@ -109,6 +109,8 @@
             Panel btnpayrollpostPanel = CreateClickablePanel("PAYROLL POSTING", btnpayrollpost_Click);
             Panel sssloanPanel = CreateClickablePanel("SSS LOAN", sssloan_Click);
             Panel hdmfloanPanel = CreateClickablePanel("HDMF LOAN", hdmfloan_Click);
+            Panel cooploanPanel = CreateClickablePanel("COOP LOAN", cooploan_Click);
+            Panel deducts_addsPanel = CreateClickablePanel("Deductions/Additionals", deducts_adds_Click);
             Panel autodeducthdmfsssloanPanel = CreateClickablePanel("Auto Deduct SSS/HDMF Loan", autodeducthdmfsssloan_Click);
             Panel govduesPanel = CreateClickablePanel("Post Government Dues", govdues_Click);
             Panel payrollAdjPanel = CreateClickablePanel("Payroll Adjustments", payrollAdj_Click);
@@ -120,6 +122,8 @@
             menuFlowLayoutPanel.Controls.Add(btnpayrollpostPanel);
             menuFlowLayoutPanel.Controls.Add(sssloanPanel);
             menuFlowLayoutPanel.Controls.Add(hdmfloanPanel);
+            menuFlowLayoutPanel.Controls.Add(cooploanPanel);
+            menuFlowLayoutPanel.Controls.Add(deducts_addsPanel);
             menuFlowLayoutPanel.Controls.Add(autodeducthdmfsssloanPanel);
             menuFlowLayoutPanel.Controls.Add(govduesPanel);
             menuFlowLayoutPanel.Controls.Add(payrollAdjPanel);
