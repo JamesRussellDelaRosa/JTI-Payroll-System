@@ -55,7 +55,6 @@
             toDateTextBox.PlaceholderText = "MM/DD/YYYY";
             toDateTextBox.Size = new Size(100, 27);
             toDateTextBox.TabIndex = 1;
-            toDateTextBox.TextChanged += this.toDateTextBox_TextChanged_1;
             toDateTextBox.KeyPress += AutoFormatDate;
             // 
             // openFormButton
