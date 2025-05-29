@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using ClosedXML.Excel; // Replaced EPPlus with ClosedXML
 using System.IO;
+using System.Globalization; // Added for DateTime parsing
 
 namespace JTI_Payroll_System
 {
@@ -18,10 +19,61 @@ namespace JTI_Payroll_System
         public COOPLOAN()
         {
             InitializeComponent();
+            InitializeCustomComponents();
         }
 
+        private void InitializeCustomComponents()
+        {
+            fromdate.Enter += new EventHandler(RemoveHint);
+            fromdate.Leave += new EventHandler(AddHint);
+            fromdate.KeyPress += new KeyPressEventHandler(AutoFormatDate);
+
+            todate.Enter += new EventHandler(RemoveHint);
+            todate.Leave += new EventHandler(AddHint);
+            todate.KeyPress += new KeyPressEventHandler(AutoFormatDate);
+
+            AddHint(fromdate, null);
+            AddHint(todate, null);
+        }
+        private void RemoveHint(object sender, EventArgs e)
+        {
+            TextBox textBox = sender as TextBox;
+            if (textBox.Text == "MM/DD/YYYY")
+            {
+                textBox.Text = "";
+                textBox.ForeColor = Color.Black;
+            }
+        }
+        private void AddHint(object sender, EventArgs e)
+        {
+            TextBox textBox = sender as TextBox;
+            if (string.IsNullOrWhiteSpace(textBox.Text))
+            {
+                textBox.Text = "MM/DD/YYYY";
+                textBox.ForeColor = Color.Gray;
+            }
+        }
         private void upload_Click(object sender, EventArgs e)
         {
+            // Validate and parse dates first
+            if (!DateTime.TryParseExact(fromdate.Text, "MM/dd/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime startDate) || fromdate.Text == "MM/DD/YYYY")
+            {
+                MessageBox.Show("Please enter a valid Start Date in MM/DD/YYYY format.", "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (!DateTime.TryParseExact(todate.Text, "MM/dd/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime endDate) || todate.Text == "MM/DD/YYYY")
+            {
+                MessageBox.Show("Please enter a valid End Date in MM/DD/YYYY format.", "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (startDate > endDate)
+            {
+                MessageBox.Show("The start date cannot be after the end date. Please enter a valid date range.", "Invalid Date Range", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             using (OpenFileDialog openFileDialog = new OpenFileDialog())
             {
                 openFileDialog.Filter = "Excel Files (*.xlsx)|*.xlsx";
@@ -118,6 +170,7 @@ namespace JTI_Payroll_System
                                                          coop_savings_deposit = @savingsDeposit,
                                                          coop_membership_fee = @membershipFee
                                                      WHERE employee_id = @employeeId 
+                                                     AND pay_period_start = @startDate AND pay_period_end = @endDate
                                                      ORDER BY pay_period_end DESC LIMIT 1";
 
                                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
@@ -127,6 +180,8 @@ namespace JTI_Payroll_System
                                         cmd.Parameters.AddWithValue("@savingsDeposit", savingsDeposit);
                                         cmd.Parameters.AddWithValue("@membershipFee", membershipFee);
                                         cmd.Parameters.AddWithValue("@employeeId", employeeId);
+                                        cmd.Parameters.AddWithValue("@startDate", startDate);
+                                        cmd.Parameters.AddWithValue("@endDate", endDate);
 
                                         try
                                         {
@@ -138,7 +193,7 @@ namespace JTI_Payroll_System
                                             else
                                             {
                                                 failCount++;
-                                                errors.Add($"No payroll record found or updated for Employee ID: {employeeId} (Row {currentRowNum})");
+                                                errors.Add($"No payroll record found or updated for Employee ID: {employeeId} within the specified date range (Row {currentRowNum})");
                                             }
                                         }
                                         catch (Exception ex)
@@ -164,6 +219,29 @@ namespace JTI_Payroll_System
                     {
                         MessageBox.Show($"Error reading Excel file: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
+                }
+            }
+        }
+        private void AutoFormatDate(object sender, KeyPressEventArgs e)
+        {
+            TextBox textBox = sender as TextBox;
+
+            // Allow only digits and control keys (e.g., backspace)
+            if (!char.IsDigit(e.KeyChar) && !char.IsControl(e.KeyChar))
+            {
+                e.Handled = true;
+                return;
+            }
+
+            // Auto-insert slashes based on the MM/DD/YYYY format
+            if (!char.IsControl(e.KeyChar))
+            {
+                int length = textBox.Text.Length;
+
+                if (length == 2 || length == 5)
+                {
+                    textBox.Text += "/";
+                    textBox.SelectionStart = textBox.Text.Length; // Move the caret to the end
                 }
             }
         }
