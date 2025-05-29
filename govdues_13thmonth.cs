@@ -113,7 +113,7 @@ namespace JTI_Payroll_System
                             AND control_period = @controlPeriod
                             AND pay_period_start = @fromDate
                             AND pay_period_end = @toDate
-                            AND (govdues_13thmonth_basic != 0 OR govdues_13thmonth_gross != 0)";
+                            AND (basic != 0 OR gross != 0)";
                         using (MySqlCommand checkCmd = new MySqlCommand(checkExistingQuery, conn))
                         {
                             checkCmd.Parameters.AddWithValue("@month", month);
@@ -135,7 +135,7 @@ namespace JTI_Payroll_System
                     {
                         string clearQuery = @"
                             UPDATE payroll 
-                            SET govdues_13thmonth_basic = 0, govdues_13thmonth_gross = 0 
+                            SET basic = 0, gross = 0 
                             WHERE month = @month 
                             AND payrollyear = @payrollYear 
                             AND control_period = @controlPeriod
@@ -264,8 +264,8 @@ namespace JTI_Payroll_System
 
                         string updateQuery = @"
                             UPDATE payroll 
-                            SET govdues_13thmonth_basic = @totalBasicPay, 
-                                govdues_13thmonth_gross = @totalGrossPay
+                            SET basic = @totalBasicPay, 
+                                gross = @totalGrossPay
                             WHERE employee_id = @employeeId 
                             AND month = @month 
                             AND payrollyear = @payrollYear 

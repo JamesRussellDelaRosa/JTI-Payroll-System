@@ -117,7 +117,7 @@
             Panel hdmfloanPanel = CreateClickablePanel("HDMF LOAN", hdmfloan_Click);
             Panel cooploanPanel = CreateClickablePanel("COOP LOAN", cooploan_Click);
             Panel deducts_addsPanel = CreateClickablePanel("Deductions/Additionals", deducts_adds_Click);
-            Panel govdues13thmonthPanel = CreateClickablePanel("GOV DUES & 13TH MONTH", govdues_13thmonth_Click);
+            Panel govdues13thmonthPanel = CreateClickablePanel("SUMMATION OF PAYROLL BASIC/GROSS", govdues_13thmonth_Click);
             Panel autodeducthdmfsssloanPanel = CreateClickablePanel("Auto Deduct SSS/HDMF Loan", autodeducthdmfsssloan_Click);
             Panel govduesPanel = CreateClickablePanel("Post Government Dues", govdues_Click);
             Panel editUsersPanel = CreateClickablePanel("EditUsers", editUsers_Click);

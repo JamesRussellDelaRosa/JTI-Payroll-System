@@ -50,11 +50,32 @@ namespace JTI_Payroll_System
         private void TextBox_Leave(object sender, EventArgs e)
         {
             TextBox textBox = sender as TextBox;
-            if (textBox != null && string.IsNullOrWhiteSpace(textBox.Text))
+            if (textBox != null)
             {
-                SetPlaceholderText(textBox, "MM/DD/YYYY");
+                string currentText = textBox.Text;
+
+                if (string.IsNullOrWhiteSpace(currentText))
+                {
+                    // If user cleared the text or entered only spaces, reset to placeholder.
+                    SetPlaceholderText(textBox, "MM/DD/YYYY");
+                }
+                // Only validate if the text color indicates it's user input (not the gray placeholder).
+                else if (textBox.ForeColor == SystemColors.WindowText)
+                {
+                    // The placeholder string "MM/DD/YYYY" itself is not a valid date for processing.
+                    // Also, any other text that doesn't parse correctly into a date.
+                    if (currentText == "MM/DD/YYYY" || 
+                        !DateTime.TryParseExact(currentText, "MM/dd/yyyy", 
+                                               System.Globalization.CultureInfo.InvariantCulture, 
+                                               System.Globalization.DateTimeStyles.None, 
+                                               out _))
+                    {
+                        MessageBox.Show($"The date '{currentText}' is invalid. Please use MM/DD/YYYY format and ensure it's a real date (e.g., not 02/30/2023).",
+                                        "Invalid Date", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                }
+                textBox.Invalidate(); // Redraw for placeholder or other visual updates.
             }
-            textBox.Invalidate();
         }
         private void TextBox_TextChanged(object sender, EventArgs e)
         {
@@ -101,16 +122,62 @@ namespace JTI_Payroll_System
         private void filter_Click(object sender, EventArgs e)
         {
             employees.Controls.Clear();
-            if (!DateTime.TryParse(textStartDate.Text, out DateTime startDate) ||
-                !DateTime.TryParse(textEndDate.Text, out DateTime endDate))
+            if (!DateTime.TryParseExact(textStartDate.Text, "MM/dd/yyyy", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out DateTime startDate) ||
+                !DateTime.TryParseExact(textEndDate.Text, "MM/dd/yyyy", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out DateTime endDate) ||
+                textStartDate.Text == "MM/DD/YYYY" || // Explicitly disallow placeholder text
+                textEndDate.Text == "MM/DD/YYYY")
             {
-                MessageBox.Show("Please enter valid start and end dates.", "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Please enter valid start and end dates using MM/DD/YYYY format.", "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
+
+            if (startDate > endDate)
+            {
+                MessageBox.Show("The start date cannot be after the end date. Please enter a valid date range.", "Invalid Date Range", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Check if the date range exists in the payroll table
+            bool dateRangeExists = false;
+            try
+            {
+                using (var conn = DatabaseHelper.GetConnection())
+                {
+                    conn.Open();
+                    string query = @"SELECT COUNT(*) FROM payroll WHERE pay_period_start = @start AND pay_period_end = @end";
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@start", startDate);
+                        cmd.Parameters.AddWithValue("@end", endDate);
+                        int count = Convert.ToInt32(cmd.ExecuteScalar());
+                        if (count > 0)
+                        {
+                            dateRangeExists = true;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error checking payroll data: " + ex.Message, "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return; // Stop further processing if there's a DB error
+            }
+
+            if (!dateRangeExists)
+            {
+                MessageBox.Show("The selected date range does not correspond to an existing payroll period.", "Invalid Payroll Period", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             LoadEmployeesByDateRange(startDate, endDate);
         }
         private void LoadEmployeesByDateRange(DateTime startDate, DateTime endDate)
         {
+            // Define original fixed widths as base for proportions
+            int[] columnBaseWidths = { 80, 100, 100, 80, 60, 110, 110 };
+            double totalBaseWidthUnits = columnBaseWidths.Sum(w => (double)w); // Sum of base units for proportion calculation
+            int numberOfColumns = columnBaseWidths.Length;
+
             try
             {
                 using (var conn = DatabaseHelper.GetConnection())
@@ -128,13 +195,33 @@ namespace JTI_Payroll_System
                                 Panel panel = new Panel
                                 {
                                     Height = 32,
-                                    Width = employees.Width - 25,
+                                    // Width will be set below based on parent
                                     BorderStyle = BorderStyle.FixedSingle,
-                                    Margin = new Padding(2),
+                                    Margin = new Padding(2), // Existing margin
                                     BackColor = Color.White
                                 };
-                                int x = 5;
-                                int[] widths = { 80, 100, 100, 80, 60, 110, 110 };
+
+                                // Set panel width to be responsive to the 'employees' container width
+                                int targetPanelWidth = employees.ClientRectangle.Width - panel.Margin.Horizontal;
+                                // Ensure a minimum sensible width for the panel
+                                int minPanelWidth = Math.Max(50, (int)(totalBaseWidthUnits * 0.4)); // e.g., min 40% of original total, or 50px
+                                panel.Width = Math.Max(minPanelWidth, targetPanelWidth);
+
+
+                                // Calculate available width for labels inside this panel
+                                int initialXOffset = 5;    // Left padding inside the panel for the first label
+                                int gapBetweenLabels = 5;  // Gap between labels
+
+                                // panel.ClientRectangle.Width is the inner width, accounts for panel's own borders
+                                int internalPanelClientAreaWidth = panel.ClientRectangle.Width;
+                                
+                                // Total width needed for all gaps between labels
+                                int totalGapSpace = (numberOfColumns > 1 ? (numberOfColumns - 1) * gapBetweenLabels : 0);
+
+                                // Net width available for the sum of all label widths
+                                int netWidthForAllLabels = internalPanelClientAreaWidth - initialXOffset - totalGapSpace;
+                                if (netWidthForAllLabels < 0) netWidthForAllLabels = 0; // Cannot be negative
+
                                 string[] values = {
                                     reader["employee_id"].ToString(),
                                     reader["lname"].ToString(),
@@ -144,20 +231,46 @@ namespace JTI_Payroll_System
                                     Convert.ToDateTime(reader["pay_period_start"]).ToString("MM/dd/yyyy"),
                                     Convert.ToDateTime(reader["pay_period_end"]).ToString("MM/dd/yyyy")
                                 };
-                                for (int i = 0; i < values.Length; i++)
+                                
+                                int currentX = initialXOffset;
+                                for (int i = 0; i < numberOfColumns; i++)
                                 {
+                                    int calculatedLabelWidth;
+                                    // Check if there's meaningful space to distribute and base units exist
+                                    if (totalBaseWidthUnits > 0 && netWidthForAllLabels > (numberOfColumns * 10) ) 
+                                    {
+                                        double proportion = (double)columnBaseWidths[i] / totalBaseWidthUnits;
+                                        calculatedLabelWidth = (int)(proportion * netWidthForAllLabels);
+                                        // Ensure a minimum width for labels to be somewhat visible and clickable
+                                        calculatedLabelWidth = Math.Max(10, calculatedLabelWidth); 
+                                    }
+                                    else
+                                    {
+                                        // Fallback: if panel is too narrow or no base units.
+                                        // Distribute remaining space or use a small fixed minimum.
+                                        if (netWidthForAllLabels > 0 && numberOfColumns > 0) {
+                                             calculatedLabelWidth = Math.Max(10, netWidthForAllLabels / numberOfColumns);
+                                        } else {
+                                             calculatedLabelWidth = Math.Max(10, columnBaseWidths[i] / 3); // Small portion of original
+                                        }
+                                    }
+
                                     Label lbl = new Label
                                     {
                                         Text = values[i],
-                                        Location = new Point(x, 7),
-                                        Width = widths[i],
-                                        AutoSize = false,
+                                        Location = new Point(currentX, 7), // Y position is fixed
+                                        Width = calculatedLabelWidth,      // Use calculated responsive width
+                                        AutoSize = false,                  // Important for fixed Width and AutoEllipsis
+                                        AutoEllipsis = true,               // Show "..." if text is too long
+                                        TextAlign = ContentAlignment.MiddleLeft, // Align text
                                         BackColor = Color.Transparent
                                     };
-                                    lbl.Click += (s, e) => EmployeePanel_Click(panel, e); // Make label clickable
+                                    lbl.Click += (s, ev) => EmployeePanel_Click(panel, ev); 
+                                    lbl.DoubleClick += (s, ev) => EmployeePanel_DoubleClick(panel, ev); 
                                     panel.Controls.Add(lbl);
-                                    x += widths[i] + 5;
+                                    currentX += calculatedLabelWidth + gapBetweenLabels; // Move X for next label
                                 }
+                                
                                 panel.Tag = new {
                                     employee_id = reader["employee_id"].ToString(),
                                     lname = reader["lname"].ToString(),
@@ -169,6 +282,7 @@ namespace JTI_Payroll_System
                                 };
                                 panel.Cursor = Cursors.Hand;
                                 panel.Click += EmployeePanel_Click;
+                                panel.DoubleClick += EmployeePanel_DoubleClick;
                                 employees.Controls.Add(panel);
                             }
                         }
@@ -185,10 +299,41 @@ namespace JTI_Payroll_System
             Panel panel = sender as Panel;
             if (panel == null && sender is Label lbl && lbl.Parent is Panel p) panel = p;
             if (panel?.Tag == null) return;
+
             // Highlight selection
-            if (selectedPanel != null) selectedPanel.BackColor = Color.White;
-            panel.BackColor = Color.LightBlue;
-            selectedPanel = panel;
+            if (selectedPanel != null && selectedPanel != panel)
+            {
+                selectedPanel.BackColor = Color.White;
+            }
+
+            if (panel.BackColor == Color.LightBlue) // If already selected, deselect on click
+            {
+                panel.BackColor = Color.White;
+                selectedPanel = null;
+            }
+            else
+            {
+                panel.BackColor = Color.LightBlue;
+                selectedPanel = panel;
+            }
+        }
+        private void EmployeePanel_DoubleClick(object sender, EventArgs e)
+        {
+            Panel panel = sender as Panel;
+            if (panel == null && sender is Label lbl && lbl.Parent is Panel p) panel = p;
+            if (panel?.Tag == null) return;
+
+            // Ensure the panel is highlighted before opening the form
+            if (selectedPanel != panel)
+            {
+                if (selectedPanel != null)
+                {
+                    selectedPanel.BackColor = Color.White;
+                }
+                panel.BackColor = Color.LightBlue;
+                selectedPanel = panel;
+            }
+            
             dynamic tag = panel.Tag;
             var adjForm = new adjustment_input(
                 tag.employee_id,
@@ -200,9 +345,6 @@ namespace JTI_Payroll_System
                 tag.pay_period_end
             );
             adjForm.ShowDialog();
-            // Optionally, remove highlight after closing
-            panel.BackColor = Color.White;
-            selectedPanel = null;
         }
     }
 }
