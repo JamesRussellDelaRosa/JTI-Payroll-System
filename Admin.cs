@@ -282,6 +282,12 @@ namespace JTI_Payroll_System
             govdues13thmonthForm.Show();
         }
 
+        private void semimonthlywtax_Click(object sender, EventArgs e)
+        {
+            semimonthlywtax semimonthlywtaxForm = new semimonthlywtax();
+            semimonthlywtaxForm.Show();
+        }
+
         private void btnLogout_Click(object sender, EventArgs e)
         {
             UserSession.Clear(); // Clear the session

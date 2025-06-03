@@ -120,6 +120,7 @@
             Panel govdues13thmonthPanel = CreateClickablePanel("SUMMATION OF PAYROLL BASIC/GROSS", govdues_13thmonth_Click);
             Panel autodeducthdmfsssloanPanel = CreateClickablePanel("Auto Deduct SSS/HDMF Loan", autodeducthdmfsssloan_Click);
             Panel govduesPanel = CreateClickablePanel("Post Government Dues", govdues_Click);
+            Panel semimonthlywtaxtablePanel = CreateClickablePanel("Semi Monthly Withholding Tax Table", semimonthlywtax_Click);
             Panel editUsersPanel = CreateClickablePanel("EditUsers", editUsers_Click);
             Panel payrollAdjPanel = CreateClickablePanel("Payroll Adjustments", payrollAdj_Click);
 
@@ -138,6 +139,7 @@
             menuFlowLayoutPanel.Controls.Add(govdues13thmonthPanel);
             menuFlowLayoutPanel.Controls.Add(autodeducthdmfsssloanPanel);
             menuFlowLayoutPanel.Controls.Add(govduesPanel);
+            menuFlowLayoutPanel.Controls.Add(semimonthlywtaxtablePanel);
             menuFlowLayoutPanel.Controls.Add(editUsersPanel);
             menuFlowLayoutPanel.Controls.Add(payrollAdjPanel);
         }

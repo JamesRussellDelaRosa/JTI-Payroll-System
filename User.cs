@@ -263,6 +263,12 @@ namespace JTI_Payroll_System
             govduesForm.Show();
         }
 
+        private void semimonthlywtax_Click(object sender, EventArgs e)
+        {
+            semimonthlywtax semimonthlywtaxForm = new semimonthlywtax();
+            semimonthlywtaxForm.Show();
+        }
+
         private void editUsers_Click(object sender, EventArgs e)
         {
             editUsers editUsersForm = new editUsers();

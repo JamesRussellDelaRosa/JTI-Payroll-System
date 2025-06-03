@@ -17,6 +17,8 @@ namespace JTI_Payroll_System
         {
             InitializeComponent();
             InitializeDataGridView();
+            // Automatically load data when the form launches
+            load_Click(this, EventArgs.Empty);
         }
 
         private void InitializeDataGridView()
