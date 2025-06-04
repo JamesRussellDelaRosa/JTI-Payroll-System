@@ -123,6 +123,12 @@ namespace JTI_Payroll_System
 
         private void BtnSave_Click(object sender, EventArgs e)
         {
+            if (!UserSession.IsAdmin)
+            {
+                MessageBox.Show("You are not allowed to make changes to the tax table.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             try
             {
                 SaveTaxTableToDatabase();

@@ -84,6 +84,12 @@ namespace JTI_Payroll_System
 
         private void saveEmp_Click(object sender, EventArgs e)
         {
+            if (!UserSession.IsAdmin)
+            {
+                MessageBox.Show("You are not allowed to save employee records.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             if (string.IsNullOrWhiteSpace(id_no.Text))
             {
                 MessageBox.Show("Please enter an Employee ID.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -98,74 +104,74 @@ namespace JTI_Payroll_System
                 if (isNewEmployee)
                 {
                     query = @"
-                        INSERT INTO employee (
-                            id_no, fname, mname, lname, sex, dt_birth, civil_stat, sssnum, tin, hdmfnum, phnum, bir_cd, bir_stat, acct_no, atm_card_no, dt_issued, enable_atm, atm_status, ccode, client, dep_code, department, line_cd, line, cont_date, cont_end, rate_month, rate_day, cont_rate, meal_rate, allowance, position, sil_amt, street, barangay, city, province, title_code, mfname, mmname, mlname, spou_name, edu_attaint, dt_expired, contact_no, zipcode, staff, active, active_hmo, active_sil
-                        ) VALUES (
-                            @id_no, @fname, @mname, @lname, @sex, @dt_birth, @civil_stat, @sssnum, @tin, @hdmfnum, @phnum, @bir_cd, @bir_stat, @acct_no, @atm_card_no, @dt_issued, @enable_atm, @atm_status, @ccode, @client, @dep_code, @department, @line_cd, @line, @cont_date, @cont_end, @rate_month, @rate_day, @cont_rate, @meal_rate, @allowance, @position, @sil_amt, @street, @barangay, @city, @province, @title_code, @mfname, @mmname, @mlname, @spou_name, @edu_attaint, @dt_expired, @contact_no, @zipcode, @staff, @active, @active_hmo, @active_sil
-                        )
-                    ";
+                INSERT INTO employee (
+                    id_no, fname, mname, lname, sex, dt_birth, civil_stat, sssnum, tin, hdmfnum, phnum, bir_cd, bir_stat, acct_no, atm_card_no, dt_issued, enable_atm, atm_status, ccode, client, dep_code, department, line_cd, line, cont_date, cont_end, rate_month, rate_day, cont_rate, meal_rate, allowance, position, sil_amt, street, barangay, city, province, title_code, mfname, mmname, mlname, spou_name, edu_attaint, dt_expired, contact_no, zipcode, staff, active, active_hmo, active_sil
+                ) VALUES (
+                    @id_no, @fname, @mname, @lname, @sex, @dt_birth, @civil_stat, @sssnum, @tin, @hdmfnum, @phnum, @bir_cd, @bir_stat, @acct_no, @atm_card_no, @dt_issued, @enable_atm, @atm_status, @ccode, @client, @dep_code, @department, @line_cd, @line, @cont_date, @cont_end, @rate_month, @rate_day, @cont_rate, @meal_rate, @allowance, @position, @sil_amt, @street, @barangay, @city, @province, @title_code, @mfname, @mmname, @mlname, @spou_name, @edu_attaint, @dt_expired, @contact_no, @zipcode, @staff, @active, @active_hmo, @active_sil
+                )
+            ";
                 }
                 else
                 {
                     query = @"
-                        UPDATE employee SET
-                            fname = @fname,
-                            mname = @mname,
-                            lname = @lname,
-                            sex = @sex,
-                            dt_birth = @dt_birth,
-                            civil_stat = @civil_stat,
-                            sssnum = @sssnum,
-                            tin = @tin,
-                            hdmfnum = @hdmfnum,
-                            phnum = @phnum,
-                            bir_cd = @bir_cd,
-                            bir_stat = @bir_stat,
-                            acct_no = @acct_no,
-                            atm_card_no = @atm_card_no,
-                            dt_issued = @dt_issued,
-                            enable_atm = @enable_atm,
-                            atm_status = @atm_status,
-                            ccode = @ccode,
-                            client = @client,
-                            dep_code = @dep_code,
-                            department = @department,
-                            line_cd = @line_cd,
-                            line = @line,
-                            cont_date = @cont_date,
-                            cont_end = @cont_end,
-                            rate_month = @rate_month,
-                            rate_day = @rate_day,
-                            cont_rate = @cont_rate,
-                            meal_rate = @meal_rate,
-                            allowance = @allowance,
-                            position = @position,
-                            sil_amt = @sil_amt,
-                            street = @street,
-                            barangay = @barangay,
-                            city = @city,
-                            province = @province,
-                            title_code = @title_code,
-                            mfname = @mfname,
-                            mmname = @mmname,
-                            mlname = @mlname,
-                            spou_name = @spou_name,
-                            edu_attaint = @edu_attaint,
-                            dt_expired = @dt_expired,
-                            contact_no = @contact_no,
-                            zipcode = @zipcode,
-                            enable_atm = @enable_atm,
-                            staff = @staff,
-                            active = @active,
-                            active_hmo = @active_hmo,
-                            active_sil = @active_sil
-                        WHERE id_no = @id_no
-                    ";
+                UPDATE employee SET
+                    fname = @fname,
+                    mname = @mname,
+                    lname = @lname,
+                    sex = @sex,
+                    dt_birth = @dt_birth,
+                    civil_stat = @civil_stat,
+                    sssnum = @sssnum,
+                    tin = @tin,
+                    hdmfnum = @hdmfnum,
+                    phnum = @phnum,
+                    bir_cd = @bir_cd,
+                    bir_stat = @bir_stat,
+                    acct_no = @acct_no,
+                    atm_card_no = @atm_card_no,
+                    dt_issued = @dt_issued,
+                    enable_atm = @enable_atm,
+                    atm_status = @atm_status,
+                    ccode = @ccode,
+                    client = @client,
+                    dep_code = @dep_code,
+                    department = @department,
+                    line_cd = @line_cd,
+                    line = @line,
+                    cont_date = @cont_date,
+                    cont_end = @cont_end,
+                    rate_month = @rate_month,
+                    rate_day = @rate_day,
+                    cont_rate = @cont_rate,
+                    meal_rate = @meal_rate,
+                    allowance = @allowance,
+                    position = @position,
+                    sil_amt = @sil_amt,
+                    street = @street,
+                    barangay = @barangay,
+                    city = @city,
+                    province = @province,
+                    title_code = @title_code,
+                    mfname = @mfname,
+                    mmname = @mmname,
+                    mlname = @mlname,
+                    spou_name = @spou_name,
+                    edu_attaint = @edu_attaint,
+                    dt_expired = @dt_expired,
+                    contact_no = @contact_no,
+                    zipcode = @zipcode,
+                    enable_atm = @enable_atm,
+                    staff = @staff,
+                    active = @active,
+                    active_hmo = @active_hmo,
+                    active_sil = @active_sil
+                WHERE id_no = @id_no
+            ";
                 }
 
                 using (MySqlCommand cmd = new MySqlCommand(query, connection))
                 {
-                    // TextBoxes
+                    // (parameters code unchanged)
                     cmd.Parameters.AddWithValue("@id_no", id_no.Text.Trim());
                     cmd.Parameters.AddWithValue("@fname", fname.Text.Trim());
                     cmd.Parameters.AddWithValue("@mname", mname.Text.Trim());
@@ -570,6 +576,11 @@ namespace JTI_Payroll_System
 
         private void edit_Click(object sender, EventArgs e)
         {
+            if (!UserSession.IsAdmin)
+            {
+                MessageBox.Show("You are not allowed to edit employee records.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
             SetControlsReadOnly(false);
             cancel.Enabled = true;
         }
@@ -635,6 +646,11 @@ namespace JTI_Payroll_System
 
         private void delete_Click(object sender, EventArgs e)
         {
+            if (!UserSession.IsAdmin)
+            {
+                MessageBox.Show("You are not allowed to delete employee records.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
             if (string.IsNullOrWhiteSpace(id_no.Text))
             {
                 MessageBox.Show("No employee selected.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -692,6 +708,11 @@ namespace JTI_Payroll_System
 
         private void empnew_Click(object sender, EventArgs e)
         {
+            if (!UserSession.IsAdmin)
+            {
+                MessageBox.Show("You are not allowed to add new employees.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
             // Clear all input fields
             foreach (Control c in Controls)
             {
