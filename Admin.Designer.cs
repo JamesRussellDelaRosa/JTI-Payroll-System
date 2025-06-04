@@ -123,6 +123,7 @@
             Panel semimonthlywtaxtablePanel = CreateClickablePanel("Semi Monthly Withholding Tax Table", semimonthlywtax_Click);
             Panel editUsersPanel = CreateClickablePanel("EditUsers", editUsers_Click);
             Panel payrollAdjPanel = CreateClickablePanel("Payroll Adjustments", payrollAdj_Click);
+            Panel modifyPayrollPanel = CreateClickablePanel("Modify Payroll", modifyPayroll_Click);
 
             // Add Panels to FlowLayoutPanel
             menuFlowLayoutPanel.Controls.Add(employeePanel);
@@ -142,6 +143,7 @@
             menuFlowLayoutPanel.Controls.Add(semimonthlywtaxtablePanel);
             menuFlowLayoutPanel.Controls.Add(editUsersPanel);
             menuFlowLayoutPanel.Controls.Add(payrollAdjPanel);
+            menuFlowLayoutPanel.Controls.Add(modifyPayrollPanel);
         }
 
         private Panel CreateClickablePanel(string text, EventHandler functionHandler)
@@ -246,7 +248,6 @@
             }
         }
 
-
         #endregion
         private FlowLayoutPanel menuFlowLayoutPanel;
         private Panel employeePanel;
@@ -262,6 +263,7 @@
         private Panel deducts_addsPanel;
         private Panel autodeducthdmfsssloanPanel;
         private Panel editUsersPanel;
+        private Panel modifyPayrollPanel;
         private Label lblFullName;
         private Label label1;
         private Button btnLogout;

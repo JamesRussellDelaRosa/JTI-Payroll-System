@@ -281,6 +281,12 @@ namespace JTI_Payroll_System
             payrollAjdForm.Show();
         }
 
+        private void modifyPayroll_Click(object sender, EventArgs e)
+        {
+            modify_payroll modifyPayrollForm = new modify_payroll();
+            modifyPayrollForm.Show();
+        }
+
         private void btnLogout_Click(object sender, EventArgs e)
         {
             UserSession.Clear(); // Clear the session
