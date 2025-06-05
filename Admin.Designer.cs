@@ -124,6 +124,7 @@
             Panel editUsersPanel = CreateClickablePanel("EditUsers", editUsers_Click);
             Panel payrollAdjPanel = CreateClickablePanel("Payroll Adjustments", payrollAdj_Click);
             Panel modifyPayrollPanel = CreateClickablePanel("Modify Payroll", modifyPayroll_Click);
+            Panel computewtaxPanel = CreateClickablePanel("Compute WTax", computewtax_Click);
 
             // Add Panels to FlowLayoutPanel
             menuFlowLayoutPanel.Controls.Add(employeePanel);
@@ -144,6 +145,7 @@
             menuFlowLayoutPanel.Controls.Add(editUsersPanel);
             menuFlowLayoutPanel.Controls.Add(payrollAdjPanel);
             menuFlowLayoutPanel.Controls.Add(modifyPayrollPanel);
+            menuFlowLayoutPanel.Controls.Add(computewtaxPanel);
         }
 
         private Panel CreateClickablePanel(string text, EventHandler functionHandler)
@@ -264,6 +266,7 @@
         private Panel autodeducthdmfsssloanPanel;
         private Panel editUsersPanel;
         private Panel modifyPayrollPanel;
+        private Panel computewtaxPanel;
         private Label lblFullName;
         private Label label1;
         private Button btnLogout;

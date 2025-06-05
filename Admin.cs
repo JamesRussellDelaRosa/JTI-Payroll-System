@@ -294,6 +294,12 @@ namespace JTI_Payroll_System
             modifyPayrollForm.Show();
         }
 
+        private void computewtax_Click(object sender, EventArgs e)
+        {
+            computewtax computewtaxForm = new computewtax();
+            computewtaxForm.Show();
+        }
+
         private void btnLogout_Click(object sender, EventArgs e)
         {
             UserSession.Clear(); // Clear the session
