@@ -6,6 +6,7 @@ using MySql.Data.MySqlClient;
 
 namespace JTI_Payroll_System
 {
+    [Obsolete("This form is now obsolete and has been replaced by the merged process in govdues_13thmonth. You may safely remove this file from the project.")]
     public partial class govdues : Form
     {
         public govdues()

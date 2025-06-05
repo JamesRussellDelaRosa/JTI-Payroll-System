@@ -1,5 +1,8 @@
 ﻿namespace JTI_Payroll_System
 {
+    /// <summary>
+    /// This designer file is now obsolete and has been replaced by the merged process in govdues_13thmonth.
+    /// You may safely remove this file from the project.
     partial class govdues
     {
         /// <summary>
@@ -23,8 +26,7 @@
         #region Windows Form Designer generated code
 
         /// <summary>
-        /// Required method for Designer support - do not modify
-        /// the contents of this method with the code editor.
+        /// Required method for Designer support - do not modify the contents of this method with the code editor.
         /// </summary>
         private void InitializeComponent()
         {

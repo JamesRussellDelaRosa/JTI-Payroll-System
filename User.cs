@@ -257,10 +257,12 @@ namespace JTI_Payroll_System
             autodeductssshdmfloanForm.Show();
         }
 
+        // The old govdues form has been removed. Please use the merged govdues_13thmonth form for all related processing.
+        // Remove or disable any UI elements that reference govdues.
+        // The panel for 'Post Government Dues' has been removed from the menu.
         private void govdues_Click(object sender, EventArgs e)
         {
-            govdues govduesForm = new govdues();
-            govduesForm.Show();
+            MessageBox.Show("The old Government Dues form has been removed. Please use the merged 13th Month & Gov Dues process.", "Notice", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void semimonthlywtax_Click(object sender, EventArgs e)
