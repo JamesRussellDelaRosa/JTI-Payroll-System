@@ -296,6 +296,7 @@ namespace JTI_Payroll_System
                             decimal sss = CalculateSSS(totalGrossPaySum, reliever);
                             decimal philhealth = CalculatePhilHealth(rate, controlPeriod, reliever);
                             decimal hdmf = CalculateHDMF(totalBasicPaySum, controlPeriod, reliever, empId, month, payrollYear);
+                            decimal totalGovDues = sss + philhealth + hdmf;
 
                             string updateQuery = @"
                                 UPDATE payroll 
@@ -303,7 +304,8 @@ namespace JTI_Payroll_System
                                     gross = @totalGrossPay,
                                     SSS = @sss,
                                     philhealth = @philhealth,
-                                    hdmf = @hdmf
+                                    hdmf = @hdmf,
+                                    total_govdues = @totalGovDues
                                 WHERE id = @id";
                             using (MySqlCommand updateCmd = new MySqlCommand(updateQuery, conn))
                             {
@@ -312,6 +314,7 @@ namespace JTI_Payroll_System
                                 updateCmd.Parameters.AddWithValue("@sss", sss);
                                 updateCmd.Parameters.AddWithValue("@philhealth", philhealth);
                                 updateCmd.Parameters.AddWithValue("@hdmf", hdmf);
+                                updateCmd.Parameters.AddWithValue("@totalGovDues", totalGovDues);
                                 updateCmd.Parameters.AddWithValue("@id", payrollId);
                                 updateCmd.ExecuteNonQuery();
                             }
