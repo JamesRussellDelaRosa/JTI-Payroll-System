@@ -17,7 +17,6 @@ namespace JTI_Payroll_System
         private DateTime toDate;
         private MySqlConnection conn;
 
-        // Constructor accepting two DateTime parameters
         public dgv_deducts_adds(DateTime fromDate, DateTime toDate)
         {
             InitializeComponent();
@@ -163,6 +162,18 @@ namespace JTI_Payroll_System
                     {
                         string employeeId = row.Cells["employee_id"].Value.ToString();
 
+                        decimal cashAdvance = Convert.ToDecimal(row.Cells["cash_advance"].Value ?? 0);
+                        decimal hmo = Convert.ToDecimal(row.Cells["hmo"].Value ?? 0);
+                        decimal uniform = Convert.ToDecimal(row.Cells["uniform"].Value ?? 0);
+                        decimal atmId = Convert.ToDecimal(row.Cells["atm_id"].Value ?? 0);
+                        decimal medical = Convert.ToDecimal(row.Cells["medical"].Value ?? 0);
+                        decimal grocery = Convert.ToDecimal(row.Cells["grocery"].Value ?? 0);
+                        decimal canteen = Convert.ToDecimal(row.Cells["canteen"].Value ?? 0);
+                        decimal damayan = Convert.ToDecimal(row.Cells["damayan"].Value ?? 0);
+                        decimal rice = Convert.ToDecimal(row.Cells["rice"].Value ?? 0);
+                        decimal sil = Convert.ToDecimal(row.Cells["sil"].Value ?? 0);
+                        decimal perfectAttendance = Convert.ToDecimal(row.Cells["perfect_attendance"].Value ?? 0);
+
                         string updateQuery = @"
                             UPDATE payroll SET
                                 cash_advance = @cash_advance, hmo = @hmo, uniform = @uniform, atm_id = @atm_id,
@@ -172,22 +183,36 @@ namespace JTI_Payroll_System
 
                         using (MySqlCommand updateCmd = new MySqlCommand(updateQuery, conn))
                         {
-                            updateCmd.Parameters.AddWithValue("@cash_advance", Convert.ToDecimal(row.Cells["cash_advance"].Value ?? 0));
-                            updateCmd.Parameters.AddWithValue("@hmo", Convert.ToDecimal(row.Cells["hmo"].Value ?? 0));
-                            updateCmd.Parameters.AddWithValue("@uniform", Convert.ToDecimal(row.Cells["uniform"].Value ?? 0));
-                            updateCmd.Parameters.AddWithValue("@atm_id", Convert.ToDecimal(row.Cells["atm_id"].Value ?? 0));
-                            updateCmd.Parameters.AddWithValue("@medical", Convert.ToDecimal(row.Cells["medical"].Value ?? 0));
-                            updateCmd.Parameters.AddWithValue("@grocery", Convert.ToDecimal(row.Cells["grocery"].Value ?? 0));
-                            updateCmd.Parameters.AddWithValue("@canteen", Convert.ToDecimal(row.Cells["canteen"].Value ?? 0));
-                            updateCmd.Parameters.AddWithValue("@damayan", Convert.ToDecimal(row.Cells["damayan"].Value ?? 0));
-                            updateCmd.Parameters.AddWithValue("@rice", Convert.ToDecimal(row.Cells["rice"].Value ?? 0));
-                            updateCmd.Parameters.AddWithValue("@sil", Convert.ToDecimal(row.Cells["sil"].Value ?? 0));
-                            updateCmd.Parameters.AddWithValue("@perfect_attendance", Convert.ToDecimal(row.Cells["perfect_attendance"].Value ?? 0));
+                            updateCmd.Parameters.AddWithValue("@cash_advance", cashAdvance);
+                            updateCmd.Parameters.AddWithValue("@hmo", hmo);
+                            updateCmd.Parameters.AddWithValue("@uniform", uniform);
+                            updateCmd.Parameters.AddWithValue("@atm_id", atmId);
+                            updateCmd.Parameters.AddWithValue("@medical", medical);
+                            updateCmd.Parameters.AddWithValue("@grocery", grocery);
+                            updateCmd.Parameters.AddWithValue("@canteen", canteen);
+                            updateCmd.Parameters.AddWithValue("@damayan", damayan);
+                            updateCmd.Parameters.AddWithValue("@rice", rice);
+                            updateCmd.Parameters.AddWithValue("@sil", sil);
+                            updateCmd.Parameters.AddWithValue("@perfect_attendance", perfectAttendance);
                             updateCmd.Parameters.AddWithValue("@employee_id", employeeId);
                             updateCmd.Parameters.AddWithValue("@fromDate", this.fromDate);
                             updateCmd.Parameters.AddWithValue("@toDate", this.toDate);
 
                             updateCmd.ExecuteNonQuery();
+                        }
+
+                        // Calculate total deductions and update total_deductions column
+                        decimal totalDeductions = cashAdvance + hmo + uniform + atmId + medical + grocery + canteen + damayan + rice;
+                        string updateTotalDeductionsQuery = @"
+                            UPDATE payroll SET total_deductions = @total_deductions
+                            WHERE employee_id = @employee_id AND pay_period_start = @fromDate AND pay_period_end = @toDate";
+                        using (MySqlCommand updateTotalCmd = new MySqlCommand(updateTotalDeductionsQuery, conn))
+                        {
+                            updateTotalCmd.Parameters.AddWithValue("@total_deductions", totalDeductions);
+                            updateTotalCmd.Parameters.AddWithValue("@employee_id", employeeId);
+                            updateTotalCmd.Parameters.AddWithValue("@fromDate", this.fromDate);
+                            updateTotalCmd.Parameters.AddWithValue("@toDate", this.toDate);
+                            updateTotalCmd.ExecuteNonQuery();
                         }
                     }
                 }
