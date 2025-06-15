@@ -103,6 +103,7 @@ namespace JTI_Payroll_System
                                 decimal adjustmentTotal = reader.IsDBNull(reader.GetOrdinal("adjustment_total")) ? 0 : reader.GetDecimal("adjustment_total");
                                 decimal relieverTotal = reader.IsDBNull(reader.GetOrdinal("reliever_total")) ? 0 : reader.GetDecimal("reliever_total");
                                 decimal netpay = totalGrossPay + sil + perfectAttendance + adjustmentTotal + relieverTotal;
+                                netpay = Math.Round(netpay, 2, MidpointRounding.AwayFromZero); // Round to 2 decimal places
                                 updates.Add((id, netpay));
                             }
                             reader.Close();
@@ -139,7 +140,7 @@ namespace JTI_Payroll_System
                 return;
             }
 
-            // Only update rows where total_grosspay is NULL or 0, regardless of regenerate checkbox
+            // If regenerate is checked, update all rows; otherwise, only update where total_grosspay is NULL or 0
             try
             {
                 using (var conn = DatabaseHelper.GetConnection())
@@ -166,10 +167,10 @@ namespace JTI_Payroll_System
                                 try { loanDeduction = reader.IsDBNull(reader.GetOrdinal("loan_deduction")) ? 0 : reader.GetDecimal("loan_deduction"); } catch { }
                                 try { totalDeductions = reader.IsDBNull(reader.GetOrdinal("total_deductions")) ? 0 : reader.GetDecimal("total_deductions"); } catch { }
                                 decimal totalGrossPay = grossPay - totalGovDues - loanDeduction - totalDeductions;
-                                // Only update if total_grosspay is NULL or 0
+                                // If regenerate is checked, always update; otherwise, only update if total_grosspay is NULL or 0
                                 bool isNull = reader.IsDBNull(reader.GetOrdinal("total_grosspay"));
                                 decimal existing = isNull ? 0 : reader.GetDecimal("total_grosspay");
-                                bool shouldUpdate = isNull || existing == 0;
+                                bool shouldUpdate = (regenerate != null && regenerate.Checked) ? true : (isNull || existing == 0);
                                 updates.Add((id, totalGrossPay, shouldUpdate));
                             }
                             reader.Close();

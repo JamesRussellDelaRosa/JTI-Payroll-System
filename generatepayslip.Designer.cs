@@ -39,6 +39,7 @@
             payrollyear = new TextBox();
             label1 = new Label();
             month = new TextBox();
+            regenerate = new CheckBox();
             SuspendLayout();
             // 
             // generate
@@ -131,11 +132,22 @@
             month.Size = new Size(32, 27);
             month.TabIndex = 24;
             // 
+            // regenerate
+            // 
+            regenerate.AutoSize = true;
+            regenerate.Location = new Point(233, 327);
+            regenerate.Name = "regenerate";
+            regenerate.Size = new Size(119, 24);
+            regenerate.TabIndex = 35;
+            regenerate.Text = "REGENERATE";
+            regenerate.UseVisualStyleBackColor = true;
+            // 
             // generatepayslip
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(regenerate);
             Controls.Add(generate);
             Controls.Add(label5);
             Controls.Add(todate);
@@ -165,5 +177,6 @@
         private TextBox payrollyear;
         private Label label1;
         private TextBox month;
+        private CheckBox regenerate;
     }
 }

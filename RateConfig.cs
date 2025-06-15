@@ -43,7 +43,7 @@ namespace JTI_Payroll_System
                             while (reader.Read())
                             {
                                 int id = reader.GetInt32("id");
-                                string rate = reader.GetDecimal("defaultrate").ToString("F5"); // Changed F2 to F5
+                                string rate = reader.GetDecimal("defaultrate").ToString("F2"); // Use F2 for defaultrate
                                 dropdownRate.Items.Add(new RateItem(id, rate));
                             }
 
@@ -120,13 +120,19 @@ namespace JTI_Payroll_System
 
         private void autoCompute_Click_1(object sender, EventArgs e)
         {
+            // Format defaultrate and ratecompute as F2
+            if (decimal.TryParse(defaultrate.Text, out decimal defRate))
+                defaultrate.Text = defRate.ToString("F2");
+            if (decimal.TryParse(ratecompute.Text, out decimal rateComp))
+                ratecompute.Text = rateComp.ToString("F2");
+
             basicpay.Text = defaultrate.Text;
 
             if (decimal.TryParse(ratecompute.Text, out decimal rate))
             {
                 rdpay.Text = (rate / 8 * 1.3m).ToString("F5");
                 rdotpay.Text = (rate / 8 * 1.69m).ToString("F5");
-                lhpay.Text = "520.00000";
+                lhpay.Text = (rate).ToString("F5");
                 regotpay.Text = (rate / 8 * 1.25m).ToString("F5");
                 trdypay.Text = (-rate / 8).ToString("F5");
                 lhhrspay.Text = (rate / 8).ToString("F5");
@@ -173,8 +179,16 @@ namespace JTI_Payroll_System
                     connection.Open();
                     using (MySqlCommand command = new MySqlCommand(query, connection))
                     {
-                        command.Parameters.AddWithValue("@defaultrate", defaultrate.Text);
-                        command.Parameters.AddWithValue("@ratecompute", ratecompute.Text);
+                        // Format defaultrate and ratecompute as F2
+                        if (decimal.TryParse(defaultrate.Text, out decimal defRate))
+                            command.Parameters.AddWithValue("@defaultrate", defRate.ToString("F2"));
+                        else
+                            command.Parameters.AddWithValue("@defaultrate", defaultrate.Text);
+                        if (decimal.TryParse(ratecompute.Text, out decimal rateComp))
+                            command.Parameters.AddWithValue("@ratecompute", rateComp.ToString("F2"));
+                        else
+                            command.Parameters.AddWithValue("@ratecompute", ratecompute.Text);
+                        // All other fields remain as F5
                         command.Parameters.AddWithValue("@basicpay", basicpay.Text);
                         command.Parameters.AddWithValue("@rdpay", rdpay.Text);
                         command.Parameters.AddWithValue("@rdotpay", rdotpay.Text);
