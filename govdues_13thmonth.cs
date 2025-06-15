@@ -320,8 +320,10 @@ namespace JTI_Payroll_System
                             }
                         }
                     }
-                    MessageBox.Show("Government Dues and 13th Month data processed successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
+                // Call the new method after processing
+                UpdateRelieverAndAdjustmentTotals(month, controlPeriod, payrollYear, fromDate, toDate);
+                MessageBox.Show("Government Dues and 13th Month data processed successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
@@ -434,6 +436,79 @@ namespace JTI_Payroll_System
                 hdmf = currentBasicPay >= 10000 ? 200 : (currentBasicPay * 0.02m);
             }
             return hdmf;
+        }
+
+        private void UpdateRelieverAndAdjustmentTotals(int month, int controlPeriod, int payrollYear, DateTime fromDate, DateTime toDate)
+        {
+            try
+            {
+                using (MySqlConnection conn = DatabaseHelper.GetConnection())
+                {
+                    conn.Open();
+                    string payrollQuery = @"SELECT id, employee_id FROM payroll WHERE month = @month AND payrollyear = @payrollYear AND control_period = @controlPeriod AND pay_period_start = @fromDate AND pay_period_end = @toDate";
+                    using (MySqlCommand payrollCmd = new MySqlCommand(payrollQuery, conn))
+                    {
+                        payrollCmd.Parameters.AddWithValue("@month", month);
+                        payrollCmd.Parameters.AddWithValue("@payrollYear", payrollYear);
+                        payrollCmd.Parameters.AddWithValue("@controlPeriod", controlPeriod);
+                        payrollCmd.Parameters.AddWithValue("@fromDate", fromDate);
+                        payrollCmd.Parameters.AddWithValue("@toDate", toDate);
+                        using (MySqlDataReader reader = payrollCmd.ExecuteReader())
+                        {
+                            var payrollList = new List<(int id, string employeeId)>();
+                            while (reader.Read())
+                            {
+                                payrollList.Add((reader.GetInt32("id"), reader.GetString("employee_id")));
+                            }
+                            reader.Close();
+                            foreach (var (id, employeeId) in payrollList)
+                            {
+                                decimal relieverTotal = 0;
+                                decimal adjustmentTotal = 0;
+                                // Get reliever gross_pay
+                                string relieverQuery = @"SELECT SUM(gross_pay) FROM payroll_reliever WHERE employee_id = @employeeId AND month = @month AND payrollyear = @payrollYear AND control_period = @controlPeriod AND pay_period_start = @fromDate AND pay_period_end = @toDate";
+                                using (MySqlCommand relieverCmd = new MySqlCommand(relieverQuery, conn))
+                                {
+                                    relieverCmd.Parameters.AddWithValue("@employeeId", employeeId);
+                                    relieverCmd.Parameters.AddWithValue("@month", month);
+                                    relieverCmd.Parameters.AddWithValue("@payrollYear", payrollYear);
+                                    relieverCmd.Parameters.AddWithValue("@controlPeriod", controlPeriod);
+                                    relieverCmd.Parameters.AddWithValue("@fromDate", fromDate);
+                                    relieverCmd.Parameters.AddWithValue("@toDate", toDate);
+                                    var val = relieverCmd.ExecuteScalar();
+                                    relieverTotal = val != DBNull.Value ? Convert.ToDecimal(val) : 0;
+                                }
+                                // Get adjustment gross_pay
+                                string adjustmentQuery = @"SELECT SUM(gross_pay) FROM payroll_adjustment WHERE employee_id = @employeeId AND month = @month AND payrollyear = @payrollYear AND control_period = @controlPeriod AND pay_period_start = @fromDate AND pay_period_end = @toDate";
+                                using (MySqlCommand adjustmentCmd = new MySqlCommand(adjustmentQuery, conn))
+                                {
+                                    adjustmentCmd.Parameters.AddWithValue("@employeeId", employeeId);
+                                    adjustmentCmd.Parameters.AddWithValue("@month", month);
+                                    adjustmentCmd.Parameters.AddWithValue("@payrollYear", payrollYear);
+                                    adjustmentCmd.Parameters.AddWithValue("@controlPeriod", controlPeriod);
+                                    adjustmentCmd.Parameters.AddWithValue("@fromDate", fromDate);
+                                    adjustmentCmd.Parameters.AddWithValue("@toDate", toDate);
+                                    var val = adjustmentCmd.ExecuteScalar();
+                                    adjustmentTotal = val != DBNull.Value ? Convert.ToDecimal(val) : 0;
+                                }
+                                // Update payroll table
+                                string updateQuery = @"UPDATE payroll SET reliever_total = @relieverTotal, adjustment_total = @adjustmentTotal WHERE id = @id";
+                                using (MySqlCommand updateCmd = new MySqlCommand(updateQuery, conn))
+                                {
+                                    updateCmd.Parameters.AddWithValue("@relieverTotal", relieverTotal);
+                                    updateCmd.Parameters.AddWithValue("@adjustmentTotal", adjustmentTotal);
+                                    updateCmd.Parameters.AddWithValue("@id", id);
+                                    updateCmd.ExecuteNonQuery();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error updating reliever/adjustment totals: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
     }
 }
