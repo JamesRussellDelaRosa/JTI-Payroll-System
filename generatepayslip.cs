@@ -16,5 +16,10 @@ namespace JTI_Payroll_System
         {
             InitializeComponent();
         }
+
+        private void generate_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }

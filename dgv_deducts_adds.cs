@@ -174,6 +174,26 @@ namespace JTI_Payroll_System
                         decimal sil = Convert.ToDecimal(row.Cells["sil"].Value ?? 0);
                         decimal perfectAttendance = Convert.ToDecimal(row.Cells["perfect_attendance"].Value ?? 0);
 
+                        // Fetch coop deduction values from database for this employee and period
+                        decimal coopLoanDeduction = 0, coopShareCapital = 0, coopSavingsDeposit = 0, coopMembershipFee = 0;
+                        string coopQuery = @"SELECT coop_loan_deduction, coop_share_capital, coop_savings_deposit, coop_membership_fee FROM payroll WHERE employee_id = @employee_id AND pay_period_start = @fromDate AND pay_period_end = @toDate";
+                        using (MySqlCommand coopCmd = new MySqlCommand(coopQuery, conn))
+                        {
+                            coopCmd.Parameters.AddWithValue("@employee_id", employeeId);
+                            coopCmd.Parameters.AddWithValue("@fromDate", this.fromDate);
+                            coopCmd.Parameters.AddWithValue("@toDate", this.toDate);
+                            using (var reader = coopCmd.ExecuteReader())
+                            {
+                                if (reader.Read())
+                                {
+                                    coopLoanDeduction = reader["coop_loan_deduction"] != DBNull.Value ? Convert.ToDecimal(reader["coop_loan_deduction"]) : 0;
+                                    coopShareCapital = reader["coop_share_capital"] != DBNull.Value ? Convert.ToDecimal(reader["coop_share_capital"]) : 0;
+                                    coopSavingsDeposit = reader["coop_savings_deposit"] != DBNull.Value ? Convert.ToDecimal(reader["coop_savings_deposit"]) : 0;
+                                    coopMembershipFee = reader["coop_membership_fee"] != DBNull.Value ? Convert.ToDecimal(reader["coop_membership_fee"]) : 0;
+                                }
+                            }
+                        }
+
                         string updateQuery = @"
                             UPDATE payroll SET
                                 cash_advance = @cash_advance, hmo = @hmo, uniform = @uniform, atm_id = @atm_id,
@@ -202,7 +222,8 @@ namespace JTI_Payroll_System
                         }
 
                         // Calculate total deductions and update total_deductions column
-                        decimal totalDeductions = cashAdvance + hmo + uniform + atmId + medical + grocery + canteen + damayan + rice;
+                        decimal totalDeductions = cashAdvance + hmo + uniform + atmId + medical + grocery + canteen + damayan + rice
+                            + coopLoanDeduction + coopShareCapital + coopSavingsDeposit + coopMembershipFee;        
                         string updateTotalDeductionsQuery = @"
                             UPDATE payroll SET total_deductions = @total_deductions
                             WHERE employee_id = @employee_id AND pay_period_start = @fromDate AND pay_period_end = @toDate";

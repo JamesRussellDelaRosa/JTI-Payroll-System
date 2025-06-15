@@ -29,7 +29,7 @@
         private void InitializeComponent()
         {
             regenerate = new CheckBox();
-            btncomputewtax = new Button();
+            generate = new Button();
             label5 = new Label();
             todate = new TextBox();
             label4 = new Label();
@@ -52,14 +52,15 @@
             regenerate.Text = "REGENERATE";
             regenerate.UseVisualStyleBackColor = true;
             // 
-            // btncomputewtax
+            // generate
             // 
-            btncomputewtax.Location = new Point(358, 324);
-            btncomputewtax.Name = "btncomputewtax";
-            btncomputewtax.Size = new Size(193, 29);
-            btncomputewtax.TabIndex = 34;
-            btncomputewtax.Text = "GENERATE";
-            btncomputewtax.UseVisualStyleBackColor = true;
+            generate.Location = new Point(358, 324);
+            generate.Name = "generate";
+            generate.Size = new Size(193, 29);
+            generate.TabIndex = 34;
+            generate.Text = "GENERATE";
+            generate.UseVisualStyleBackColor = true;
+            generate.Click += generate_Click;
             // 
             // label5
             // 
@@ -147,7 +148,7 @@
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
             Controls.Add(regenerate);
-            Controls.Add(btncomputewtax);
+            Controls.Add(generate);
             Controls.Add(label5);
             Controls.Add(todate);
             Controls.Add(label4);
@@ -167,7 +168,7 @@
         #endregion
 
         private CheckBox regenerate;
-        private Button btncomputewtax;
+        private Button generate;
         private Label label5;
         private TextBox todate;
         private Label label4;
