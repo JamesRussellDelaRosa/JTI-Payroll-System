@@ -117,6 +117,7 @@
             Panel payrollAdjPanel = CreateClickablePanel("Payroll Adjustments", payrollAdj_Click);
             Panel modifyPayrollPanel = CreateClickablePanel("Modify Payroll", modifyPayroll_Click);
             Panel computewtaxPanel = CreateClickablePanel("Compute WTax", computewtax_Click);
+            Panel genpayslipPanel = CreateClickablePanel("Generate Payslip", genpayslip_Click);
 
             // Add Panels to FlowLayoutPanel
             menuFlowLayoutPanel.Controls.Add(employeePanel);
@@ -133,6 +134,7 @@
             menuFlowLayoutPanel.Controls.Add(payrollAdjPanel);
             menuFlowLayoutPanel.Controls.Add(modifyPayrollPanel);
             menuFlowLayoutPanel.Controls.Add(computewtaxPanel);
+            menuFlowLayoutPanel.Controls.Add(genpayslipPanel);
         }
 
         private Panel CreateClickablePanel(string text, EventHandler functionHandler)

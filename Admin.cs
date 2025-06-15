@@ -302,6 +302,12 @@ namespace JTI_Payroll_System
             computewtaxForm.Show();
         }
 
+        private void genpayslip_Click(object sender, EventArgs e)
+        {
+            generatepayslip generatepayslipForm = new generatepayslip();
+            generatepayslipForm.Show();
+        }
+
         private void btnLogout_Click(object sender, EventArgs e)
         {
             UserSession.Clear(); // Clear the session
