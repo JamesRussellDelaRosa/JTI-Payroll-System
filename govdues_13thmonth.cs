@@ -370,7 +370,24 @@ namespace JTI_Payroll_System
             }
             if (controlPeriod == 1)
             {
-                return rate * 313 / 12 * 0.05m / 2;
+                decimal ratecompute = 0;
+                using (MySqlConnection conn = DatabaseHelper.GetConnection())
+                {
+                    conn.Open();
+                    string query = "SELECT ratecompute FROM rate WHERE defaultrate = @rate ORDER BY id DESC LIMIT 1";
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@rate", rate);
+                        using (MySqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                ratecompute = reader.GetDecimal("ratecompute");
+                            }
+                        }
+                    }
+                }
+                return ratecompute * 313 / 12 * 0.05m / 2;
             }
             return 0;
         }

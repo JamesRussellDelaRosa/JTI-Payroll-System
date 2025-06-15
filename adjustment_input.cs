@@ -285,27 +285,27 @@ namespace JTI_Payroll_System
                             if (rateReader.Read())
                             {
                                 // Get config values
-                                decimal basic = rateReader.GetDecimal("basic");
-                                decimal rd = rateReader.GetDecimal("rd");
-                                decimal rdot = rateReader.GetDecimal("rdot");
-                                decimal lh = rateReader.GetDecimal("lh");
-                                decimal regot = rateReader.GetDecimal("regot");
-                                decimal trdy = rateReader.GetDecimal("trdy");
-                                decimal lhhrs = rateReader.GetDecimal("lhhrs");
-                                decimal lhothrs = rateReader.GetDecimal("lhothrs");
-                                decimal lhrd = rateReader.GetDecimal("lhrd");
-                                decimal lhrdot = rateReader.GetDecimal("lhrdot");
-                                decimal sh = rateReader.GetDecimal("sh");
-                                decimal shot = rateReader.GetDecimal("shot");
-                                decimal shrd = rateReader.GetDecimal("shrd");
-                                decimal shrdot = rateReader.GetDecimal("shrdot");
-                                decimal nd = rateReader.GetDecimal("nd");
-                                decimal ndot = rateReader.GetDecimal("ndot");
-                                decimal ndrd = rateReader.GetDecimal("ndrd");
-                                decimal ndsh = rateReader.GetDecimal("ndsh");
-                                decimal ndshrd = rateReader.GetDecimal("ndshrd");
-                                decimal ndlh = rateReader.GetDecimal("ndlh");
-                                decimal ndlhrd = rateReader.GetDecimal("ndlhrd");
+                                decimal basic = rateReader.GetDecimal("basicpay");
+                                decimal rd = rateReader.GetDecimal("rdpay");
+                                decimal rdot = rateReader.GetDecimal("rdotpay");
+                                decimal lh = rateReader.GetDecimal("lhpay");
+                                decimal regot = rateReader.GetDecimal("regotpay");
+                                decimal trdy = rateReader.GetDecimal("trdypay");
+                                decimal lhhrs = rateReader.GetDecimal("lhhrspay");
+                                decimal lhothrs = rateReader.GetDecimal("lhothrspay");
+                                decimal lhrd = rateReader.GetDecimal("lhrdpay");
+                                decimal lhrdot = rateReader.GetDecimal("lhrdotpay");
+                                decimal sh = rateReader.GetDecimal("shpay");
+                                decimal shot = rateReader.GetDecimal("shotpay");
+                                decimal shrd = rateReader.GetDecimal("shrdpay");
+                                decimal shrdot = rateReader.GetDecimal("shrdotpay");
+                                decimal nd = rateReader.GetDecimal("ndpay");
+                                decimal ndot = rateReader.GetDecimal("ndotpay");
+                                decimal ndrd = rateReader.GetDecimal("ndrdpay");
+                                decimal ndsh = rateReader.GetDecimal("ndshpay");
+                                decimal ndshrd = rateReader.GetDecimal("ndshrdpay");
+                                decimal ndlh = rateReader.GetDecimal("ndlhpay");
+                                decimal ndlhrd = rateReader.GetDecimal("ndlhrdpay");
                                 rateReader.Close();
                                 // Get adjustment row values
                                 decimal total_days = Convert.ToDecimal(row.Cells["total_days"].Value ?? 0);
