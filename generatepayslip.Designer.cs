@@ -28,7 +28,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            regenerate = new CheckBox();
             generate = new Button();
             label5 = new Label();
             todate = new TextBox();
@@ -41,16 +40,6 @@
             label1 = new Label();
             month = new TextBox();
             SuspendLayout();
-            // 
-            // regenerate
-            // 
-            regenerate.AutoSize = true;
-            regenerate.Location = new Point(233, 327);
-            regenerate.Name = "regenerate";
-            regenerate.Size = new Size(119, 24);
-            regenerate.TabIndex = 35;
-            regenerate.Text = "REGENERATE";
-            regenerate.UseVisualStyleBackColor = true;
             // 
             // generate
             // 
@@ -147,7 +136,6 @@
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
-            Controls.Add(regenerate);
             Controls.Add(generate);
             Controls.Add(label5);
             Controls.Add(todate);
@@ -166,8 +154,6 @@
         }
 
         #endregion
-
-        private CheckBox regenerate;
         private Button generate;
         private Label label5;
         private TextBox todate;
