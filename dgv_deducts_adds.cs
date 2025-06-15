@@ -30,6 +30,7 @@ namespace JTI_Payroll_System
 
         private void InitializeDataGridView()
         {
+            dataGridView1.AllowUserToAddRows = false; // Prevent the empty new row from appearing
             dataGridView1.AutoGenerateColumns = false; // Prevent auto-generation of columns
 
             // Set up columns
