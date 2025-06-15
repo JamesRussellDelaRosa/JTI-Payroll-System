@@ -16,9 +16,65 @@ namespace JTI_Payroll_System
         public autodeductssshdmfloan()
         {
             InitializeComponent();
+            InitializeCustomComponents();
+        }
 
-            fromdate.PlaceholderText = "MM/DD/YYYY";
-            todate.PlaceholderText = "MM/DD/YYYY";
+        private void InitializeCustomComponents()
+        {
+            fromdate.Enter += new EventHandler(RemoveHint);
+            fromdate.Leave += new EventHandler(AddHint);
+            fromdate.KeyPress += new KeyPressEventHandler(AutoFormatDate);
+
+            todate.Enter += new EventHandler(RemoveHint);
+            todate.Leave += new EventHandler(AddHint);
+            todate.KeyPress += new KeyPressEventHandler(AutoFormatDate);
+
+            AddHint(fromdate, null);
+            AddHint(todate, null);
+        }
+
+        private void RemoveHint(object sender, EventArgs e)
+        {
+            TextBox textBox = sender as TextBox;
+            if (textBox.Text == "MM/DD/YYYY")
+            {
+                textBox.Text = "";
+                textBox.ForeColor = Color.Black;
+            }
+        }
+
+        private void AddHint(object sender, EventArgs e)
+        {
+            TextBox textBox = sender as TextBox;
+            if (string.IsNullOrWhiteSpace(textBox.Text))
+            {
+                textBox.Text = "MM/DD/YYYY";
+                textBox.ForeColor = Color.Gray;
+            }
+        }
+
+        private void AutoFormatDate(object sender, KeyPressEventArgs e)
+        {
+            TextBox textBox = sender as TextBox;
+
+            // Allow only digits and control keys (e.g., backspace)
+            if (!char.IsDigit(e.KeyChar) && !char.IsControl(e.KeyChar))
+            {
+                e.Handled = true;
+                return;
+            }
+
+            // Auto-insert slashes based on the MM/DD/YYYY format
+            if (!char.IsControl(e.KeyChar))
+            {
+                int length = textBox.Text.Length;
+
+                if (length == 2 || length == 5)
+                {
+                    textBox.Text += "/";
+                    textBox.SelectionStart = textBox.Text.Length; // Move the caret to the end
+                }
+            }
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -117,6 +173,16 @@ namespace JTI_Payroll_System
                                 UpdateHdmfCalamityLoan(connection, employeeId, fromDate, toDate);
                                 UpdateSSSLoan(connection, employeeId, fromDate, toDate);
                                 UpdateSSSCalamityLoan(connection, employeeId, fromDate, toDate);
+
+                                // Sum loans and update loan_deduction
+                                string updateLoanDeductionQuery = @"UPDATE payroll SET loan_deduction = IFNULL(hdmf_loan,0) + IFNULL(hdmfcalamity_loan,0) + IFNULL(sss_loan,0) + IFNULL(ssscalamity_loan,0) WHERE employee_id = @employee_id AND pay_period_start = @from_date AND pay_period_end = @to_date";
+                                using (MySqlCommand updateLoanDeductionCommand = new MySqlCommand(updateLoanDeductionQuery, connection))
+                                {
+                                    updateLoanDeductionCommand.Parameters.AddWithValue("@employee_id", employeeId);
+                                    updateLoanDeductionCommand.Parameters.AddWithValue("@from_date", fromDate.ToString("yyyy-MM-dd"));
+                                    updateLoanDeductionCommand.Parameters.AddWithValue("@to_date", toDate.ToString("yyyy-MM-dd"));
+                                    updateLoanDeductionCommand.ExecuteNonQuery();
+                                }
                             }
 
                             MessageBox.Show("HDMF Loan deductions updated successfully.");
