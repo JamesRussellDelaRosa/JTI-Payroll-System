@@ -182,6 +182,26 @@ namespace JTI_Payroll_System
                                     Canteen = reader.IsDBNull(reader.GetOrdinal("canteen")) ? 0 : reader.GetDecimal(reader.GetOrdinal("canteen")),
                                     Damayan = reader.IsDBNull(reader.GetOrdinal("damayan")) ? 0 : reader.GetDecimal(reader.GetOrdinal("damayan")),
                                     Rice = reader.IsDBNull(reader.GetOrdinal("rice")) ? 0 : reader.GetDecimal(reader.GetOrdinal("rice")),
+                                    TotalDays = reader.IsDBNull(reader.GetOrdinal("total_days")) ? 0 : reader.GetDecimal(reader.GetOrdinal("total_days")),
+                                    LegalHolidayCount = reader.IsDBNull(reader.GetOrdinal("legal_holiday_count")) ? 0 : reader.GetDecimal(reader.GetOrdinal("legal_holiday_count")),
+                                    OvertimeHours = reader.IsDBNull(reader.GetOrdinal("overtime_hours")) ? 0 : reader.GetDecimal(reader.GetOrdinal("overtime_hours")),
+                                    RestdayHours = reader.IsDBNull(reader.GetOrdinal("restday_hours")) ? 0 : reader.GetDecimal(reader.GetOrdinal("restday_hours")),
+                                    RestdayOvertimeHours = reader.IsDBNull(reader.GetOrdinal("restday_overtime_hours")) ? 0 : reader.GetDecimal(reader.GetOrdinal("restday_overtime_hours")),
+                                    LegalHolidayHours = reader.IsDBNull(reader.GetOrdinal("legal_holiday_hours")) ? 0 : reader.GetDecimal(reader.GetOrdinal("legal_holiday_hours")),
+                                    LegalHolidayOvertimeHours = reader.IsDBNull(reader.GetOrdinal("legal_holiday_overtime_hours")) ? 0 : reader.GetDecimal(reader.GetOrdinal("legal_holiday_overtime_hours")),
+                                    LegalHolidayRestdayHours = reader.IsDBNull(reader.GetOrdinal("lhrd_hours")) ? 0 : reader.GetDecimal(reader.GetOrdinal("lhrd_hours")),
+                                    LegalHolidayRestdayOvertimeHours = reader.IsDBNull(reader.GetOrdinal("lhrd_overtime_hours")) ? 0 : reader.GetDecimal(reader.GetOrdinal("lhrd_overtime_hours")),
+                                    SpecialHolidayHours = reader.IsDBNull(reader.GetOrdinal("special_holiday_hours")) ? 0 : reader.GetDecimal(reader.GetOrdinal("special_holiday_hours")),
+                                    SpecialHolidayOvertimeHours = reader.IsDBNull(reader.GetOrdinal("special_holiday_overtime_hours")) ? 0 : reader.GetDecimal(reader.GetOrdinal("special_holiday_overtime_hours")),
+                                    SpecialHolidayRestdayHours = reader.IsDBNull(reader.GetOrdinal("special_holiday_restday_hours")) ? 0 : reader.GetDecimal(reader.GetOrdinal("special_holiday_restday_hours")),
+                                    SpecialHolidayRestdayOvertimeHours = reader.IsDBNull(reader.GetOrdinal("special_holiday_restday_overtime_hours")) ? 0 : reader.GetDecimal(reader.GetOrdinal("special_holiday_restday_overtime_hours")),
+                                    NightDifferentialHours = reader.IsDBNull(reader.GetOrdinal("nd_hrs")) ? 0 : reader.GetDecimal(reader.GetOrdinal("nd_hrs")),
+                                    NightDifferentialOvertimeHours = reader.IsDBNull(reader.GetOrdinal("ndot_hrs")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndot_hrs")),
+                                    NightDifferentialRestdayHours = reader.IsDBNull(reader.GetOrdinal("ndrd_hrs")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndrd_hrs")),
+                                    NightDifferentialSpecialHolidayHours = reader.IsDBNull(reader.GetOrdinal("ndsh_hrs")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndsh_hrs")),
+                                    NightDifferentialSpecialHolidayRestdayHours = reader.IsDBNull(reader.GetOrdinal("ndshrd_hrs")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndshrd_hrs")),
+                                    NightDifferentialLegalHolidayHours = reader.IsDBNull(reader.GetOrdinal("ndlh_hrs")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndlh_hrs")),
+                                    NightDifferentialLegalHolidayRestdayHours = reader.IsDBNull(reader.GetOrdinal("ndlhrd_hrs")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndlhrd_hrs"))
                                 };
                                 payslips.Add(payslip);
                             }
@@ -291,30 +311,45 @@ namespace JTI_Payroll_System
                 gfx.DrawLine(XPens.Black, dedCol1, y, dedCol2 + 40, y);
                 y += 2;
 
-                // Earnings and Deductions Table (side by side)
-                string[] earningLabels = new[] {
-                    "Basic Pay (no. of regular Days)",
-                    "Legal Holiday w/ Pay",
-                    "Less:Tardy/Undertime",
-                    "Total Basic Pay",
-                    "Overtime Pay",
-                    "Night Differential",
-                    "Total Overtime Pay",
-                    "GROSS PAY"
+                // EARNINGS TABLE (detailed rows)
+                var earningsRows = new (string label, string current, decimal amount, bool bold)[] {
+                    ("Basic Pay (No. of regular Days)", payslip.TotalDays.ToString("N2"), payslip.BasicPay, false),
+                    ("Legal Holiday w/ Pay", payslip.LegalHolidayCount.ToString(), payslip.LegalHolidayPay, false),
+                    ("Less:Tardy/Undertime", payslip.TardyUndertimePay.ToString("N2"), payslip.TardyUndertimePay, false),
+                    ("Total Basic Pay", "", payslip.BasicPay + payslip.LegalHolidayPay - payslip.TardyUndertimePay, true),
+                    ("Overtime Pay", "", payslip.OvertimePay, true),
+                    ("Regular OT Hrs.", payslip.OvertimeHours.ToString("N2"), payslip.OvertimePay, false),
+                    ("Rest Day Hrs.", payslip.RestdayHours.ToString("N2"), payslip.RestdayPay, false),
+                    ("Rest Day OT Hrs.", payslip.RestdayOvertimeHours.ToString("N2"), payslip.RestdayOvertimePay, false),
+                    ("Legal Holiday Hrs.", payslip.LegalHolidayHours.ToString("N2"), payslip.LegalHolidayPay, false),
+                    ("Legal Holiday OT Hrs.", payslip.LegalHolidayOvertimeHours.ToString("N2"), payslip.LegalHolidayOvertimePay, false),
+                    ("Legal Hol. Rest Day Hrs.", payslip.LegalHolidayRestdayHours.ToString("N2"), payslip.LegalHolidayRestdayPay, false),
+                    ("Legal Hol. Rest Day OT Hrs.", payslip.LegalHolidayRestdayOvertimeHours.ToString("N2"), payslip.LegalHolidayRestdayOvertimePay, false),
+                    ("Special Holiday Hrs.", payslip.SpecialHolidayHours.ToString("N2"), payslip.SpecialHolidayPay, false),
+                    ("Special Holiday OT Hrs.", payslip.SpecialHolidayOvertimeHours.ToString("N2"), payslip.SpecialHolidayOvertimePay, false),
+                    ("Spl Holiday on a Rest Day", payslip.SpecialHolidayRestdayHours.ToString("N2"), payslip.SpecialHolidayRestdayPay, false),
+                    ("Spl Hol/Rest Day OT", payslip.SpecialHolidayRestdayOvertimeHours.ToString("N2"), payslip.SpecialHolidayRestdayOvertimePay, false),
+                    ("Night Differential", payslip.NightDifferentialHours.ToString("N2"), payslip.NightDifferentialPay, false),
+                    ("Night Differential OT", payslip.NightDifferentialOvertimeHours.ToString("N2"), payslip.NightDifferentialOvertimePay, false),
+                    ("Night Diff. Rest Day", payslip.NightDifferentialRestdayHours.ToString("N2"), payslip.NightDifferentialRestdayPay, false),
+                    ("Night Diff. SH.", payslip.NightDifferentialSpecialHolidayHours.ToString("N2"), payslip.NightDifferentialSpecialHolidayPay, false),
+                    ("Night Diff. SH/RD.", payslip.NightDifferentialSpecialHolidayRestdayHours.ToString("N2"), payslip.NightDifferentialSpecialHolidayRestdayPay, false),
+                    ("Night Diff. Leg. Hol.", payslip.NightDifferentialLegalHolidayHours.ToString("N2"), payslip.NightDifferentialLegalHolidayPay, false),
+                    ("Night Diff. LH/RD.", payslip.NightDifferentialLegalHolidayRestdayHours.ToString("N2"), payslip.NightDifferentialLegalHolidayRestdayPay, false),
+                    ("Total Overtime Pay", "", payslip.OvertimePay, true),
+                    ("GROSS PAY", "", payslip.GrossPay, true)
                 };
-                string[] earningCurrent = new[] { "-", "-", "-", "", "", "-", "", "" };
-                decimal[] earningAmounts = new[] {
-                    payslip.BasicPay,
-                    payslip.LegalHolidayPay,
-                    payslip.TardyUndertimePay,
-                    payslip.BasicPay + payslip.LegalHolidayPay - payslip.TardyUndertimePay,
-                    0,
-                    payslip.NightDifferentialPay,
-                    payslip.OvertimePay,
-                    payslip.GrossPay
-                };
-                bool[] earningBold = new[] { false, false, false, true, true, false, true, true };
+                int earningsY = tableStartY + lineHeight + 2;
+                foreach (var row in earningsRows)
+                {
+                    gfx.DrawString(row.label, row.bold ? boldFont : font, blackBrush, earningsCol1, earningsY);
+                    gfx.DrawString(row.current, font, blackBrush, earningsCol2, earningsY);
+                    gfx.DrawString($"{row.amount:N2}", row.bold ? boldFont : font, blackBrush, new XRect(earningsCol3, earningsY, 40, lineHeight), XStringFormats.TopRight);
+                    earningsY += lineHeight;
+                }
 
+                // Deductions Table (right side, unchanged)
+                int deductionsY = tableStartY + lineHeight + 2;
                 string[] deductionLabels = new[] {
                     "GOVERNMENT DUES DEDUCTION",
                     "SSS Contribution",
@@ -360,44 +395,30 @@ namespace JTI_Payroll_System
                     payslip.TotalDeductions
                 };
                 bool[] deductionBold = new[] { true, false, false, false, true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true };
-
-                int maxRows = Math.Max(earningLabels.Length, deductionLabels.Length);
-                int earningsY = tableStartY + lineHeight + 2;
-                int deductionsY = tableStartY + lineHeight + 2;
-                for (int i = 0; i < maxRows; i++)
+                for (int i = 0; i < deductionLabels.Length; i++)
                 {
-                    if (i < earningLabels.Length)
-                    {
-                        gfx.DrawString(earningLabels[i], earningBold[i] ? boldFont : font, blackBrush, earningsCol1, earningsY);
-                        gfx.DrawString(earningCurrent[i], font, blackBrush, earningsCol2, earningsY);
-                        gfx.DrawString($"{earningAmounts[i]:N2}", earningBold[i] ? boldFont : font, blackBrush, new XRect(earningsCol3, earningsY, 40, lineHeight), XStringFormats.TopRight);
-                    }
-                    if (i < deductionLabels.Length)
-                    {
-                        gfx.DrawString(deductionLabels[i], deductionBold[i] ? boldFont : font, blackBrush, dedCol1, deductionsY);
-                        gfx.DrawString($"{deductionAmounts[i]:N2}", deductionBold[i] ? boldFont : font, blackBrush, new XRect(dedCol2, deductionsY, 40, lineHeight), XStringFormats.TopRight);
-                    }
-                    earningsY += lineHeight;
+                    gfx.DrawString(deductionLabels[i], deductionBold[i] ? boldFont : font, blackBrush, dedCol1, deductionsY);
+                    gfx.DrawString($"{deductionAmounts[i]:N2}", deductionBold[i] ? boldFont : font, blackBrush, new XRect(dedCol2, deductionsY, 40, lineHeight), XStringFormats.TopRight);
                     deductionsY += lineHeight;
                 }
-                y = Math.Max(earningsY, deductionsY) + lineHeight;
 
-                // Other Earnings
-                gfx.DrawString("OTHER EARNINGS", boldFont, blackBrush, earningsCol1, y);
-                y += lineHeight;
+                // Other Earnings (on the right, below deductions)
+                int otherY = deductionsY;
+                gfx.DrawString("OTHER EARNINGS", boldFont, blackBrush, dedCol1, otherY);
+                otherY += lineHeight;
                 void DrawOtherEarningRow(string label, decimal amount, bool red = false)
                 {
                     XFont useFont = red ? redFont : font;
                     XBrush useBrush = red ? redBrush : blackBrush;
-                    gfx.DrawString(label, useFont, useBrush, earningsCol1, y);
-                    gfx.DrawString($"{amount:N2}", useFont, useBrush, new XRect(earningsCol3, y, 40, lineHeight), XStringFormats.TopRight);
-                    y += lineHeight;
+                    gfx.DrawString(label, useFont, useBrush, dedCol1, otherY);
+                    gfx.DrawString($"{amount:N2}", useFont, useBrush, new XRect(dedCol2, otherY, 40, lineHeight), XStringFormats.TopRight);
+                    otherY += lineHeight;
                 }
                 DrawOtherEarningRow("SIL-SERVICE INCENTIVE LEAVE", payslip.SIL, true);
                 DrawOtherEarningRow("PERFECT ATTENDANCE", payslip.PerfectAttendance, true);
                 DrawOtherEarningRow("ADJUSTMENT (LH NO WORK)", payslip.Adjustment, true);
                 DrawOtherEarningRow("RELIEVER", payslip.Reliever, true);
-                y += lineHeight;
+                otherY += lineHeight;
                 DrawOtherEarningRow("TAKE HOME PAY", payslip.NetPay, false);
 
                 using (SaveFileDialog sfd = new SaveFileDialog { Filter = "PDF files (*.pdf)|*.pdf", FileName = $"Payslip_{payslip.EmployeeId}.pdf" })
@@ -525,5 +546,40 @@ namespace JTI_Payroll_System
         public decimal Canteen { get; set; }
         public decimal Damayan { get; set; }
         public decimal Rice { get; set; }
+        public decimal TotalDays { get; set; }
+        public decimal LegalHolidayCount { get; set; }
+        public decimal OvertimeHours { get; set; }
+        public decimal RestdayHours { get; set; }
+        public decimal RestdayOvertimeHours { get; set; }
+        public decimal LegalHolidayHours { get; set; }
+        public decimal LegalHolidayOvertimeHours { get; set; }
+        public decimal LegalHolidayRestdayHours { get; set; }
+        public decimal LegalHolidayRestdayOvertimeHours { get; set; }
+        public decimal SpecialHolidayHours { get; set; }
+        public decimal SpecialHolidayOvertimeHours { get; set; }
+        public decimal SpecialHolidayRestdayHours { get; set; }
+        public decimal SpecialHolidayRestdayOvertimeHours { get; set; }
+        public decimal NightDifferentialHours { get; set; }
+        public decimal NightDifferentialOvertimeHours { get; set; }
+        public decimal NightDifferentialRestdayHours { get; set; }
+        public decimal NightDifferentialSpecialHolidayHours { get; set; }
+        public decimal NightDifferentialSpecialHolidayRestdayHours { get; set; }
+        public decimal NightDifferentialLegalHolidayHours { get; set; }
+        public decimal NightDifferentialLegalHolidayRestdayHours { get; set; }
+        public decimal RestdayPay { get; set; }
+        public decimal RestdayOvertimePay { get; set; }
+        public decimal LegalHolidayOvertimePay { get; set; }
+        public decimal LegalHolidayRestdayPay { get; set; }
+        public decimal LegalHolidayRestdayOvertimePay { get; set; }
+        public decimal SpecialHolidayPay { get; set; }
+        public decimal SpecialHolidayOvertimePay { get; set; }
+        public decimal SpecialHolidayRestdayPay { get; set; }
+        public decimal SpecialHolidayRestdayOvertimePay { get; set; }
+        public decimal NightDifferentialOvertimePay { get; set; }
+        public decimal NightDifferentialRestdayPay { get; set; }
+        public decimal NightDifferentialSpecialHolidayPay { get; set; }
+        public decimal NightDifferentialSpecialHolidayRestdayPay { get; set; }
+        public decimal NightDifferentialLegalHolidayPay { get; set; }
+        public decimal NightDifferentialLegalHolidayRestdayPay { get; set; }
     }
 }
