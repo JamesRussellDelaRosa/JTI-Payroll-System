@@ -216,41 +216,6 @@ namespace JTI_Payroll_System
             return payslips;
         }
 
-        private void ShowPayslip(PayslipViewModel payslip)
-        {
-            // For demonstration, show a simple MessageBox. Replace with a custom form for a real payslip view.
-            var sb = new StringBuilder();
-            sb.AppendLine($"ID NO: {payslip.EmployeeId}");
-            sb.AppendLine($"NAME: {payslip.EmployeeName}");
-            sb.AppendLine($"PERIOD: {payslip.PeriodStart:MM/dd/yyyy} - {payslip.PeriodEnd:MM/dd/yyyy}");
-            sb.AppendLine($"RATE/DAY: {payslip.RatePerDay:N2}");
-            sb.AppendLine($"Basic Pay: {payslip.BasicPay:N2}");
-            sb.AppendLine($"Legal Holiday Pay: {payslip.LegalHolidayPay:N2}");
-            sb.AppendLine($"Tardy/Undertime: {payslip.TardyUndertimePay:N2}");
-            sb.AppendLine($"Overtime Pay: {payslip.OvertimePay:N2}");
-            sb.AppendLine($"Night Differential: {payslip.NightDifferentialPay:N2}");
-            sb.AppendLine($"Gross Pay: {payslip.GrossPay:N2}");
-            sb.AppendLine($"SSS: {payslip.SSS:N2}");
-            sb.AppendLine($"PhilHealth: {payslip.PhilHealth:N2}");
-            sb.AppendLine($"HDMF: {payslip.HDMF:N2}");
-            sb.AppendLine($"HMO: {payslip.HMO:N2}");
-            sb.AppendLine($"Total Deductions: {payslip.TotalDeductions:N2}");
-            sb.AppendLine($"SIL: {payslip.SIL:N2}");
-            sb.AppendLine($"Perfect Attendance: {payslip.PerfectAttendance:N2}");
-            sb.AppendLine($"Adjustment: {payslip.Adjustment:N2}");
-            sb.AppendLine($"Reliever: {payslip.Reliever:N2}");
-            sb.AppendLine($"Cash Advance: {payslip.CashAdvance:N2}");
-            sb.AppendLine($"Uniform: {payslip.Uniform:N2}");
-            sb.AppendLine($"ATM ID: {payslip.AtmId:N2}");
-            sb.AppendLine($"Medical: {payslip.Medical:N2}");
-            sb.AppendLine($"Grocery: {payslip.Grocery:N2}");
-            sb.AppendLine($"Canteen: {payslip.Canteen:N2}");
-            sb.AppendLine($"Damayan: {payslip.Damayan:N2}");
-            sb.AppendLine($"Rice: {payslip.Rice:N2}");
-            sb.AppendLine($"Net Pay: {payslip.NetPay:N2}");
-            MessageBox.Show(sb.ToString(), "Payslip", MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
-
         private void GeneratePayslipPdf(PayslipViewModel payslip)
         {
             using (PdfDocument document = new PdfDocument())
