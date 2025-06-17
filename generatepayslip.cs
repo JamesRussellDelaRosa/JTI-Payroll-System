@@ -201,7 +201,24 @@ namespace JTI_Payroll_System
                                     NightDifferentialSpecialHolidayHours = reader.IsDBNull(reader.GetOrdinal("ndsh_hrs")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndsh_hrs")),
                                     NightDifferentialSpecialHolidayRestdayHours = reader.IsDBNull(reader.GetOrdinal("ndshrd_hrs")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndshrd_hrs")),
                                     NightDifferentialLegalHolidayHours = reader.IsDBNull(reader.GetOrdinal("ndlh_hrs")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndlh_hrs")),
-                                    NightDifferentialLegalHolidayRestdayHours = reader.IsDBNull(reader.GetOrdinal("ndlhrd_hrs")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndlhrd_hrs"))
+                                    NightDifferentialLegalHolidayRestdayHours = reader.IsDBNull(reader.GetOrdinal("ndlhrd_hrs")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndlhrd_hrs")),
+                                    RestdayPay = reader.IsDBNull(reader.GetOrdinal("rdpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("rdpay")),
+                                    RestdayOvertimePay = reader.IsDBNull(reader.GetOrdinal("rdotpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("rdotpay")),
+                                    LegalHolidayOvertimePay = reader.IsDBNull(reader.GetOrdinal("lhothrspay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("lhothrspay")),
+                                    LegalHolidayRestdayPay = reader.IsDBNull(reader.GetOrdinal("lhrdpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("lhrdpay")),
+                                    LegalHolidayRestdayOvertimePay = reader.IsDBNull(reader.GetOrdinal("lhrdotpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("lhrdotpay")),
+                                    SpecialHolidayPay = reader.IsDBNull(reader.GetOrdinal("shpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("shpay")),
+                                    SpecialHolidayOvertimePay = reader.IsDBNull(reader.GetOrdinal("shotpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("shotpay")),
+                                    SpecialHolidayRestdayPay = reader.IsDBNull(reader.GetOrdinal("shrdpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("shrdpay")),
+                                    SpecialHolidayRestdayOvertimePay = reader.IsDBNull(reader.GetOrdinal("shrdotpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("shrdotpay")),
+                                    NightDifferentialOvertimePay = reader.IsDBNull(reader.GetOrdinal("ndotpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndotpay")),
+                                    NightDifferentialRestdayPay = reader.IsDBNull(reader.GetOrdinal("ndrdpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndrdpay")),
+                                    NightDifferentialSpecialHolidayPay = reader.IsDBNull(reader.GetOrdinal("ndshpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndshpay")),
+                                    NightDifferentialSpecialHolidayRestdayPay = reader.IsDBNull(reader.GetOrdinal("ndshrdpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndshrdpay")),
+                                    NightDifferentialLegalHolidayPay = reader.IsDBNull(reader.GetOrdinal("ndlhpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndlhpay")),
+                                    NightDifferentialLegalHolidayRestdayPay = reader.IsDBNull(reader.GetOrdinal("ndlhrdpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndlhrdpay")),
+                                    TotalBasicPay = reader.IsDBNull(reader.GetOrdinal("total_basic_pay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("total_basic_pay")),
+                                    RegOtPay = reader.IsDBNull(reader.GetOrdinal("regotpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("regotpay"))
                                 };
                                 payslips.Add(payslip);
                             }
@@ -283,7 +300,7 @@ namespace JTI_Payroll_System
                     ("Less:Tardy/Undertime", payslip.TardyUndertimePay.ToString("N2"), payslip.TardyUndertimePay, false),
                     ("Total Basic Pay", "", payslip.BasicPay + payslip.LegalHolidayPay - payslip.TardyUndertimePay, true),
                     ("Overtime Pay", "", payslip.OvertimePay, true),
-                    ("Regular OT Hrs.", payslip.OvertimeHours.ToString("N2"), payslip.OvertimePay, false),
+                    ("Regular OT Hrs.", payslip.OvertimeHours.ToString("N2"), payslip.RegOtPay, false),
                     ("Rest Day Hrs.", payslip.RestdayHours.ToString("N2"), payslip.RestdayPay, false),
                     ("Rest Day OT Hrs.", payslip.RestdayOvertimeHours.ToString("N2"), payslip.RestdayOvertimePay, false),
                     ("Legal Holiday Hrs.", payslip.LegalHolidayHours.ToString("N2"), payslip.LegalHolidayPay, false),
@@ -307,9 +324,43 @@ namespace JTI_Payroll_System
                 int earningsY = tableStartY + lineHeight + 2;
                 foreach (var row in earningsRows)
                 {
-                    gfx.DrawString(row.label, row.bold ? boldFont : font, blackBrush, new XRect(earningsCol1, earningsY, earningsCol2 - earningsCol1, lineHeight), XStringFormats.TopLeft);
-                    gfx.DrawString(row.current, font, blackBrush, new XRect(earningsCol2, earningsY, earningsCol3 - earningsCol2, lineHeight), XStringFormats.TopCenter);
-                    gfx.DrawString($"{row.amount:N2}", row.bold ? boldFont : font, blackBrush, new XRect(earningsCol3, earningsY, 60, lineHeight), XStringFormats.TopRight);
+                    if (row.label == "Total Basic Pay")
+                    {
+                        // Draw a rectangle around the header row
+                        gfx.DrawRectangle(XPens.Black, earningsCol1, earningsY, earningsCol3 + 60 - earningsCol1, lineHeight);
+                        gfx.DrawString(row.label, boldFont, blackBrush, new XRect(earningsCol1, earningsY, earningsCol2 - earningsCol1, lineHeight), XStringFormats.TopLeft);
+                        // Show value for AMOUNT from total_basic_pay
+                        gfx.DrawString($"{payslip.TotalBasicPay:N2}", boldFont, blackBrush, new XRect(earningsCol3, earningsY, 60, lineHeight), XStringFormats.TopRight);
+                    }
+                    else if (row.label == "Total Overtime Pay")
+                    {
+                        // Draw a rectangle around the header row
+                        gfx.DrawRectangle(XPens.Black, earningsCol1, earningsY, earningsCol3 + 60 - earningsCol1, lineHeight);
+                        gfx.DrawString(row.label, boldFont, blackBrush, new XRect(earningsCol1, earningsY, earningsCol2 - earningsCol1, lineHeight), XStringFormats.TopLeft);
+                        // Show value for AMOUNT from total_ot_pay
+                        gfx.DrawString($"{payslip.OvertimePay:N2}", boldFont, blackBrush, new XRect(earningsCol3, earningsY, 60, lineHeight), XStringFormats.TopRight);
+                    }
+                    else if (row.label == "GROSS PAY")
+                    {
+                        // Draw a rectangle around the header row
+                        gfx.DrawRectangle(XPens.Black, earningsCol1, earningsY, earningsCol3 + 60 - earningsCol1, lineHeight);
+                        gfx.DrawString(row.label, boldFont, blackBrush, new XRect(earningsCol1, earningsY, earningsCol2 - earningsCol1, lineHeight), XStringFormats.TopLeft);
+                        // Show value for AMOUNT from gross_pay
+                        gfx.DrawString($"{payslip.GrossPay:N2}", boldFont, blackBrush, new XRect(earningsCol3, earningsY, 60, lineHeight), XStringFormats.TopRight);
+                    }
+                    else if (row.label == "Overtime Pay")
+                    {
+                        // Draw a rectangle around the header row
+                        gfx.DrawRectangle(XPens.Black, earningsCol1, earningsY, earningsCol3 + 60 - earningsCol1, lineHeight);
+                        gfx.DrawString(row.label, boldFont, blackBrush, new XRect(earningsCol1, earningsY, earningsCol2 - earningsCol1, lineHeight), XStringFormats.TopLeft);
+                        // No value for CURRENT or AMOUNT for section headers
+                    }
+                    else
+                    {
+                        gfx.DrawString(row.label, row.bold ? boldFont : font, blackBrush, new XRect(earningsCol1, earningsY, earningsCol2 - earningsCol1, lineHeight), XStringFormats.TopLeft);
+                        gfx.DrawString(row.current, font, blackBrush, new XRect(earningsCol2, earningsY, earningsCol3 - earningsCol2, lineHeight), XStringFormats.TopCenter);
+                        gfx.DrawString($"{row.amount:N2}", row.bold ? boldFont : font, blackBrush, new XRect(earningsCol3, earningsY, 60, lineHeight), XStringFormats.TopRight);
+                    }
                     earningsY += lineHeight;
                 }
 
@@ -546,5 +597,7 @@ namespace JTI_Payroll_System
         public decimal NightDifferentialSpecialHolidayRestdayPay { get; set; }
         public decimal NightDifferentialLegalHolidayPay { get; set; }
         public decimal NightDifferentialLegalHolidayRestdayPay { get; set; }
+        public decimal TotalBasicPay { get; set; }
+        public decimal RegOtPay { get; set; }
     }
 }
