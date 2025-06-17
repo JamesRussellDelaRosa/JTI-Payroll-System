@@ -8,6 +8,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using MySql.Data.MySqlClient;
+using PdfSharp.Drawing;
+using PdfSharp.Pdf;
+using System.Diagnostics;
 
 namespace JTI_Payroll_System
 {
@@ -127,6 +130,287 @@ namespace JTI_Payroll_System
             }
         }
 
+        private List<PayslipViewModel> GetPayslipsForPeriod(int month, int controlPeriod, int payrollYear, DateTime fromDate, DateTime toDate)
+        {
+            var payslips = new List<PayslipViewModel>();
+            try
+            {
+                using (var conn = DatabaseHelper.GetConnection())
+                {
+                    conn.Open();
+                    string selectQuery = @"SELECT * FROM payroll WHERE month = @month AND payrollyear = @payrollYear AND control_period = @controlPeriod AND pay_period_start = @fromDate AND pay_period_end = @toDate";
+                    using (var cmd = new MySqlCommand(selectQuery, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@month", month);
+                        cmd.Parameters.AddWithValue("@payrollYear", payrollYear);
+                        cmd.Parameters.AddWithValue("@controlPeriod", controlPeriod);
+                        cmd.Parameters.AddWithValue("@fromDate", fromDate);
+                        cmd.Parameters.AddWithValue("@toDate", toDate);
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                var payslip = new PayslipViewModel
+                                {
+                                    EmployeeId = reader["employee_id"].ToString(),
+                                    EmployeeName = $"{reader["lname"]}, {reader["fname"]} {reader["mname"]}",
+                                    Department = reader["ccode"].ToString(),
+                                    PeriodStart = reader.GetDateTime(reader.GetOrdinal("pay_period_start")),
+                                    PeriodEnd = reader.GetDateTime(reader.GetOrdinal("pay_period_end")),
+                                    RatePerDay = reader.IsDBNull(reader.GetOrdinal("rate")) ? 0 : reader.GetDecimal(reader.GetOrdinal("rate")),
+                                    BasicPay = reader.IsDBNull(reader.GetOrdinal("basicpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("basicpay")),
+                                    LegalHolidayPay = reader.IsDBNull(reader.GetOrdinal("lhpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("lhpay")),
+                                    TardyUndertimePay = reader.IsDBNull(reader.GetOrdinal("trdypay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("trdypay")),
+                                    OvertimePay = reader.IsDBNull(reader.GetOrdinal("total_ot_pay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("total_ot_pay")),
+                                    NightDifferentialPay = reader.IsDBNull(reader.GetOrdinal("ndpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndpay")),
+                                    GrossPay = reader.IsDBNull(reader.GetOrdinal("gross_pay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("gross_pay")),
+                                    SSS = reader.IsDBNull(reader.GetOrdinal("SSS")) ? 0 : reader.GetDecimal(reader.GetOrdinal("SSS")),
+                                    PhilHealth = reader.IsDBNull(reader.GetOrdinal("philhealth")) ? 0 : reader.GetDecimal(reader.GetOrdinal("philhealth")),
+                                    HDMF = reader.IsDBNull(reader.GetOrdinal("hdmf")) ? 0 : reader.GetDecimal(reader.GetOrdinal("hdmf")),
+                                    HMO = reader.IsDBNull(reader.GetOrdinal("hmo")) ? 0 : reader.GetDecimal(reader.GetOrdinal("hmo")),
+                                    TotalDeductions = reader.IsDBNull(reader.GetOrdinal("total_deductions")) ? 0 : reader.GetDecimal(reader.GetOrdinal("total_deductions")),
+                                    SIL = reader.IsDBNull(reader.GetOrdinal("sil")) ? 0 : reader.GetDecimal(reader.GetOrdinal("sil")),
+                                    PerfectAttendance = reader.IsDBNull(reader.GetOrdinal("perfect_attendance")) ? 0 : reader.GetDecimal(reader.GetOrdinal("perfect_attendance")),
+                                    Adjustment = reader.IsDBNull(reader.GetOrdinal("adjustment_total")) ? 0 : reader.GetDecimal(reader.GetOrdinal("adjustment_total")),
+                                    Reliever = reader.IsDBNull(reader.GetOrdinal("reliever_total")) ? 0 : reader.GetDecimal(reader.GetOrdinal("reliever_total")),
+                                    NetPay = reader.IsDBNull(reader.GetOrdinal("netpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("netpay")),
+                                    CashAdvance = reader.IsDBNull(reader.GetOrdinal("cash_advance")) ? 0 : reader.GetDecimal(reader.GetOrdinal("cash_advance")),
+                                    Uniform = reader.IsDBNull(reader.GetOrdinal("uniform")) ? 0 : reader.GetDecimal(reader.GetOrdinal("uniform")),
+                                    AtmId = reader.IsDBNull(reader.GetOrdinal("atm_id")) ? 0 : reader.GetDecimal(reader.GetOrdinal("atm_id")),
+                                    Medical = reader.IsDBNull(reader.GetOrdinal("medical")) ? 0 : reader.GetDecimal(reader.GetOrdinal("medical")),
+                                    Grocery = reader.IsDBNull(reader.GetOrdinal("grocery")) ? 0 : reader.GetDecimal(reader.GetOrdinal("grocery")),
+                                    Canteen = reader.IsDBNull(reader.GetOrdinal("canteen")) ? 0 : reader.GetDecimal(reader.GetOrdinal("canteen")),
+                                    Damayan = reader.IsDBNull(reader.GetOrdinal("damayan")) ? 0 : reader.GetDecimal(reader.GetOrdinal("damayan")),
+                                    Rice = reader.IsDBNull(reader.GetOrdinal("rice")) ? 0 : reader.GetDecimal(reader.GetOrdinal("rice")),
+                                };
+                                payslips.Add(payslip);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error fetching payslips: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            return payslips;
+        }
+
+        private void ShowPayslip(PayslipViewModel payslip)
+        {
+            // For demonstration, show a simple MessageBox. Replace with a custom form for a real payslip view.
+            var sb = new StringBuilder();
+            sb.AppendLine($"ID NO: {payslip.EmployeeId}");
+            sb.AppendLine($"NAME: {payslip.EmployeeName}");
+            sb.AppendLine($"PERIOD: {payslip.PeriodStart:MM/dd/yyyy} - {payslip.PeriodEnd:MM/dd/yyyy}");
+            sb.AppendLine($"RATE/DAY: {payslip.RatePerDay:N2}");
+            sb.AppendLine($"Basic Pay: {payslip.BasicPay:N2}");
+            sb.AppendLine($"Legal Holiday Pay: {payslip.LegalHolidayPay:N2}");
+            sb.AppendLine($"Tardy/Undertime: {payslip.TardyUndertimePay:N2}");
+            sb.AppendLine($"Overtime Pay: {payslip.OvertimePay:N2}");
+            sb.AppendLine($"Night Differential: {payslip.NightDifferentialPay:N2}");
+            sb.AppendLine($"Gross Pay: {payslip.GrossPay:N2}");
+            sb.AppendLine($"SSS: {payslip.SSS:N2}");
+            sb.AppendLine($"PhilHealth: {payslip.PhilHealth:N2}");
+            sb.AppendLine($"HDMF: {payslip.HDMF:N2}");
+            sb.AppendLine($"HMO: {payslip.HMO:N2}");
+            sb.AppendLine($"Total Deductions: {payslip.TotalDeductions:N2}");
+            sb.AppendLine($"SIL: {payslip.SIL:N2}");
+            sb.AppendLine($"Perfect Attendance: {payslip.PerfectAttendance:N2}");
+            sb.AppendLine($"Adjustment: {payslip.Adjustment:N2}");
+            sb.AppendLine($"Reliever: {payslip.Reliever:N2}");
+            sb.AppendLine($"Cash Advance: {payslip.CashAdvance:N2}");
+            sb.AppendLine($"Uniform: {payslip.Uniform:N2}");
+            sb.AppendLine($"ATM ID: {payslip.AtmId:N2}");
+            sb.AppendLine($"Medical: {payslip.Medical:N2}");
+            sb.AppendLine($"Grocery: {payslip.Grocery:N2}");
+            sb.AppendLine($"Canteen: {payslip.Canteen:N2}");
+            sb.AppendLine($"Damayan: {payslip.Damayan:N2}");
+            sb.AppendLine($"Rice: {payslip.Rice:N2}");
+            sb.AppendLine($"Net Pay: {payslip.NetPay:N2}");
+            MessageBox.Show(sb.ToString(), "Payslip", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private void GeneratePayslipPdf(PayslipViewModel payslip)
+        {
+            using (PdfDocument document = new PdfDocument())
+            {
+                document.Info.Title = "Payslip";
+                PdfPage page = document.AddPage();
+                double margin = 40;
+                double pageWidth = page.Width.Point;
+                double usableWidth = pageWidth - 2 * margin;
+                int y = 40, lineHeight = 14;
+                int earningsCol1 = (int)margin, earningsCol2 = (int)(margin + 90), earningsCol3 = (int)(margin + 170);
+                int dedCol1 = (int)(margin + usableWidth / 2 + 10), dedCol2 = (int)(margin + usableWidth / 2 + 160);
+
+                XGraphics gfx = XGraphics.FromPdfPage(page);
+                XFont font = new XFont("Arial", 8);
+                var fontStyleExType = typeof(XFont).Assembly.GetType("PdfSharp.Drawing.XFontStyleEx");
+                object boldStyle = fontStyleExType != null ? Enum.Parse(fontStyleExType, "Bold", true) : null;
+                XFont boldFont = boldStyle != null ? (XFont)Activator.CreateInstance(typeof(XFont), new object[] { "Arial", 8, boldStyle }) : new XFont("Arial", 8);
+                XFont headerFont = boldStyle != null ? (XFont)Activator.CreateInstance(typeof(XFont), new object[] { "Arial", 10, boldStyle }) : new XFont("Arial", 10);
+                XFont redFont = boldStyle != null ? (XFont)Activator.CreateInstance(typeof(XFont), new object[] { "Arial", 8, boldStyle }) : new XFont("Arial", 8);
+                XBrush redBrush = XBrushes.Red;
+                XBrush blackBrush = XBrushes.Black;
+
+                // Header
+                gfx.DrawString("JEANNIE'S TOUCH MANPOWER SOLUTIONS INC.", headerFont, blackBrush, new XRect(0, y, page.Width, 20), XStringFormats.TopCenter);
+                y += lineHeight + 2;
+                gfx.DrawString("****PAYSLIP****", redFont, redBrush, page.Width.Point - margin - 100, y);
+                y += lineHeight + 2;
+
+                // Employee Info
+                gfx.DrawString("ID NO :", font, blackBrush, earningsCol1, y);
+                gfx.DrawRectangle(XBrushes.Yellow, earningsCol1 + 45, y - 2, 50, lineHeight - 2);
+                gfx.DrawString(payslip.EmployeeId, boldFont, blackBrush, earningsCol1 + 48, y);
+                gfx.DrawString("BIR CODE :", font, blackBrush, dedCol1, y);
+                gfx.DrawString("S", font, blackBrush, dedCol1 + 60, y);
+                y += lineHeight;
+                gfx.DrawString("NAME :", font, blackBrush, earningsCol1, y);
+                gfx.DrawString(payslip.EmployeeName.ToUpper(), boldFont, blackBrush, earningsCol1 + 48, y);
+                gfx.DrawString("RATE/DAY :", font, blackBrush, dedCol1, y);
+                gfx.DrawString($"{payslip.RatePerDay:N2}", font, blackBrush, dedCol1 + 60, y);
+                y += lineHeight;
+                gfx.DrawString("JTI-MANOS -JTI INTERNATIONAL ASIA MANUFACTURING CORP.", font, blackBrush, earningsCol1 + 48, y);
+                gfx.DrawString("TYPE-ATM :", font, blackBrush, dedCol1, y);
+                gfx.DrawString("428303263825768", font, blackBrush, dedCol1 + 60, y);
+                y += lineHeight;
+                gfx.DrawString($"PAYROLL PERIOD {payslip.PeriodStart:MM/dd/yyyy} TO {payslip.PeriodEnd:MM/dd/yyyy}", font, blackBrush, earningsCol1, y);
+                y += lineHeight + 2;
+
+                // Table headers
+                int tableStartY = y;
+                gfx.DrawString("EARNINGS", boldFont, blackBrush, earningsCol1, y);
+                gfx.DrawString("CURRENT", boldFont, blackBrush, earningsCol2, y);
+                gfx.DrawString("AMOUNT", boldFont, blackBrush, earningsCol3, y);
+                gfx.DrawString("DEDUCTIONS", boldFont, blackBrush, dedCol1, y);
+                gfx.DrawString("AMOUNT", boldFont, blackBrush, dedCol2, y);
+                y += lineHeight;
+                gfx.DrawLine(XPens.Black, earningsCol1, y, earningsCol3 + 40, y);
+                gfx.DrawLine(XPens.Black, dedCol1, y, dedCol2 + 40, y);
+                y += 2;
+
+                // Earnings and Deductions Table (side by side)
+                string[] earningLabels = new[] {
+                    "Basic Pay (no. of regular Days)",
+                    "Legal Holiday w/ Pay",
+                    "Less:Tardy/Undertime",
+                    "Total Basic Pay",
+                    "Overtime Pay",
+                    "Night Differential",
+                    "Total Overtime Pay",
+                    "GROSS PAY"
+                };
+                string[] earningCurrent = new[] { "-", "-", "-", "", "", "-", "", "" };
+                decimal[] earningAmounts = new[] {
+                    payslip.BasicPay,
+                    payslip.LegalHolidayPay,
+                    payslip.TardyUndertimePay,
+                    payslip.BasicPay + payslip.LegalHolidayPay - payslip.TardyUndertimePay,
+                    0,
+                    payslip.NightDifferentialPay,
+                    payslip.OvertimePay,
+                    payslip.GrossPay
+                };
+                bool[] earningBold = new[] { false, false, false, true, true, false, true, true };
+
+                string[] deductionLabels = new[] {
+                    "GOVERNMENT DUES DEDUCTION",
+                    "SSS Contribution",
+                    "Phil-Health Contribution",
+                    "HDMF Contribution",
+                    "Loan Deduction",
+                    "SSS Loan",
+                    "HDMF Loan",
+                    "SSS Calamity Loan",
+                    "HDMF Calamity Loan",
+                    "Withholding Tax",
+                    "Cash Advance",
+                    "HMO",
+                    "Uniform",
+                    "ATM ID",
+                    "Medical",
+                    "Grocery",
+                    "Canteen",
+                    "Damayan",
+                    "Rice",
+                    "Total Deduction"
+                };
+                decimal[] deductionAmounts = new[] {
+                    0,
+                    payslip.SSS,
+                    payslip.PhilHealth,
+                    payslip.HDMF,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    payslip.CashAdvance,
+                    payslip.HMO,
+                    payslip.Uniform,
+                    payslip.AtmId,
+                    payslip.Medical,
+                    payslip.Grocery,
+                    payslip.Canteen,
+                    payslip.Damayan,
+                    payslip.Rice,
+                    payslip.TotalDeductions
+                };
+                bool[] deductionBold = new[] { true, false, false, false, true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true };
+
+                int maxRows = Math.Max(earningLabels.Length, deductionLabels.Length);
+                int earningsY = tableStartY + lineHeight + 2;
+                int deductionsY = tableStartY + lineHeight + 2;
+                for (int i = 0; i < maxRows; i++)
+                {
+                    if (i < earningLabels.Length)
+                    {
+                        gfx.DrawString(earningLabels[i], earningBold[i] ? boldFont : font, blackBrush, earningsCol1, earningsY);
+                        gfx.DrawString(earningCurrent[i], font, blackBrush, earningsCol2, earningsY);
+                        gfx.DrawString($"{earningAmounts[i]:N2}", earningBold[i] ? boldFont : font, blackBrush, new XRect(earningsCol3, earningsY, 40, lineHeight), XStringFormats.TopRight);
+                    }
+                    if (i < deductionLabels.Length)
+                    {
+                        gfx.DrawString(deductionLabels[i], deductionBold[i] ? boldFont : font, blackBrush, dedCol1, deductionsY);
+                        gfx.DrawString($"{deductionAmounts[i]:N2}", deductionBold[i] ? boldFont : font, blackBrush, new XRect(dedCol2, deductionsY, 40, lineHeight), XStringFormats.TopRight);
+                    }
+                    earningsY += lineHeight;
+                    deductionsY += lineHeight;
+                }
+                y = Math.Max(earningsY, deductionsY) + lineHeight;
+
+                // Other Earnings
+                gfx.DrawString("OTHER EARNINGS", boldFont, blackBrush, earningsCol1, y);
+                y += lineHeight;
+                void DrawOtherEarningRow(string label, decimal amount, bool red = false)
+                {
+                    XFont useFont = red ? redFont : font;
+                    XBrush useBrush = red ? redBrush : blackBrush;
+                    gfx.DrawString(label, useFont, useBrush, earningsCol1, y);
+                    gfx.DrawString($"{amount:N2}", useFont, useBrush, new XRect(earningsCol3, y, 40, lineHeight), XStringFormats.TopRight);
+                    y += lineHeight;
+                }
+                DrawOtherEarningRow("SIL-SERVICE INCENTIVE LEAVE", payslip.SIL, true);
+                DrawOtherEarningRow("PERFECT ATTENDANCE", payslip.PerfectAttendance, true);
+                DrawOtherEarningRow("ADJUSTMENT (LH NO WORK)", payslip.Adjustment, true);
+                DrawOtherEarningRow("RELIEVER", payslip.Reliever, true);
+                y += lineHeight;
+                DrawOtherEarningRow("TAKE HOME PAY", payslip.NetPay, false);
+
+                using (SaveFileDialog sfd = new SaveFileDialog { Filter = "PDF files (*.pdf)|*.pdf", FileName = $"Payslip_{payslip.EmployeeId}.pdf" })
+                {
+                    if (sfd.ShowDialog() == DialogResult.OK)
+                    {
+                        document.Save(sfd.FileName);
+                        Process.Start(new ProcessStartInfo(sfd.FileName) { UseShellExecute = true });
+                    }
+                }
+            }
+        }
+
         private void generate_Click(object sender, EventArgs e)
         {
             // Parse input fields
@@ -194,11 +478,52 @@ namespace JTI_Payroll_System
                 // After updating total_grosspay, update netpay
                 UpdateNetPay(monthVal, controlPeriodVal, payrollYearVal, fromDateVal, toDateVal);
                 MessageBox.Show("Payslip generation calculation and update complete.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                // Show payslips for the period
+                var payslips = GetPayslipsForPeriod(monthVal, controlPeriodVal, payrollYearVal, fromDateVal, toDateVal);
+                foreach (var payslip in payslips)
+                {
+                    GeneratePayslipPdf(payslip);
+                }
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Error during payslip generation: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+    }
+
+    // PayslipViewModel for displaying payslip data
+    public class PayslipViewModel
+    {
+        public string EmployeeId { get; set; }
+        public string EmployeeName { get; set; }
+        public string Department { get; set; }
+        public DateTime PeriodStart { get; set; }
+        public DateTime PeriodEnd { get; set; }
+        public decimal RatePerDay { get; set; }
+        public decimal BasicPay { get; set; }
+        public decimal LegalHolidayPay { get; set; }
+        public decimal TardyUndertimePay { get; set; }
+        public decimal OvertimePay { get; set; }
+        public decimal NightDifferentialPay { get; set; }
+        public decimal GrossPay { get; set; }
+        public decimal SSS { get; set; }
+        public decimal PhilHealth { get; set; }
+        public decimal HDMF { get; set; }
+        public decimal HMO { get; set; }
+        public decimal TotalDeductions { get; set; }
+        public decimal SIL { get; set; }
+        public decimal PerfectAttendance { get; set; }
+        public decimal Adjustment { get; set; }
+        public decimal Reliever { get; set; }
+        public decimal NetPay { get; set; }
+        public decimal CashAdvance { get; set; }
+        public decimal Uniform { get; set; }
+        public decimal AtmId { get; set; }
+        public decimal Medical { get; set; }
+        public decimal Grocery { get; set; }
+        public decimal Canteen { get; set; }
+        public decimal Damayan { get; set; }
+        public decimal Rice { get; set; }
     }
 }

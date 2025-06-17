@@ -10,10 +10,19 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="LiberationSans-Regular.ttf" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="LiberationSans-Regular.ttf" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="ClosedXML" Version="0.104.2" />
     <PackageReference Include="EPPlus" Version="8.0.5" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.1" />
     <PackageReference Include="MySql.Data" Version="9.2.0" />
+    <PackageReference Include="PDFsharp" Version="6.2.0" />
   </ItemGroup>
 
   <ItemGroup>
