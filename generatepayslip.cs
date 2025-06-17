@@ -301,14 +301,14 @@ namespace JTI_Payroll_System
 
                 // Table headers
                 int tableStartY = y;
-                gfx.DrawString("EARNINGS", boldFont, blackBrush, earningsCol1, y);
-                gfx.DrawString("CURRENT", boldFont, blackBrush, earningsCol2, y);
-                gfx.DrawString("AMOUNT", boldFont, blackBrush, earningsCol3, y);
-                gfx.DrawString("DEDUCTIONS", boldFont, blackBrush, dedCol1, y);
-                gfx.DrawString("AMOUNT", boldFont, blackBrush, dedCol2, y);
+                gfx.DrawString("EARNINGS", boldFont, blackBrush, new XRect(earningsCol1, y, earningsCol2 - earningsCol1, lineHeight), XStringFormats.TopLeft);
+                gfx.DrawString("CURRENT", boldFont, blackBrush, new XRect(earningsCol2, y, earningsCol3 - earningsCol2, lineHeight), XStringFormats.TopCenter);
+                gfx.DrawString("AMOUNT", boldFont, blackBrush, new XRect(earningsCol3, y, 60, lineHeight), XStringFormats.TopRight);
+                gfx.DrawString("DEDUCTIONS", boldFont, blackBrush, new XRect(dedCol1, y, dedCol2 - dedCol1, lineHeight), XStringFormats.TopLeft);
+                gfx.DrawString("AMOUNT", boldFont, blackBrush, new XRect(dedCol2, y, 60, lineHeight), XStringFormats.TopRight);
                 y += lineHeight;
-                gfx.DrawLine(XPens.Black, earningsCol1, y, earningsCol3 + 40, y);
-                gfx.DrawLine(XPens.Black, dedCol1, y, dedCol2 + 40, y);
+                gfx.DrawLine(XPens.Black, earningsCol1, y, earningsCol3 + 60, y);
+                gfx.DrawLine(XPens.Black, dedCol1, y, dedCol2 + 60, y);
                 y += 2;
 
                 // EARNINGS TABLE (detailed rows)
@@ -342,9 +342,9 @@ namespace JTI_Payroll_System
                 int earningsY = tableStartY + lineHeight + 2;
                 foreach (var row in earningsRows)
                 {
-                    gfx.DrawString(row.label, row.bold ? boldFont : font, blackBrush, earningsCol1, earningsY);
-                    gfx.DrawString(row.current, font, blackBrush, earningsCol2, earningsY);
-                    gfx.DrawString($"{row.amount:N2}", row.bold ? boldFont : font, blackBrush, new XRect(earningsCol3, earningsY, 40, lineHeight), XStringFormats.TopRight);
+                    gfx.DrawString(row.label, row.bold ? boldFont : font, blackBrush, new XRect(earningsCol1, earningsY, earningsCol2 - earningsCol1, lineHeight), XStringFormats.TopLeft);
+                    gfx.DrawString(row.current, font, blackBrush, new XRect(earningsCol2, earningsY, earningsCol3 - earningsCol2, lineHeight), XStringFormats.TopCenter);
+                    gfx.DrawString($"{row.amount:N2}", row.bold ? boldFont : font, blackBrush, new XRect(earningsCol3, earningsY, 60, lineHeight), XStringFormats.TopRight);
                     earningsY += lineHeight;
                 }
 
@@ -397,8 +397,8 @@ namespace JTI_Payroll_System
                 bool[] deductionBold = new[] { true, false, false, false, true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true };
                 for (int i = 0; i < deductionLabels.Length; i++)
                 {
-                    gfx.DrawString(deductionLabels[i], deductionBold[i] ? boldFont : font, blackBrush, dedCol1, deductionsY);
-                    gfx.DrawString($"{deductionAmounts[i]:N2}", deductionBold[i] ? boldFont : font, blackBrush, new XRect(dedCol2, deductionsY, 40, lineHeight), XStringFormats.TopRight);
+                    gfx.DrawString(deductionLabels[i], deductionBold[i] ? boldFont : font, blackBrush, new XRect(dedCol1, deductionsY, dedCol2 - dedCol1, lineHeight), XStringFormats.TopLeft);
+                    gfx.DrawString($"{deductionAmounts[i]:N2}", deductionBold[i] ? boldFont : font, blackBrush, new XRect(dedCol2, deductionsY, 60, lineHeight), XStringFormats.TopRight);
                     deductionsY += lineHeight;
                 }
 
@@ -410,8 +410,8 @@ namespace JTI_Payroll_System
                 {
                     XFont useFont = red ? redFont : font;
                     XBrush useBrush = red ? redBrush : blackBrush;
-                    gfx.DrawString(label, useFont, useBrush, dedCol1, otherY);
-                    gfx.DrawString($"{amount:N2}", useFont, useBrush, new XRect(dedCol2, otherY, 40, lineHeight), XStringFormats.TopRight);
+                    gfx.DrawString(label, useFont, useBrush, new XRect(dedCol1, otherY, dedCol2 - dedCol1, lineHeight), XStringFormats.TopLeft);
+                    gfx.DrawString($"{amount:N2}", useFont, useBrush, new XRect(dedCol2, otherY, 60, lineHeight), XStringFormats.TopRight);
                     otherY += lineHeight;
                 }
                 DrawOtherEarningRow("SIL-SERVICE INCENTIVE LEAVE", payslip.SIL, true);
