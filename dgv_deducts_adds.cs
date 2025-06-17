@@ -174,9 +174,9 @@ namespace JTI_Payroll_System
                         decimal sil = Convert.ToDecimal(row.Cells["sil"].Value ?? 0);
                         decimal perfectAttendance = Convert.ToDecimal(row.Cells["perfect_attendance"].Value ?? 0);
 
-                        // Fetch coop deduction values from database for this employee and period
-                        decimal coopLoanDeduction = 0, coopShareCapital = 0, coopSavingsDeposit = 0, coopMembershipFee = 0;
-                        string coopQuery = @"SELECT coop_loan_deduction, coop_share_capital, coop_savings_deposit, coop_membership_fee FROM payroll WHERE employee_id = @employee_id AND pay_period_start = @fromDate AND pay_period_end = @toDate";
+                        // Fetch coop deduction values and wtax from database for this employee and period
+                        decimal coopLoanDeduction = 0, coopShareCapital = 0, coopSavingsDeposit = 0, coopMembershipFee = 0, wtax = 0;
+                        string coopQuery = @"SELECT coop_loan_deduction, coop_share_capital, coop_savings_deposit, coop_membership_fee, wtax FROM payroll WHERE employee_id = @employee_id AND pay_period_start = @fromDate AND pay_period_end = @toDate";
                         using (MySqlCommand coopCmd = new MySqlCommand(coopQuery, conn))
                         {
                             coopCmd.Parameters.AddWithValue("@employee_id", employeeId);
@@ -190,6 +190,7 @@ namespace JTI_Payroll_System
                                     coopShareCapital = reader["coop_share_capital"] != DBNull.Value ? Convert.ToDecimal(reader["coop_share_capital"]) : 0;
                                     coopSavingsDeposit = reader["coop_savings_deposit"] != DBNull.Value ? Convert.ToDecimal(reader["coop_savings_deposit"]) : 0;
                                     coopMembershipFee = reader["coop_membership_fee"] != DBNull.Value ? Convert.ToDecimal(reader["coop_membership_fee"]) : 0;
+                                    wtax = reader["wtax"] != DBNull.Value ? Convert.ToDecimal(reader["wtax"]) : 0;
                                 }
                             }
                         }
@@ -223,7 +224,7 @@ namespace JTI_Payroll_System
 
                         // Calculate total deductions and update total_deductions column
                         decimal totalDeductions = cashAdvance + hmo + uniform + atmId + medical + grocery + canteen + damayan + rice
-                            + coopLoanDeduction + coopShareCapital + coopSavingsDeposit + coopMembershipFee;        
+                            + coopLoanDeduction + coopShareCapital + coopSavingsDeposit + coopMembershipFee + wtax;
                         string updateTotalDeductionsQuery = @"
                             UPDATE payroll SET total_deductions = @total_deductions
                             WHERE employee_id = @employee_id AND pay_period_start = @fromDate AND pay_period_end = @toDate";
