@@ -138,7 +138,7 @@ namespace JTI_Payroll_System
                 using (var conn = DatabaseHelper.GetConnection())
                 {
                     conn.Open();
-                    string selectQuery = @"SELECT p.*, e.ccode AS emp_ccode, e.client AS emp_client, e.bir_stat AS emp_bir_stat FROM payroll p LEFT JOIN employee e ON p.employee_id = e.id_no WHERE p.month = @month AND p.payrollyear = @payrollYear AND p.control_period = @controlPeriod AND p.pay_period_start = @fromDate AND p.pay_period_end = @toDate";
+                    string selectQuery = @"SELECT p.*, e.ccode AS emp_ccode, e.client AS emp_client, e.bir_stat AS emp_bir_stat, e.atm_card_no AS emp_atm_card_no FROM payroll p LEFT JOIN employee e ON p.employee_id = e.id_no WHERE p.month = @month AND p.payrollyear = @payrollYear AND p.control_period = @controlPeriod AND p.pay_period_start = @fromDate AND p.pay_period_end = @toDate";
                     using (var cmd = new MySqlCommand(selectQuery, conn))
                     {
                         cmd.Parameters.AddWithValue("@month", month);
@@ -157,6 +157,7 @@ namespace JTI_Payroll_System
                                     Department = reader["emp_ccode"]?.ToString() ?? "",
                                     Client = reader["emp_client"]?.ToString() ?? "",
                                     BirStat = reader["emp_bir_stat"]?.ToString() ?? "",
+                                    AtmCardNo = reader["emp_atm_card_no"]?.ToString() ?? "",
                                     PeriodStart = reader.GetDateTime(reader.GetOrdinal("pay_period_start")),
                                     PeriodEnd = reader.GetDateTime(reader.GetOrdinal("pay_period_end")),
                                     RatePerDay = reader.IsDBNull(reader.GetOrdinal("rate")) ? 0 : reader.GetDecimal(reader.GetOrdinal("rate")),
@@ -277,7 +278,7 @@ namespace JTI_Payroll_System
                 y += lineHeight;
                 gfx.DrawString($"{payslip.Department} - {payslip.Client}", font, blackBrush, new XRect(earningsCol1, y, earningsCol3 + 60 - earningsCol1, lineHeight), XStringFormats.TopLeft);
                 gfx.DrawString("TYPE-ATM :", font, blackBrush, dedCol1, y);
-                gfx.DrawString("428303263825768", font, blackBrush, dedCol1 + 60, y);
+                gfx.DrawString(payslip.AtmCardNo, font, blackBrush, dedCol1 + 60, y);
                 y += lineHeight + 2;
                 gfx.DrawString($"PAYROLL PERIOD {payslip.PeriodStart:MM/dd/yyyy} TO {payslip.PeriodEnd:MM/dd/yyyy}", font, blackBrush, earningsCol1, y);
                 y += lineHeight + 2;
@@ -538,6 +539,7 @@ namespace JTI_Payroll_System
         public string Department { get; set; }
         public string Client { get; set; } // Added for client from employee table
         public string BirStat { get; set; } // Added for BIR status from employee table
+        public string AtmCardNo { get; set; } // Added for ATM card number from employee table
         public DateTime PeriodStart { get; set; }
         public DateTime PeriodEnd { get; set; }
         public decimal RatePerDay { get; set; }
