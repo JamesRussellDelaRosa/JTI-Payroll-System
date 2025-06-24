@@ -11,6 +11,9 @@ using MySql.Data.MySqlClient;
 using PdfSharp.Drawing;
 using PdfSharp.Pdf;
 using System.Diagnostics;
+using System.IO;
+using Patagames.Pdf.Net;
+using Patagames.Pdf.Net.Controls.WinForms;
 
 namespace JTI_Payroll_System
 {
@@ -79,169 +82,12 @@ namespace JTI_Payroll_System
             }
         }
 
-        private void UpdateNetPay(int month, int controlPeriod, int payrollYear, DateTime fromDate, DateTime toDate)
-        {
-            try
-            {
-                using (var conn = DatabaseHelper.GetConnection())
-                {
-                    conn.Open();
-                    string selectQuery = @"SELECT id, total_grosspay, sil, perfect_attendance, adjustment_total, reliever_total FROM payroll WHERE month = @month AND payrollyear = @payrollYear AND control_period = @controlPeriod AND pay_period_start = @fromDate AND pay_period_end = @toDate";
-                    using (var cmd = new MySqlCommand(selectQuery, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@month", month);
-                        cmd.Parameters.AddWithValue("@payrollYear", payrollYear);
-                        cmd.Parameters.AddWithValue("@controlPeriod", controlPeriod);
-                        cmd.Parameters.AddWithValue("@fromDate", fromDate);
-                        cmd.Parameters.AddWithValue("@toDate", toDate);
-                        using (var reader = cmd.ExecuteReader())
-                        {
-                            var updates = new List<(int id, decimal netpay)>();
-                            while (reader.Read())
-                            {
-                                int id = reader.GetInt32("id");
-                                decimal totalGrossPay = reader.IsDBNull(reader.GetOrdinal("total_grosspay")) ? 0 : reader.GetDecimal("total_grosspay");
-                                decimal sil = reader.IsDBNull(reader.GetOrdinal("sil")) ? 0 : reader.GetDecimal("sil");
-                                decimal perfectAttendance = reader.IsDBNull(reader.GetOrdinal("perfect_attendance")) ? 0 : reader.GetDecimal("perfect_attendance");
-                                decimal adjustmentTotal = reader.IsDBNull(reader.GetOrdinal("adjustment_total")) ? 0 : reader.GetDecimal("adjustment_total");
-                                decimal relieverTotal = reader.IsDBNull(reader.GetOrdinal("reliever_total")) ? 0 : reader.GetDecimal("reliever_total");
-                                decimal netpay = totalGrossPay + sil + perfectAttendance + adjustmentTotal + relieverTotal;
-                                netpay = Math.Round(netpay, 2, MidpointRounding.AwayFromZero); // Round to 2 decimal places
-                                updates.Add((id, netpay));
-                            }
-                            reader.Close();
-                            foreach (var upd in updates)
-                            {
-                                string updateQuery = "UPDATE payroll SET netpay = @netpay WHERE id = @id";
-                                using (var updateCmd = new MySqlCommand(updateQuery, conn))
-                                {
-                                    updateCmd.Parameters.AddWithValue("@netpay", upd.netpay);
-                                    updateCmd.Parameters.AddWithValue("@id", upd.id);
-                                    updateCmd.ExecuteNonQuery();
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error updating netpay: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        private List<PayslipViewModel> GetPayslipsForPeriod(int month, int controlPeriod, int payrollYear, DateTime fromDate, DateTime toDate)
-        {
-            var payslips = new List<PayslipViewModel>();
-            try
-            {
-                using (var conn = DatabaseHelper.GetConnection())
-                {
-                    conn.Open();
-                    string selectQuery = @"SELECT p.*, e.ccode AS emp_ccode, e.client AS emp_client, e.bir_stat AS emp_bir_stat, e.atm_card_no AS emp_atm_card_no FROM payroll p LEFT JOIN employee e ON p.employee_id = e.id_no WHERE p.month = @month AND p.payrollyear = @payrollYear AND p.control_period = @controlPeriod AND p.pay_period_start = @fromDate AND p.pay_period_end = @toDate";
-                    using (var cmd = new MySqlCommand(selectQuery, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@month", month);
-                        cmd.Parameters.AddWithValue("@payrollYear", payrollYear);
-                        cmd.Parameters.AddWithValue("@controlPeriod", controlPeriod);
-                        cmd.Parameters.AddWithValue("@fromDate", fromDate);
-                        cmd.Parameters.AddWithValue("@toDate", toDate);
-                        using (var reader = cmd.ExecuteReader())
-                        {
-                            while (reader.Read())
-                            {
-                                var payslip = new PayslipViewModel
-                                {
-                                    EmployeeId = reader["employee_id"].ToString(),
-                                    EmployeeName = $"{reader["lname"]}, {reader["fname"]} {reader["mname"]}",
-                                    Department = reader["emp_ccode"]?.ToString() ?? "",
-                                    Client = reader["emp_client"]?.ToString() ?? "",
-                                    BirStat = reader["emp_bir_stat"]?.ToString() ?? "",
-                                    AtmCardNo = reader["emp_atm_card_no"]?.ToString() ?? "",
-                                    PeriodStart = reader.GetDateTime(reader.GetOrdinal("pay_period_start")),
-                                    PeriodEnd = reader.GetDateTime(reader.GetOrdinal("pay_period_end")),
-                                    RatePerDay = reader.IsDBNull(reader.GetOrdinal("rate")) ? 0 : reader.GetDecimal(reader.GetOrdinal("rate")),
-                                    BasicPay = reader.IsDBNull(reader.GetOrdinal("basicpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("basicpay")),
-                                    LegalHolidayPay = reader.IsDBNull(reader.GetOrdinal("lhpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("lhpay")),
-                                    TardyUndertimePay = reader.IsDBNull(reader.GetOrdinal("trdypay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("trdypay")),
-                                    OvertimePay = reader.IsDBNull(reader.GetOrdinal("total_ot_pay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("total_ot_pay")),
-                                    NightDifferentialPay = reader.IsDBNull(reader.GetOrdinal("ndpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndpay")),
-                                    GrossPay = reader.IsDBNull(reader.GetOrdinal("gross_pay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("gross_pay")),
-                                    SSS = reader.IsDBNull(reader.GetOrdinal("SSS")) ? 0 : reader.GetDecimal(reader.GetOrdinal("SSS")),
-                                    PhilHealth = reader.IsDBNull(reader.GetOrdinal("philhealth")) ? 0 : reader.GetDecimal(reader.GetOrdinal("philhealth")),
-                                    HDMF = reader.IsDBNull(reader.GetOrdinal("hdmf")) ? 0 : reader.GetDecimal(reader.GetOrdinal("hdmf")),
-                                    HMO = reader.IsDBNull(reader.GetOrdinal("hmo")) ? 0 : reader.GetDecimal(reader.GetOrdinal("hmo")),
-                                    TotalDeductions = reader.IsDBNull(reader.GetOrdinal("total_deductions")) ? 0 : reader.GetDecimal(reader.GetOrdinal("total_deductions")),
-                                    SIL = reader.IsDBNull(reader.GetOrdinal("sil")) ? 0 : reader.GetDecimal(reader.GetOrdinal("sil")),
-                                    PerfectAttendance = reader.IsDBNull(reader.GetOrdinal("perfect_attendance")) ? 0 : reader.GetDecimal(reader.GetOrdinal("perfect_attendance")),
-                                    Adjustment = reader.IsDBNull(reader.GetOrdinal("adjustment_total")) ? 0 : reader.GetDecimal(reader.GetOrdinal("adjustment_total")),
-                                    Reliever = reader.IsDBNull(reader.GetOrdinal("reliever_total")) ? 0 : reader.GetDecimal(reader.GetOrdinal("reliever_total")),
-                                    NetPay = reader.IsDBNull(reader.GetOrdinal("netpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("netpay")),
-                                    CashAdvance = reader.IsDBNull(reader.GetOrdinal("cash_advance")) ? 0 : reader.GetDecimal(reader.GetOrdinal("cash_advance")),
-                                    Uniform = reader.IsDBNull(reader.GetOrdinal("uniform")) ? 0 : reader.GetDecimal(reader.GetOrdinal("uniform")),
-                                    AtmId = reader.IsDBNull(reader.GetOrdinal("atm_id")) ? 0 : reader.GetDecimal(reader.GetOrdinal("atm_id")),
-                                    Medical = reader.IsDBNull(reader.GetOrdinal("medical")) ? 0 : reader.GetDecimal(reader.GetOrdinal("medical")),
-                                    Grocery = reader.IsDBNull(reader.GetOrdinal("grocery")) ? 0 : reader.GetDecimal(reader.GetOrdinal("grocery")),
-                                    Canteen = reader.IsDBNull(reader.GetOrdinal("canteen")) ? 0 : reader.GetDecimal(reader.GetOrdinal("canteen")),
-                                    Damayan = reader.IsDBNull(reader.GetOrdinal("damayan")) ? 0 : reader.GetDecimal(reader.GetOrdinal("damayan")),
-                                    Rice = reader.IsDBNull(reader.GetOrdinal("rice")) ? 0 : reader.GetDecimal(reader.GetOrdinal("rice")),
-                                    TotalDays = reader.IsDBNull(reader.GetOrdinal("total_days")) ? 0 : reader.GetDecimal(reader.GetOrdinal("total_days")),
-                                    LegalHolidayCount = reader.IsDBNull(reader.GetOrdinal("legal_holiday_count")) ? 0 : reader.GetDecimal(reader.GetOrdinal("legal_holiday_count")),
-                                    OvertimeHours = reader.IsDBNull(reader.GetOrdinal("overtime_hours")) ? 0 : reader.GetDecimal(reader.GetOrdinal("overtime_hours")),
-                                    RestdayHours = reader.IsDBNull(reader.GetOrdinal("restday_hours")) ? 0 : reader.GetDecimal(reader.GetOrdinal("restday_hours")),
-                                    RestdayOvertimeHours = reader.IsDBNull(reader.GetOrdinal("restday_overtime_hours")) ? 0 : reader.GetDecimal(reader.GetOrdinal("restday_overtime_hours")),
-                                    LegalHolidayHours = reader.IsDBNull(reader.GetOrdinal("legal_holiday_hours")) ? 0 : reader.GetDecimal(reader.GetOrdinal("legal_holiday_hours")),
-                                    LegalHolidayOvertimeHours = reader.IsDBNull(reader.GetOrdinal("legal_holiday_overtime_hours")) ? 0 : reader.GetDecimal(reader.GetOrdinal("legal_holiday_overtime_hours")),
-                                    LegalHolidayRestdayHours = reader.IsDBNull(reader.GetOrdinal("lhrd_hours")) ? 0 : reader.GetDecimal(reader.GetOrdinal("lhrd_hours")),
-                                    LegalHolidayRestdayOvertimeHours = reader.IsDBNull(reader.GetOrdinal("lhrd_overtime_hours")) ? 0 : reader.GetDecimal(reader.GetOrdinal("lhrd_overtime_hours")),
-                                    SpecialHolidayHours = reader.IsDBNull(reader.GetOrdinal("special_holiday_hours")) ? 0 : reader.GetDecimal(reader.GetOrdinal("special_holiday_hours")),
-                                    SpecialHolidayOvertimeHours = reader.IsDBNull(reader.GetOrdinal("special_holiday_overtime_hours")) ? 0 : reader.GetDecimal(reader.GetOrdinal("special_holiday_overtime_hours")),
-                                    SpecialHolidayRestdayHours = reader.IsDBNull(reader.GetOrdinal("special_holiday_restday_hours")) ? 0 : reader.GetDecimal(reader.GetOrdinal("special_holiday_restday_hours")),
-                                    SpecialHolidayRestdayOvertimeHours = reader.IsDBNull(reader.GetOrdinal("special_holiday_restday_overtime_hours")) ? 0 : reader.GetDecimal(reader.GetOrdinal("special_holiday_restday_overtime_hours")),
-                                    NightDifferentialHours = reader.IsDBNull(reader.GetOrdinal("nd_hrs")) ? 0 : reader.GetDecimal(reader.GetOrdinal("nd_hrs")),
-                                    NightDifferentialOvertimeHours = reader.IsDBNull(reader.GetOrdinal("ndot_hrs")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndot_hrs")),
-                                    NightDifferentialRestdayHours = reader.IsDBNull(reader.GetOrdinal("ndrd_hrs")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndrd_hrs")),
-                                    NightDifferentialSpecialHolidayHours = reader.IsDBNull(reader.GetOrdinal("ndsh_hrs")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndsh_hrs")),
-                                    NightDifferentialSpecialHolidayRestdayHours = reader.IsDBNull(reader.GetOrdinal("ndshrd_hrs")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndshrd_hrs")),
-                                    NightDifferentialLegalHolidayHours = reader.IsDBNull(reader.GetOrdinal("ndlh_hrs")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndlh_hrs")),
-                                    NightDifferentialLegalHolidayRestdayHours = reader.IsDBNull(reader.GetOrdinal("ndlhrd_hrs")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndlhrd_hrs")),
-                                    RestdayPay = reader.IsDBNull(reader.GetOrdinal("rdpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("rdpay")),
-                                    RestdayOvertimePay = reader.IsDBNull(reader.GetOrdinal("rdotpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("rdotpay")),
-                                    LegalHolidayOvertimePay = reader.IsDBNull(reader.GetOrdinal("lhothrspay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("lhothrspay")),
-                                    LegalHolidayRestdayPay = reader.IsDBNull(reader.GetOrdinal("lhrdpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("lhrdpay")),
-                                    LegalHolidayRestdayOvertimePay = reader.IsDBNull(reader.GetOrdinal("lhrdotpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("lhrdotpay")),
-                                    SpecialHolidayPay = reader.IsDBNull(reader.GetOrdinal("shpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("shpay")),
-                                    SpecialHolidayOvertimePay = reader.IsDBNull(reader.GetOrdinal("shotpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("shotpay")),
-                                    SpecialHolidayRestdayPay = reader.IsDBNull(reader.GetOrdinal("shrdpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("shrdpay")),
-                                    SpecialHolidayRestdayOvertimePay = reader.IsDBNull(reader.GetOrdinal("shrdotpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("shrdotpay")),
-                                    NightDifferentialOvertimePay = reader.IsDBNull(reader.GetOrdinal("ndotpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndotpay")),
-                                    NightDifferentialRestdayPay = reader.IsDBNull(reader.GetOrdinal("ndrdpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndrdpay")),
-                                    NightDifferentialSpecialHolidayPay = reader.IsDBNull(reader.GetOrdinal("ndshpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndshpay")),
-                                    NightDifferentialSpecialHolidayRestdayPay = reader.IsDBNull(reader.GetOrdinal("ndshrdpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndshrdpay")),
-                                    NightDifferentialLegalHolidayPay = reader.IsDBNull(reader.GetOrdinal("ndlhpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndlhpay")),
-                                    NightDifferentialLegalHolidayRestdayPay = reader.IsDBNull(reader.GetOrdinal("ndlhrdpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndlhrdpay")),
-                                    TotalBasicPay = reader.IsDBNull(reader.GetOrdinal("total_basic_pay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("total_basic_pay")),
-                                    RegOtPay = reader.IsDBNull(reader.GetOrdinal("regotpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("regotpay"))
-                                };
-                                payslips.Add(payslip);
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error fetching payslips: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            return payslips;
-        }
-
         private void GeneratePayslipPdf(PayslipViewModel payslip)
         {
-            using (PdfDocument document = new PdfDocument())
+            using (PdfSharp.Pdf.PdfDocument document = new PdfSharp.Pdf.PdfDocument())
             {
                 document.Info.Title = "Payslip";
-                PdfPage page = document.AddPage();
+                PdfSharp.Pdf.PdfPage page = document.AddPage();
                 double margin = 40;
                 double pageWidth = page.Width.Point;
                 double usableWidth = pageWidth - 2 * margin;
@@ -439,15 +285,169 @@ namespace JTI_Payroll_System
                 otherY += lineHeight;
                 DrawOtherEarningRow("TAKE HOME PAY", payslip.NetPay, false);
 
-                using (SaveFileDialog sfd = new SaveFileDialog { Filter = "PDF files (*.pdf)|*.pdf", FileName = $"Payslip_{payslip.EmployeeId}.pdf" })
+                // Save to a temporary file and view
+                string tempFile = Path.Combine(Path.GetTempPath(), $"Payslip_{payslip.EmployeeId}_{Guid.NewGuid()}.pdf");
+                document.Save(tempFile);
+                PdfViewerForm viewerForm = new PdfViewerForm(tempFile);
+                viewerForm.ShowDialog();
+            }
+        }
+
+        private void UpdateNetPay(int month, int controlPeriod, int payrollYear, DateTime fromDate, DateTime toDate)
+        {
+            try
+            {
+                using (var conn = DatabaseHelper.GetConnection())
                 {
-                    if (sfd.ShowDialog() == DialogResult.OK)
+                    conn.Open();
+                    string selectQuery = @"SELECT id, total_grosspay, sil, perfect_attendance, adjustment_total, reliever_total FROM payroll WHERE month = @month AND payrollyear = @payrollYear AND control_period = @controlPeriod AND pay_period_start = @fromDate AND pay_period_end = @toDate";
+                    using (var cmd = new MySqlCommand(selectQuery, conn))
                     {
-                        document.Save(sfd.FileName);
-                        Process.Start(new ProcessStartInfo(sfd.FileName) { UseShellExecute = true });
+                        cmd.Parameters.AddWithValue("@month", month);
+                        cmd.Parameters.AddWithValue("@payrollYear", payrollYear);
+                        cmd.Parameters.AddWithValue("@controlPeriod", controlPeriod);
+                        cmd.Parameters.AddWithValue("@fromDate", fromDate);
+                        cmd.Parameters.AddWithValue("@toDate", toDate);
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            var updates = new List<(int id, decimal netpay)>();
+                            while (reader.Read())
+                            {
+                                int id = reader.GetInt32("id");
+                                decimal totalGrossPay = reader.IsDBNull(reader.GetOrdinal("total_grosspay")) ? 0 : reader.GetDecimal("total_grosspay");
+                                decimal sil = reader.IsDBNull(reader.GetOrdinal("sil")) ? 0 : reader.GetDecimal("sil");
+                                decimal perfectAttendance = reader.IsDBNull(reader.GetOrdinal("perfect_attendance")) ? 0 : reader.GetDecimal("perfect_attendance");
+                                decimal adjustmentTotal = reader.IsDBNull(reader.GetOrdinal("adjustment_total")) ? 0 : reader.GetDecimal("adjustment_total");
+                                decimal relieverTotal = reader.IsDBNull(reader.GetOrdinal("reliever_total")) ? 0 : reader.GetDecimal("reliever_total");
+                                decimal netpay = totalGrossPay + sil + perfectAttendance + adjustmentTotal + relieverTotal;
+                                netpay = Math.Round(netpay, 2, MidpointRounding.AwayFromZero); // Round to 2 decimal places
+                                updates.Add((id, netpay));
+                            }
+                            reader.Close();
+                            foreach (var upd in updates)
+                            {
+                                string updateQuery = "UPDATE payroll SET netpay = @netpay WHERE id = @id";
+                                using (var updateCmd = new MySqlCommand(updateQuery, conn))
+                                {
+                                    updateCmd.Parameters.AddWithValue("@netpay", upd.netpay);
+                                    updateCmd.Parameters.AddWithValue("@id", upd.id);
+                                    updateCmd.ExecuteNonQuery();
+                                }
+                            }
+                        }
                     }
                 }
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error updating netpay: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private List<PayslipViewModel> GetPayslipsForPeriod(int month, int controlPeriod, int payrollYear, DateTime fromDate, DateTime toDate)
+        {
+            var payslips = new List<PayslipViewModel>();
+            try
+            {
+                using (var conn = DatabaseHelper.GetConnection())
+                {
+                    conn.Open();
+                    string selectQuery = @"SELECT p.*, e.ccode AS emp_ccode, e.client AS emp_client, e.bir_stat AS emp_bir_stat, e.atm_card_no AS emp_atm_card_no FROM payroll p LEFT JOIN employee e ON p.employee_id = e.id_no WHERE p.month = @month AND p.payrollyear = @payrollYear AND p.control_period = @controlPeriod AND p.pay_period_start = @fromDate AND p.pay_period_end = @toDate";
+                    using (var cmd = new MySqlCommand(selectQuery, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@month", month);
+                        cmd.Parameters.AddWithValue("@payrollYear", payrollYear);
+                        cmd.Parameters.AddWithValue("@controlPeriod", controlPeriod);
+                        cmd.Parameters.AddWithValue("@fromDate", fromDate);
+                        cmd.Parameters.AddWithValue("@toDate", toDate);
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                var payslip = new PayslipViewModel
+                                {
+                                    EmployeeId = reader["employee_id"].ToString(),
+                                    EmployeeName = $"{reader["lname"]}, {reader["fname"]} {reader["mname"]}",
+                                    Department = reader["emp_ccode"]?.ToString() ?? "",
+                                    Client = reader["emp_client"]?.ToString() ?? "",
+                                    BirStat = reader["emp_bir_stat"]?.ToString() ?? "",
+                                    AtmCardNo = reader["emp_atm_card_no"]?.ToString() ?? "",
+                                    PeriodStart = reader.GetDateTime(reader.GetOrdinal("pay_period_start")),
+                                    PeriodEnd = reader.GetDateTime(reader.GetOrdinal("pay_period_end")),
+                                    RatePerDay = reader.IsDBNull(reader.GetOrdinal("rate")) ? 0 : reader.GetDecimal(reader.GetOrdinal("rate")),
+                                    BasicPay = reader.IsDBNull(reader.GetOrdinal("basicpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("basicpay")),
+                                    LegalHolidayPay = reader.IsDBNull(reader.GetOrdinal("lhpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("lhpay")),
+                                    TardyUndertimePay = reader.IsDBNull(reader.GetOrdinal("trdypay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("trdypay")),
+                                    OvertimePay = reader.IsDBNull(reader.GetOrdinal("total_ot_pay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("total_ot_pay")),
+                                    NightDifferentialPay = reader.IsDBNull(reader.GetOrdinal("ndpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndpay")),
+                                    GrossPay = reader.IsDBNull(reader.GetOrdinal("gross_pay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("gross_pay")),
+                                    SSS = reader.IsDBNull(reader.GetOrdinal("SSS")) ? 0 : reader.GetDecimal(reader.GetOrdinal("SSS")),
+                                    PhilHealth = reader.IsDBNull(reader.GetOrdinal("philhealth")) ? 0 : reader.GetDecimal(reader.GetOrdinal("philhealth")),
+                                    HDMF = reader.IsDBNull(reader.GetOrdinal("hdmf")) ? 0 : reader.GetDecimal(reader.GetOrdinal("hdmf")),
+                                    HMO = reader.IsDBNull(reader.GetOrdinal("hmo")) ? 0 : reader.GetDecimal(reader.GetOrdinal("hmo")),
+                                    TotalDeductions = reader.IsDBNull(reader.GetOrdinal("total_deductions")) ? 0 : reader.GetDecimal(reader.GetOrdinal("total_deductions")),
+                                    SIL = reader.IsDBNull(reader.GetOrdinal("sil")) ? 0 : reader.GetDecimal(reader.GetOrdinal("sil")),
+                                    PerfectAttendance = reader.IsDBNull(reader.GetOrdinal("perfect_attendance")) ? 0 : reader.GetDecimal(reader.GetOrdinal("perfect_attendance")),
+                                    Adjustment = reader.IsDBNull(reader.GetOrdinal("adjustment_total")) ? 0 : reader.GetDecimal(reader.GetOrdinal("adjustment_total")),
+                                    Reliever = reader.IsDBNull(reader.GetOrdinal("reliever_total")) ? 0 : reader.GetDecimal(reader.GetOrdinal("reliever_total")),
+                                    NetPay = reader.IsDBNull(reader.GetOrdinal("netpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("netpay")),
+                                    CashAdvance = reader.IsDBNull(reader.GetOrdinal("cash_advance")) ? 0 : reader.GetDecimal(reader.GetOrdinal("cash_advance")),
+                                    Uniform = reader.IsDBNull(reader.GetOrdinal("uniform")) ? 0 : reader.GetDecimal(reader.GetOrdinal("uniform")),
+                                    AtmId = reader.IsDBNull(reader.GetOrdinal("atm_id")) ? 0 : reader.GetDecimal(reader.GetOrdinal("atm_id")),
+                                    Medical = reader.IsDBNull(reader.GetOrdinal("medical")) ? 0 : reader.GetDecimal(reader.GetOrdinal("medical")),
+                                    Grocery = reader.IsDBNull(reader.GetOrdinal("grocery")) ? 0 : reader.GetDecimal(reader.GetOrdinal("grocery")),
+                                    Canteen = reader.IsDBNull(reader.GetOrdinal("canteen")) ? 0 : reader.GetDecimal(reader.GetOrdinal("canteen")),
+                                    Damayan = reader.IsDBNull(reader.GetOrdinal("damayan")) ? 0 : reader.GetDecimal(reader.GetOrdinal("damayan")),
+                                    Rice = reader.IsDBNull(reader.GetOrdinal("rice")) ? 0 : reader.GetDecimal(reader.GetOrdinal("rice")),
+                                    TotalDays = reader.IsDBNull(reader.GetOrdinal("total_days")) ? 0 : reader.GetDecimal(reader.GetOrdinal("total_days")),
+                                    LegalHolidayCount = reader.IsDBNull(reader.GetOrdinal("legal_holiday_count")) ? 0 : reader.GetDecimal(reader.GetOrdinal("legal_holiday_count")),
+                                    OvertimeHours = reader.IsDBNull(reader.GetOrdinal("overtime_hours")) ? 0 : reader.GetDecimal(reader.GetOrdinal("overtime_hours")),
+                                    RestdayHours = reader.IsDBNull(reader.GetOrdinal("restday_hours")) ? 0 : reader.GetDecimal(reader.GetOrdinal("restday_hours")),
+                                    RestdayOvertimeHours = reader.IsDBNull(reader.GetOrdinal("restday_overtime_hours")) ? 0 : reader.GetDecimal(reader.GetOrdinal("restday_overtime_hours")),
+                                    LegalHolidayHours = reader.IsDBNull(reader.GetOrdinal("legal_holiday_hours")) ? 0 : reader.GetDecimal(reader.GetOrdinal("legal_holiday_hours")),
+                                    LegalHolidayOvertimeHours = reader.IsDBNull(reader.GetOrdinal("legal_holiday_overtime_hours")) ? 0 : reader.GetDecimal(reader.GetOrdinal("legal_holiday_overtime_hours")),
+                                    LegalHolidayRestdayHours = reader.IsDBNull(reader.GetOrdinal("lhrd_hours")) ? 0 : reader.GetDecimal(reader.GetOrdinal("lhrd_hours")),
+                                    LegalHolidayRestdayOvertimeHours = reader.IsDBNull(reader.GetOrdinal("lhrd_overtime_hours")) ? 0 : reader.GetDecimal(reader.GetOrdinal("lhrd_overtime_hours")),
+                                    SpecialHolidayHours = reader.IsDBNull(reader.GetOrdinal("special_holiday_hours")) ? 0 : reader.GetDecimal(reader.GetOrdinal("special_holiday_hours")),
+                                    SpecialHolidayOvertimeHours = reader.IsDBNull(reader.GetOrdinal("special_holiday_overtime_hours")) ? 0 : reader.GetDecimal(reader.GetOrdinal("special_holiday_overtime_hours")),
+                                    SpecialHolidayRestdayHours = reader.IsDBNull(reader.GetOrdinal("special_holiday_restday_hours")) ? 0 : reader.GetDecimal(reader.GetOrdinal("special_holiday_restday_hours")),
+                                    SpecialHolidayRestdayOvertimeHours = reader.IsDBNull(reader.GetOrdinal("special_holiday_restday_overtime_hours")) ? 0 : reader.GetDecimal(reader.GetOrdinal("special_holiday_restday_overtime_hours")),
+                                    NightDifferentialHours = reader.IsDBNull(reader.GetOrdinal("nd_hrs")) ? 0 : reader.GetDecimal(reader.GetOrdinal("nd_hrs")),
+                                    NightDifferentialOvertimeHours = reader.IsDBNull(reader.GetOrdinal("ndot_hrs")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndot_hrs")),
+                                    NightDifferentialRestdayHours = reader.IsDBNull(reader.GetOrdinal("ndrd_hrs")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndrd_hrs")),
+                                    NightDifferentialSpecialHolidayHours = reader.IsDBNull(reader.GetOrdinal("ndsh_hrs")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndsh_hrs")),
+                                    NightDifferentialSpecialHolidayRestdayHours = reader.IsDBNull(reader.GetOrdinal("ndshrd_hrs")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndshrd_hrs")),
+                                    NightDifferentialLegalHolidayHours = reader.IsDBNull(reader.GetOrdinal("ndlh_hrs")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndlh_hrs")),
+                                    NightDifferentialLegalHolidayRestdayHours = reader.IsDBNull(reader.GetOrdinal("ndlhrd_hrs")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndlhrd_hrs")),
+                                    RestdayPay = reader.IsDBNull(reader.GetOrdinal("rdpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("rdpay")),
+                                    RestdayOvertimePay = reader.IsDBNull(reader.GetOrdinal("rdotpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("rdotpay")),
+                                    LegalHolidayOvertimePay = reader.IsDBNull(reader.GetOrdinal("lhothrspay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("lhothrspay")),
+                                    LegalHolidayRestdayPay = reader.IsDBNull(reader.GetOrdinal("lhrdpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("lhrdpay")),
+                                    LegalHolidayRestdayOvertimePay = reader.IsDBNull(reader.GetOrdinal("lhrdotpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("lhrdotpay")),
+                                    SpecialHolidayPay = reader.IsDBNull(reader.GetOrdinal("shpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("shpay")),
+                                    SpecialHolidayOvertimePay = reader.IsDBNull(reader.GetOrdinal("shotpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("shotpay")),
+                                    SpecialHolidayRestdayPay = reader.IsDBNull(reader.GetOrdinal("shrdpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("shrdpay")),
+                                    SpecialHolidayRestdayOvertimePay = reader.IsDBNull(reader.GetOrdinal("shrdotpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("shrdotpay")),
+                                    NightDifferentialOvertimePay = reader.IsDBNull(reader.GetOrdinal("ndotpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndotpay")),
+                                    NightDifferentialRestdayPay = reader.IsDBNull(reader.GetOrdinal("ndrdpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndrdpay")),
+                                    NightDifferentialSpecialHolidayPay = reader.IsDBNull(reader.GetOrdinal("ndshpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndshpay")),
+                                    NightDifferentialSpecialHolidayRestdayPay = reader.IsDBNull(reader.GetOrdinal("ndshrdpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndshrdpay")),
+                                    NightDifferentialLegalHolidayPay = reader.IsDBNull(reader.GetOrdinal("ndlhpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndlhpay")),
+                                    NightDifferentialLegalHolidayRestdayPay = reader.IsDBNull(reader.GetOrdinal("ndlhrdpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndlhrdpay")),
+                                    TotalBasicPay = reader.IsDBNull(reader.GetOrdinal("total_basic_pay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("total_basic_pay")),
+                                    RegOtPay = reader.IsDBNull(reader.GetOrdinal("regotpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("regotpay"))
+                                };
+                                payslips.Add(payslip);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error fetching payslips: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            return payslips;
         }
 
         private void generate_Click(object sender, EventArgs e)
@@ -604,5 +604,52 @@ namespace JTI_Payroll_System
         public decimal NightDifferentialLegalHolidayRestdayPay { get; set; }
         public decimal TotalBasicPay { get; set; }
         public decimal RegOtPay { get; set; }
+    }
+
+    public class PdfViewerForm : Form
+    {
+        private PdfViewer pdfViewer;
+        private string loadedPdfPath;
+        private Button btnSaveAs;
+
+        public PdfViewerForm(string pdfFilePath)
+        {
+            InitializeComponent();
+            loadedPdfPath = pdfFilePath;
+            pdfViewer = new PdfViewer
+            {
+                Dock = DockStyle.Fill
+            };
+            Controls.Add(pdfViewer);
+            pdfViewer.LoadDocument(pdfFilePath);
+
+            btnSaveAs = new Button
+            {
+                Text = "Save As",
+                Dock = DockStyle.Top,
+                Height = 32
+            };
+            btnSaveAs.Click += BtnSaveAs_Click;
+            Controls.Add(btnSaveAs);
+            btnSaveAs.BringToFront();
+        }
+
+        private void BtnSaveAs_Click(object sender, EventArgs e)
+        {
+            using (SaveFileDialog sfd = new SaveFileDialog { Filter = "PDF files (*.pdf)|*.pdf", FileName = Path.GetFileName(loadedPdfPath) })
+            {
+                if (sfd.ShowDialog() == DialogResult.OK)
+                {
+                    File.Copy(loadedPdfPath, sfd.FileName, true);
+                    MessageBox.Show("PDF saved successfully.", "Save As", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+        }
+
+        private void InitializeComponent()
+        {
+            this.Text = "PDF Viewer";
+            this.Size = new Size(800, 600);
+        }
     }
 }
