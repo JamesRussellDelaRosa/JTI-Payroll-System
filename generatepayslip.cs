@@ -138,7 +138,7 @@ namespace JTI_Payroll_System
                 using (var conn = DatabaseHelper.GetConnection())
                 {
                     conn.Open();
-                    string selectQuery = @"SELECT p.*, e.ccode AS emp_ccode, e.client AS emp_client FROM payroll p LEFT JOIN employee e ON p.employee_id = e.id_no WHERE p.month = @month AND p.payrollyear = @payrollYear AND p.control_period = @controlPeriod AND p.pay_period_start = @fromDate AND p.pay_period_end = @toDate";
+                    string selectQuery = @"SELECT p.*, e.ccode AS emp_ccode, e.client AS emp_client, e.bir_stat AS emp_bir_stat FROM payroll p LEFT JOIN employee e ON p.employee_id = e.id_no WHERE p.month = @month AND p.payrollyear = @payrollYear AND p.control_period = @controlPeriod AND p.pay_period_start = @fromDate AND p.pay_period_end = @toDate";
                     using (var cmd = new MySqlCommand(selectQuery, conn))
                     {
                         cmd.Parameters.AddWithValue("@month", month);
@@ -156,6 +156,7 @@ namespace JTI_Payroll_System
                                     EmployeeName = $"{reader["lname"]}, {reader["fname"]} {reader["mname"]}",
                                     Department = reader["emp_ccode"]?.ToString() ?? "",
                                     Client = reader["emp_client"]?.ToString() ?? "",
+                                    BirStat = reader["emp_bir_stat"]?.ToString() ?? "",
                                     PeriodStart = reader.GetDateTime(reader.GetOrdinal("pay_period_start")),
                                     PeriodEnd = reader.GetDateTime(reader.GetOrdinal("pay_period_end")),
                                     RatePerDay = reader.IsDBNull(reader.GetOrdinal("rate")) ? 0 : reader.GetDecimal(reader.GetOrdinal("rate")),
@@ -267,14 +268,14 @@ namespace JTI_Payroll_System
                 gfx.DrawString("ID NO :", font, blackBrush, earningsCol1, y);
                 gfx.DrawString(payslip.EmployeeId, boldFont, blackBrush, earningsCol1 + 48, y);
                 gfx.DrawString("BIR CODE :", font, blackBrush, dedCol1, y);
-                gfx.DrawString("S", font, blackBrush, dedCol1 + 60, y);
+                gfx.DrawString(payslip.BirStat, font, blackBrush, dedCol1 + 60, y);
                 y += lineHeight;
                 gfx.DrawString("NAME :", font, blackBrush, earningsCol1, y);
                 gfx.DrawString(payslip.EmployeeName.ToUpper(), boldFont, blackBrush, earningsCol1 + 48, y);
                 gfx.DrawString("RATE/DAY :", font, blackBrush, dedCol1, y);
                 gfx.DrawString($"{payslip.RatePerDay:N2}", font, blackBrush, dedCol1 + 60, y);
                 y += lineHeight;
-                gfx.DrawString($"{payslip.Department}-{payslip.Client}", font, blackBrush, new XRect(earningsCol1, y, earningsCol3 + 60 - earningsCol1, lineHeight), XStringFormats.TopLeft);
+                gfx.DrawString($"{payslip.Department} - {payslip.Client}", font, blackBrush, new XRect(earningsCol1, y, earningsCol3 + 60 - earningsCol1, lineHeight), XStringFormats.TopLeft);
                 gfx.DrawString("TYPE-ATM :", font, blackBrush, dedCol1, y);
                 gfx.DrawString("428303263825768", font, blackBrush, dedCol1 + 60, y);
                 y += lineHeight + 2;
@@ -536,6 +537,7 @@ namespace JTI_Payroll_System
         public string EmployeeName { get; set; }
         public string Department { get; set; }
         public string Client { get; set; } // Added for client from employee table
+        public string BirStat { get; set; } // Added for BIR status from employee table
         public DateTime PeriodStart { get; set; }
         public DateTime PeriodEnd { get; set; }
         public decimal RatePerDay { get; set; }
