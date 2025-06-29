@@ -23,6 +23,14 @@ namespace JTI_Payroll_System
             dgvDTR.CurrentCellDirtyStateChanged += dgvDTR_CurrentCellDirtyStateChanged; // Add this line
             dgvDTR.CellEnter += dgvDTR_CellEnter;
 
+            // Add row highlighting for current row
+            dgvDTR.RowPrePaint += dgvDTR_RowPrePaint;
+
+            // Add context menu for Fill Down
+            ContextMenuStrip menu = new ContextMenuStrip();
+            menu.Items.Add("Fill Down", null, (s, e) => FillDownCurrentCell());
+            dgvDTR.ContextMenuStrip = menu;
+
             // Add event handlers for placeholder text
             textStartDate.Enter += TextBox_Enter;
             textStartDate.Leave += TextBox_Leave;
@@ -100,18 +108,14 @@ namespace JTI_Payroll_System
 
                     if (!currentDataSource.Contains(newRate))
                     {
-                        // Show a warning and reset the input
-                        MessageBox.Show("The entered rate does not exist in the dropdown. Please select a valid rate.",
-                                        "Invalid Rate", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        comboBoxrate.Text = "0.00"; // Reset to default
+                        // Silently reset to default if invalid
+                        comboBoxrate.Text = "0.00";
                     }
                 }
                 else
                 {
-                    // Show a warning and reset the input
-                    MessageBox.Show("Invalid Rate value. Please enter a valid decimal number.",
-                                    "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    comboBoxrate.Text = "0.00"; // Reset to default
+                    // Silently reset to default if invalid
+                    comboBoxrate.Text = "0.00";
                 }
             }
         }
@@ -193,18 +197,14 @@ namespace JTI_Payroll_System
 
                     if (!currentDataSource.Contains(input))
                     {
-                        // Show a warning and reset the input
-                        MessageBox.Show("The entered shift code does not exist in the dropdown. Please select a valid shift code.",
-                                        "Invalid Shift Code", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        comboBoxshiftcode.Text = ""; // Reset to default
+                        // Silently reset to default if invalid
+                        comboBoxshiftcode.Text = "";
                     }
                 }
                 else
                 {
-                    // Show a warning and reset the input
-                    MessageBox.Show("Invalid Shift Code. Please enter a valid value.",
-                                    "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    comboBoxshiftcode.Text = ""; // Reset to default
+                    // Silently reset to default if invalid
+                    comboBoxshiftcode.Text = "";
                 }
             }
         }
@@ -870,7 +870,7 @@ namespace JTI_Payroll_System
                     }
                     else
                     {
-                        MessageBox.Show("Invalid Shift Code", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        // Silently clear shift data if invalid, no MessageBox
                         ClearShiftData(row);
                     }
                 }
@@ -1041,6 +1041,8 @@ namespace JTI_Payroll_System
                                 comboBox.DroppedDown = true; // Keep the dropdown open
                             }
                         };
+                        // Auto-open dropdown when editing starts
+                        comboBox.DroppedDown = true;
                     }
                 }
                 else
@@ -1075,6 +1077,13 @@ namespace JTI_Payroll_System
                     textBox.Text += ":";
                     textBox.SelectionStart = textBox.Text.Length; // Move the cursor to the end
                 }
+            }
+            // Move to next cell on Enter
+            if (e.KeyChar == '\r')
+            {
+                dgvDTR.EndEdit();
+                SendKeys.Send("{TAB}");
+                e.Handled = true;
             }
         }
         private void ComboBox_SelectedIndexChanged(object sender, EventArgs e)
@@ -1496,7 +1505,26 @@ namespace JTI_Payroll_System
                 }
             }
         }
+        private void dgvDTR_RowPrePaint(object sender, DataGridViewRowPrePaintEventArgs e)
+        {
+            if (dgvDTR.CurrentRow != null && e.RowIndex == dgvDTR.CurrentRow.Index)
+            {
+                dgvDTR.Rows[e.RowIndex].DefaultCellStyle.BackColor = System.Drawing.Color.LightYellow;
+            }
+            else
+            {
+                dgvDTR.Rows[e.RowIndex].DefaultCellStyle.BackColor = System.Drawing.Color.White;
+            }
+        }
+        private void FillDownCurrentCell()
+        {
+            if (dgvDTR.CurrentCell == null) return;
+            var col = dgvDTR.CurrentCell.ColumnIndex;
+            var val = dgvDTR.CurrentCell.Value;
+            for (int i = dgvDTR.CurrentCell.RowIndex + 1; i < dgvDTR.Rows.Count; i++)
+            {
+                dgvDTR.Rows[i].Cells[col].Value = val;
+            }
+        }
     }
-
-
 }
