@@ -318,7 +318,7 @@ namespace JTI_Payroll_System
                                 decimal sil = reader.IsDBNull(reader.GetOrdinal("sil")) ? 0 : reader.GetDecimal("sil");
                                 decimal perfectAttendance = reader.IsDBNull(reader.GetOrdinal("perfect_attendance")) ? 0 : reader.GetDecimal("perfect_attendance");
                                 decimal adjustmentTotal = reader.IsDBNull(reader.GetOrdinal("adjustment_total")) ? 0 : reader.GetDecimal("adjustment_total");
-                                decimal relieverTotal = reader.IsDBNull(reader.GetOrdinal("reliever_total")) ? 0 : reader.GetDecimal("reliever_total");
+                                decimal relieverTotal = reader.IsDBNull(reader.GetOrdinal("reliever_total")) ? 0 : reader.GetDecimal(reader.GetOrdinal("reliever_total"));
                                 decimal netpay = totalGrossPay + sil + perfectAttendance + adjustmentTotal + relieverTotal;
                                 netpay = Math.Round(netpay, 2, MidpointRounding.AwayFromZero); // Round to 2 decimal places
                                 updates.Add((id, netpay));
@@ -611,6 +611,7 @@ namespace JTI_Payroll_System
         private PdfViewer pdfViewer;
         private string loadedPdfPath;
         private Button btnSaveAs;
+        private Button btnPrint;
 
         public PdfViewerForm(string pdfFilePath)
         {
@@ -632,6 +633,16 @@ namespace JTI_Payroll_System
             btnSaveAs.Click += BtnSaveAs_Click;
             Controls.Add(btnSaveAs);
             btnSaveAs.BringToFront();
+
+            btnPrint = new Button
+            {
+                Text = "Print",
+                Dock = DockStyle.Top,
+                Height = 32
+            };
+            btnPrint.Click += BtnPrint_Click;
+            Controls.Add(btnPrint);
+            btnPrint.BringToFront();
         }
 
         private void BtnSaveAs_Click(object sender, EventArgs e)
@@ -643,6 +654,74 @@ namespace JTI_Payroll_System
                     File.Copy(loadedPdfPath, sfd.FileName, true);
                     MessageBox.Show("PDF saved successfully.", "Save As", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
+            }
+        }
+
+        private void BtnPrint_Click(object sender, EventArgs e)
+        {
+            // Print the PDF by rendering each page to an image and sending to the printer
+            using (PrintDialog printDialog = new PrintDialog())
+            using (System.Drawing.Printing.PrintDocument printDoc = new System.Drawing.Printing.PrintDocument())
+            {
+                printDoc.DocumentName = loadedPdfPath;
+                printDialog.Document = printDoc;
+                int pageCount = 1;
+                Patagames.Pdf.Net.PdfDocument pdfDoc = null;
+                try
+                {
+                    pdfDoc = Patagames.Pdf.Net.PdfDocument.Load(loadedPdfPath);
+                    pageCount = pdfDoc.Pages.Count;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Failed to load PDF for printing: " + ex.Message, "Print Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+                int currentPage = 0;
+                printDoc.PrintPage += (s, ev) =>
+                {
+                    if (pdfDoc != null && currentPage < pageCount)
+                    {
+                        // Try using the RenderEx method if available
+                        var page = pdfDoc.Pages[currentPage];
+                        Bitmap bmp = null;
+                        try
+                        {
+                            // Try RenderEx(int width, int height, bool forPrinting) if available
+                            var renderExMethod = page.GetType().GetMethod("RenderEx", new[] { typeof(int), typeof(int), typeof(bool) });
+                            if (renderExMethod != null)
+                            {
+                                bmp = (Bitmap)renderExMethod.Invoke(page, new object[] { ev.MarginBounds.Width, ev.MarginBounds.Height, true });
+                            }
+                            else
+                            {
+                                MessageBox.Show("Unable to render PDF page to bitmap. No suitable method found.", "Print Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                ev.HasMorePages = false;
+                                return;
+                            }
+                        }
+                        catch
+                        {
+                            MessageBox.Show("Unable to render PDF page to bitmap. Please check Patagames.Pdf.Net documentation for your version.", "Print Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            ev.HasMorePages = false;
+                            return;
+                        }
+                        ev.Graphics.DrawImage(bmp, ev.MarginBounds);
+                        bmp.Dispose();
+                        currentPage++;
+                        ev.HasMorePages = currentPage < pageCount;
+                    }
+                    else
+                    {
+                        ev.HasMorePages = false;
+                    }
+                };
+                if (printDialog.ShowDialog() == DialogResult.OK)
+                {
+                    currentPage = 0;
+                    printDoc.Print();
+                }
+                pdfDoc?.Dispose();
             }
         }
 
