@@ -26,6 +26,10 @@ namespace JTI_Payroll_System
             // Add row highlighting for current row
             dgvDTR.RowPrePaint += dgvDTR_RowPrePaint;
 
+            // --- Optimization: Set CheckBox column style only once ---
+            SetCheckBoxColumnStyles();
+            // --------------------------------------------------------
+
             // Add context menu for Fill Down
             ContextMenuStrip menu = new ContextMenuStrip();
             menu.Items.Add("Fill Down", null, (s, e) => FillDownCurrentCell());
@@ -48,6 +52,25 @@ namespace JTI_Payroll_System
             // Set initial placeholder text
             SetPlaceholderText(textStartDate, "MM/DD/YYYY");
             SetPlaceholderText(textEndDate, "MM/DD/YYYY");
+
+            // Setup columns once
+            SetupRateDropdown();
+            SetupShiftCodeDropdown();
+        }
+
+        // Optimization: Set CheckBox column style only once
+        private void SetCheckBoxColumnStyles()
+        {
+            string[] checkBoxColumns = { "RestDay", "LegalHoliday", "SpecialHoliday", "NonWorkingDay", "Reliever" };
+            foreach (var colName in checkBoxColumns)
+            {
+                if (dgvDTR.Columns.Contains(colName) && dgvDTR.Columns[colName] is DataGridViewCheckBoxColumn col)
+                {
+                    col.FlatStyle = FlatStyle.Standard;
+                    col.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(255, 255, 224); // Light yellow
+                    col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+                }
+            }
         }
 
         private void SetupRateDropdown()
@@ -340,8 +363,10 @@ namespace JTI_Payroll_System
                 dt.DefaultView.Sort = "Date ASC";
                 dgvDTR.DataSource = dt;
                 dgvDTR.AllowUserToAddRows = false;
-                SetupRateDropdown();
-                SetupShiftCodeDropdown();
+
+                // Columns are now setup in the constructor, so we don't call them here.
+                // SetupRateDropdown();
+                // SetupShiftCodeDropdown();
 
                 // Update column headers
                 dgvDTR.Columns["WorkingHours"].HeaderText = "WorkHrs";
@@ -375,8 +400,7 @@ namespace JTI_Payroll_System
                 dgvDTR.Columns["ShiftCode"].DisplayIndex = 3;
 
                 HighlightRestDaysAndUpdateRemarks(dgvDTR);
-
-                dgvDTR.Refresh();
+                SetCheckBoxColumnStyles(); // <-- Ensure styles are set after columns are created
             }
             catch (Exception ex)
             {
@@ -1252,16 +1276,19 @@ namespace JTI_Payroll_System
             if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
             {
                 DataGridViewRow row = dgvDTR.Rows[e.RowIndex];
-                if (dgvDTR.Columns[e.ColumnIndex].Name == "RestDay")
+                string colName = dgvDTR.Columns[e.ColumnIndex].Name;
+                // Handle all checkbox columns for consistent style
+                if (colName == "RestDay" || colName == "LegalHoliday" || colName == "SpecialHoliday" || colName == "NonWorkingDay" || colName == "Reliever")
                 {
                     bool isRestDay = Convert.ToBoolean(row.Cells["RestDay"].Value);
+                    // Only RestDay changes text color, others do not
                     if (isRestDay)
                     {
-                        row.DefaultCellStyle.ForeColor = System.Drawing.Color.Red; // Specify System.Drawing.Color
+                        row.DefaultCellStyle.ForeColor = System.Drawing.Color.Red;
                     }
                     else
                     {
-                        row.DefaultCellStyle.ForeColor = System.Drawing.Color.Black; // Specify System.Drawing.Color
+                        row.DefaultCellStyle.ForeColor = System.Drawing.Color.Black;
                     }
                 }
             }
@@ -1507,13 +1534,21 @@ namespace JTI_Payroll_System
         }
         private void dgvDTR_RowPrePaint(object sender, DataGridViewRowPrePaintEventArgs e)
         {
+            if (e.RowIndex < 0 || e.RowIndex >= dgvDTR.Rows.Count) return;
+
+            // Optimization: Only update if value changes
+            var row = dgvDTR.Rows[e.RowIndex];
+            System.Drawing.Color highlight = System.Drawing.Color.LightYellow;
+            System.Drawing.Color normal = System.Drawing.Color.White;
             if (dgvDTR.CurrentRow != null && e.RowIndex == dgvDTR.CurrentRow.Index)
             {
-                dgvDTR.Rows[e.RowIndex].DefaultCellStyle.BackColor = System.Drawing.Color.LightYellow;
+                if (row.DefaultCellStyle.BackColor != highlight)
+                    row.DefaultCellStyle.BackColor = highlight;
             }
             else
             {
-                dgvDTR.Rows[e.RowIndex].DefaultCellStyle.BackColor = System.Drawing.Color.White;
+                if (row.DefaultCellStyle.BackColor != normal)
+                    row.DefaultCellStyle.BackColor = normal;
             }
         }
         private void FillDownCurrentCell()
