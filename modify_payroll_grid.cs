@@ -134,6 +134,9 @@ namespace JTI_Payroll_System
                 return;
             }
 
+            // Always clear previous selection before searching
+            dataGridView1.ClearSelection();
+
             bool found = false;
             foreach (DataGridViewRow row in dataGridView1.Rows)
             {
