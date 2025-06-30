@@ -52,10 +52,6 @@ namespace JTI_Payroll_System
             // Set initial placeholder text
             SetPlaceholderText(textStartDate, "MM/DD/YYYY");
             SetPlaceholderText(textEndDate, "MM/DD/YYYY");
-
-            // Setup columns once
-            SetupRateDropdown();
-            SetupShiftCodeDropdown();
         }
 
         // Optimization: Set CheckBox column style only once
@@ -318,6 +314,10 @@ namespace JTI_Payroll_System
         {
             try
             {
+                // Setup columns once
+                SetupRateDropdown();
+                SetupShiftCodeDropdown();
+
                 DataTable dt = LoadAttendanceData(employeeID, startDate, endDate);
 
                 if (dt.Rows.Count > 0)
@@ -363,10 +363,6 @@ namespace JTI_Payroll_System
                 dt.DefaultView.Sort = "Date ASC";
                 dgvDTR.DataSource = dt;
                 dgvDTR.AllowUserToAddRows = false;
-
-                // Columns are now setup in the constructor, so we don't call them here.
-                // SetupRateDropdown();
-                // SetupShiftCodeDropdown();
 
                 // Update column headers
                 dgvDTR.Columns["WorkingHours"].HeaderText = "WorkHrs";
