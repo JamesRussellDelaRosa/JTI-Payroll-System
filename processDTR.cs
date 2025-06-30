@@ -1307,7 +1307,7 @@ namespace JTI_Payroll_System
             {
                 // Fetch all shift codes from the database once
                 List<ShiftCodeData> allShiftCodes = GetAllShiftCodes();
-                int totalRows = dgvDTR.Rows.Count - 1; // Exclude new row
+                int totalRows = dgvDTR.Rows.Count; // Correctly count total rows
                 int processedRows = 0;
 
                 foreach (DataGridViewRow row in dgvDTR.Rows)
