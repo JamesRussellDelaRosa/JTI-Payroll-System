@@ -137,38 +137,6 @@ namespace JTI_Payroll_System
                 return;
             }
 
-            // Check if the date range exists in the payroll table
-            bool dateRangeExists = false;
-            try
-            {
-                using (var conn = DatabaseHelper.GetConnection())
-                {
-                    conn.Open();
-                    string query = @"SELECT COUNT(*) FROM payroll WHERE pay_period_start = @start AND pay_period_end = @end";
-                    using (var cmd = new MySqlCommand(query, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@start", startDate);
-                        cmd.Parameters.AddWithValue("@end", endDate);
-                        int count = Convert.ToInt32(cmd.ExecuteScalar());
-                        if (count > 0)
-                        {
-                            dateRangeExists = true;
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error checking payroll data: " + ex.Message, "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return; // Stop further processing if there's a DB error
-            }
-
-            if (!dateRangeExists)
-            {
-                MessageBox.Show("The selected date range does not correspond to an existing payroll period.", "Invalid Payroll Period", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
             LoadEmployeesByDateRange(startDate, endDate);
         }
         private void LoadEmployeesByDateRange(DateTime startDate, DateTime endDate)
@@ -183,7 +151,7 @@ namespace JTI_Payroll_System
                 using (var conn = DatabaseHelper.GetConnection())
                 {
                     conn.Open();
-                    string query = @"SELECT employee_id, lname, fname, mname, ccode, pay_period_start, pay_period_end FROM payroll WHERE pay_period_start = @start AND pay_period_end = @end GROUP BY employee_id, lname, fname, mname, ccode, pay_period_start, pay_period_end ORDER BY lname, fname, mname";
+                    string query = @"SELECT employee_id, lname, fname, mname, ccode, pay_period_start, pay_period_end FROM payroll WHERE pay_period_start <= @end AND pay_period_end >= @start GROUP BY employee_id, lname, fname, mname, ccode, pay_period_start, pay_period_end ORDER BY lname, fname, mname";
                     using (var cmd = new MySqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@start", startDate);

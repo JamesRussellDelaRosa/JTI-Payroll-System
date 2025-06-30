@@ -165,6 +165,7 @@ namespace JTI_Payroll_System
                                     mname = nameReader["mname"].ToString();
                                     ccode = nameReader["ccode"].ToString();
                                 }
+                                nameReader.Close(); // Explicitly close the reader before next command
                             }
                         }
 
