@@ -61,6 +61,8 @@
             loanamt = new TextBox();
             loandate = new TextBox();
             flowLayoutPanel1 = new FlowLayoutPanel();
+            search = new Button();
+            searchtxt = new TextBox();
             SuspendLayout();
             // 
             // calamitydelete
@@ -346,11 +348,30 @@
             flowLayoutPanel1.Size = new Size(736, 405);
             flowLayoutPanel1.TabIndex = 34;
             // 
+            // search
+            // 
+            search.Location = new Point(812, 19);
+            search.Name = "search";
+            search.Size = new Size(94, 29);
+            search.TabIndex = 68;
+            search.Text = "Search";
+            search.UseVisualStyleBackColor = true;
+            search.Click += search_Click;
+            // 
+            // searchtxt
+            // 
+            searchtxt.Location = new Point(611, 21);
+            searchtxt.Name = "searchtxt";
+            searchtxt.Size = new Size(195, 27);
+            searchtxt.TabIndex = 67;
+            // 
             // SSSLOAN
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1427, 683);
+            Controls.Add(search);
+            Controls.Add(searchtxt);
             Controls.Add(calamitydelete);
             Controls.Add(calamitysave);
             Controls.Add(label8);
@@ -425,5 +446,7 @@
         private TextBox loanamt;
         private TextBox loandate;
         private FlowLayoutPanel flowLayoutPanel1;
+        private Button search;
+        private TextBox searchtxt;
     }
 }

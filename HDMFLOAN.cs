@@ -647,6 +647,54 @@ namespace JTI_Payroll_System
             }
         }
 
+        private void search_Click(object sender, EventArgs e)
+        {
+            string searchTerm = searchtxt.Text.Trim();
+
+            if (string.IsNullOrEmpty(searchTerm))
+            {
+                // If search is empty, show all employees
+                foreach (Control control in flowLayoutPanel1.Controls)
+                {
+                    if (control is Panel panel)
+                    {
+                        panel.Visible = true;
+                    }
+                }
+                return;
+            }
+
+            int foundCount = 0;
+            foreach (Control control in flowLayoutPanel1.Controls)
+            {
+                if (control is Panel panel)
+                {
+                    var employeeData = (dynamic)panel.Tag;
+                    if (employeeData != null)
+                    {
+                        string employeeId = employeeData.Id.ToString();
+                        string employeeName = employeeData.Name.ToString();
+
+                        // Case-insensitive search for ID or name
+                        if (employeeId.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                            employeeName.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0)
+                        {
+                            panel.Visible = true;
+                            foundCount++;
+                        }
+                        else
+                        {
+                            panel.Visible = false;
+                        }
+                    }
+                }
+            }
+
+            if (foundCount == 0)
+            {
+                MessageBox.Show("No employee found matching your search.", "Not Found", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
 
     }
 }

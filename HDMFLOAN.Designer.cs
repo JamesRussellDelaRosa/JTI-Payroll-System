@@ -61,6 +61,8 @@
             calamitymonthamort = new TextBox();
             calamityloanamt = new TextBox();
             calamityloandate = new TextBox();
+            searchtxt = new TextBox();
+            search = new Button();
             SuspendLayout();
             // 
             // flowLayoutPanel1
@@ -346,11 +348,30 @@
             calamityloandate.Size = new Size(125, 27);
             calamityloandate.TabIndex = 19;
             // 
+            // searchtxt
+            // 
+            searchtxt.Location = new Point(663, 14);
+            searchtxt.Name = "searchtxt";
+            searchtxt.Size = new Size(195, 27);
+            searchtxt.TabIndex = 34;
+            // 
+            // search
+            // 
+            search.Location = new Point(864, 12);
+            search.Name = "search";
+            search.Size = new Size(94, 29);
+            search.TabIndex = 35;
+            search.Text = "Search";
+            search.UseVisualStyleBackColor = true;
+            search.Click += search_Click;
+            // 
             // HDMFLOAN
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1442, 814);
+            Controls.Add(search);
+            Controls.Add(searchtxt);
             Controls.Add(calamitydelete);
             Controls.Add(calamitysave);
             Controls.Add(label8);
@@ -425,5 +446,7 @@
         private TextBox calamitymonthamort;
         private TextBox calamityloanamt;
         private TextBox calamityloandate;
+        private TextBox searchtxt;
+        private Button search;
     }
 }
