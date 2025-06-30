@@ -17,46 +17,69 @@ namespace JTI_Payroll_System
 
         private void InitializeComponent()
         {
-            this.dataGridView1 = new System.Windows.Forms.DataGridView();
-            this.btnSaveChanges = new System.Windows.Forms.Button();
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
-            this.SuspendLayout();
+            dataGridView1 = new DataGridView();
+            btnSaveChanges = new Button();
+            search = new Button();
+            searchtxt = new TextBox();
+            ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
+            SuspendLayout();
             // 
             // dataGridView1
             // 
-            this.dataGridView1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView1.Location = new System.Drawing.Point(12, 12);
-            this.dataGridView1.Name = "dataGridView1";
-            this.dataGridView1.Size = new System.Drawing.Size(1160, 500);
-            this.dataGridView1.TabIndex = 0;
-            this.dataGridView1.AllowUserToAddRows = false;
-            this.dataGridView1.DataBindingComplete += new System.Windows.Forms.DataGridViewBindingCompleteEventHandler(this.dataGridView1_DataBindingComplete);
+            dataGridView1.AllowUserToAddRows = false;
+            dataGridView1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            dataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dataGridView1.Location = new Point(12, 49);
+            dataGridView1.Name = "dataGridView1";
+            dataGridView1.RowHeadersWidth = 51;
+            dataGridView1.Size = new Size(1160, 500);
+            dataGridView1.TabIndex = 0;
+            dataGridView1.DataBindingComplete += dataGridView1_DataBindingComplete;
             // 
             // btnSaveChanges
             // 
-            this.btnSaveChanges.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnSaveChanges.Location = new System.Drawing.Point(1050, 520);
-            this.btnSaveChanges.Name = "btnSaveChanges";
-            this.btnSaveChanges.Size = new System.Drawing.Size(120, 30);
-            this.btnSaveChanges.TabIndex = 1;
-            this.btnSaveChanges.Text = "Save Changes";
-            this.btnSaveChanges.UseVisualStyleBackColor = true;
-            this.btnSaveChanges.Click += new System.EventHandler(this.btnSaveChanges_Click);
+            btnSaveChanges.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            btnSaveChanges.Location = new Point(1052, 12);
+            btnSaveChanges.Name = "btnSaveChanges";
+            btnSaveChanges.Size = new Size(120, 30);
+            btnSaveChanges.TabIndex = 1;
+            btnSaveChanges.Text = "Save Changes";
+            btnSaveChanges.UseVisualStyleBackColor = true;
+            btnSaveChanges.Click += btnSaveChanges_Click;
+            // 
+            // search
+            // 
+            search.Location = new Point(954, 10);
+            search.Name = "search";
+            search.Size = new Size(94, 29);
+            search.TabIndex = 70;
+            search.Text = "Search";
+            search.UseVisualStyleBackColor = true;
+            search.Click += search_Click;
+            // 
+            // searchtxt
+            // 
+            searchtxt.Location = new Point(753, 12);
+            searchtxt.Name = "searchtxt";
+            searchtxt.Size = new Size(195, 27);
+            searchtxt.TabIndex = 69;
             // 
             // modify_payroll_grid
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1184, 561);
-            this.Controls.Add(this.btnSaveChanges);
-            this.Controls.Add(this.dataGridView1);
-            this.Name = "modify_payroll_grid";
-            this.Text = "Modify Payroll Grid";
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
-            this.ResumeLayout(false);
+            AutoScaleDimensions = new SizeF(8F, 20F);
+            AutoScaleMode = AutoScaleMode.Font;
+            ClientSize = new Size(1184, 561);
+            Controls.Add(search);
+            Controls.Add(searchtxt);
+            Controls.Add(btnSaveChanges);
+            Controls.Add(dataGridView1);
+            Name = "modify_payroll_grid";
+            Text = "Modify Payroll Grid";
+            ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
+            ResumeLayout(false);
+            PerformLayout();
         }
+        private Button search;
+        private TextBox searchtxt;
     }
 }

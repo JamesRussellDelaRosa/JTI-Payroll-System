@@ -123,5 +123,42 @@ namespace JTI_Payroll_System
                 }
             }
         }
+
+        private void search_Click(object sender, EventArgs e)
+        {
+            string searchTerm = searchtxt.Text.Trim();
+            if (string.IsNullOrEmpty(searchTerm))
+            {
+                // Clear selection if search is empty
+                dataGridView1.ClearSelection();
+                return;
+            }
+
+            bool found = false;
+            foreach (DataGridViewRow row in dataGridView1.Rows)
+            {
+                if (row.IsNewRow) continue;
+                string empId = row.Cells["employee_id"]?.Value?.ToString() ?? string.Empty;
+                string lname = row.Cells["lname"]?.Value?.ToString() ?? string.Empty;
+                string fname = row.Cells["fname"]?.Value?.ToString() ?? string.Empty;
+                string mname = row.Cells["mname"]?.Value?.ToString() ?? string.Empty;
+
+                if (empId.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    lname.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    fname.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    mname.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    row.Selected = true;
+                    dataGridView1.FirstDisplayedScrollingRowIndex = row.Index;
+                    found = true;
+                    break; // Only highlight the first match
+                }
+            }
+            if (!found)
+            {
+                MessageBox.Show("No employee found matching your search.", "Not Found", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                dataGridView1.ClearSelection();
+            }
+        }
     }
 }
