@@ -302,6 +302,12 @@ namespace JTI_Payroll_System
             computewtaxForm.Show();
         }
 
+        private void exportpayroll_Click(object sender, EventArgs e)
+        {
+            exportpayroll exportPayrollForm = new exportpayroll();
+            exportPayrollForm.Show();
+        }
+
         private void genpayslip_Click(object sender, EventArgs e)
         {
             generatepayslip generatepayslipForm = new generatepayslip();
