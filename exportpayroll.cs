@@ -89,7 +89,7 @@ namespace JTI_Payroll_System
                 return;
             }
 
-            if (!postedpayroll.Checked)
+            if (!postedpayroll.Checked && !overallpayroll.Checked)
             {
                 MessageBox.Show("Please check 'POSTED PAYROLL' to export posted payroll data.", "Export", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
@@ -100,13 +100,25 @@ namespace JTI_Payroll_System
                 using (MySqlConnection conn = DatabaseHelper.GetConnection())
                 {
                     conn.Open();
-                    string payrollQuery = @"SELECT employee_id, lname, fname, mname, ccode, rate, working_hours, total_days, basicpay, td_ut, trdypay, legal_holiday_count, lhpay, overtime_hours, regotpay, restday_hours, rdpay, restday_overtime_hours, rdotpay, legal_holiday_hours, lhhrspay, legal_holiday_overtime_hours, lhothrspay, lhrd_hours, lhrdpay, lhrd_overtime_hours, lhrdotpay, special_holiday_hours, shpay, special_holiday_overtime_hours, shotpay, special_holiday_restday_hours, shrdpay, special_holiday_restday_overtime_hours, shrdotpay, nd_hrs, ndpay, ndot_hrs, ndotpay, ndrd_hrs, ndrdpay, ndsh_hrs, ndshpay, ndshrd_hrs, ndshrdpay, ndlh_hrs, ndlhpay, ndlhrd_hrs, ndlhrdpay, ndrdot_hrs, ndshot_hrs, ndshrdot_hrs, ndlhot_hrs, ndlhrdot_hrs, non_working_day_count, total_earnings, total_basic_pay, total_ot_pay, gross_pay FROM payroll WHERE pay_period_start = @startDate AND pay_period_end = @endDate";
-                    string relieverQuery = @"SELECT employee_id, lname, fname, mname, ccode, rate, reliever, non_working_day_count, working_hours, total_days, basicpay, td_ut, trdypay, legal_holiday_count, lhpay, overtime_hours, regotpay, restday_hours, rdpay, restday_overtime_hours, rdotpay, legal_holiday_hours, lhhrspay, legal_holiday_overtime_hours, lhothrspay, lhrd_hours, lhrdpay, lhrd_overtime_hours, lhrdotpay, special_holiday_hours, shpay, special_holiday_overtime_hours, shotpay, special_holiday_restday_hours, shrdpay, special_holiday_restday_overtime_hours, shrdotpay, nd_hrs, ndpay, ndot_hrs, ndotpay, ndrd_hrs, ndrdpay, ndsh_hrs, ndshpay, ndshrd_hrs, ndshrdpay, ndlh_hrs, ndlhpay, ndlhrd_hrs, ndlhrdpay, ndrdot_hrs, ndshot_hrs, ndshrdot_hrs, ndlhot_hrs, ndlhrdot_hrs, total_earnings, total_basic_pay, total_ot_pay, gross_pay FROM payroll_reliever WHERE pay_period_start = @startDate AND pay_period_end = @endDate";
+                    string payrollQuery;
+                    string relieverQuery;
+                    if (overallpayroll.Checked)
+                    {
+                        payrollQuery = "SELECT * FROM payroll";
+                        relieverQuery = "SELECT employee_id, lname, fname, mname, ccode, rate, reliever, non_working_day_count, working_hours, total_days, basicpay, td_ut, trdypay, legal_holiday_count, lhpay, overtime_hours, regotpay, restday_hours, rdpay, restday_overtime_hours, rdotpay, legal_holiday_hours, lhhrspay, legal_holiday_overtime_hours, lhothrspay, lhrd_hours, lhrdpay, lhrd_overtime_hours, lhrdotpay, special_holiday_hours, shpay, special_holiday_overtime_hours, shotpay, special_holiday_restday_hours, shrdpay, special_holiday_restday_overtime_hours, shrdotpay, nd_hrs, ndpay, ndot_hrs, ndotpay, ndrd_hrs, ndrdpay, ndsh_hrs, ndshpay, ndshrd_hrs, ndshrdpay, ndlh_hrs, ndlhpay, ndlhrd_hrs, ndlhrdpay, ndrdot_hrs, ndshot_hrs, ndshrdot_hrs, ndlhot_hrs, ndlhrdot_hrs, total_earnings, total_basic_pay, total_ot_pay, gross_pay FROM payroll_reliever";
+                    }
+                    else
+                    {
+                        payrollQuery = @"SELECT employee_id, lname, fname, mname, ccode, rate, working_hours, total_days, basicpay, td_ut, trdypay, legal_holiday_count, lhpay, overtime_hours, regotpay, restday_hours, rdpay, restday_overtime_hours, rdotpay, legal_holiday_hours, lhhrspay, legal_holiday_overtime_hours, lhothrspay, lhrd_hours, lhrdpay, lhrd_overtime_hours, lhrdotpay, special_holiday_hours, shpay, special_holiday_overtime_hours, shotpay, special_holiday_restday_hours, shrdpay, special_holiday_restday_overtime_hours, shrdotpay, nd_hrs, ndpay, ndot_hrs, ndotpay, ndrd_hrs, ndrdpay, ndsh_hrs, ndshpay, ndshrd_hrs, ndshrdpay, ndlh_hrs, ndlhpay, ndlhrd_hrs, ndlhrdpay, ndrdot_hrs, ndshot_hrs, ndshrdot_hrs, ndlhot_hrs, ndlhrdot_hrs, non_working_day_count, total_earnings, total_basic_pay, total_ot_pay, gross_pay FROM payroll WHERE pay_period_start = @startDate AND pay_period_end = @endDate";
+                        relieverQuery = @"SELECT employee_id, lname, fname, mname, ccode, rate, reliever, non_working_day_count, working_hours, total_days, basicpay, td_ut, trdypay, legal_holiday_count, lhpay, overtime_hours, regotpay, restday_hours, rdpay, restday_overtime_hours, rdotpay, legal_holiday_hours, lhhrspay, legal_holiday_overtime_hours, lhothrspay, lhrd_hours, lhrdpay, lhrd_overtime_hours, lhrdotpay, special_holiday_hours, shpay, special_holiday_overtime_hours, shotpay, special_holiday_restday_hours, shrdpay, special_holiday_restday_overtime_hours, shrdotpay, nd_hrs, ndpay, ndot_hrs, ndotpay, ndrd_hrs, ndrdpay, ndsh_hrs, ndshpay, ndshrd_hrs, ndshrdpay, ndlh_hrs, ndlhpay, ndlhrd_hrs, ndlhrdpay, ndrdot_hrs, ndshot_hrs, ndshrdot_hrs, ndlhot_hrs, ndlhrdot_hrs, total_earnings, total_basic_pay, total_ot_pay, gross_pay FROM payroll_reliever WHERE pay_period_start = @startDate AND pay_period_end = @endDate";
+                    }
 
                     using (SaveFileDialog sfd = new SaveFileDialog())
                     {
                         sfd.Filter = "Excel files (*.xlsx)|*.xlsx";
-                        sfd.FileName = $"payroll_export_{startDate:yyyyMMdd}_{endDate:yyyyMMdd}.xlsx";
+                        sfd.FileName = overallpayroll.Checked
+                            ? $"payroll_export_all_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx"
+                            : $"payroll_export_{startDate:yyyyMMdd}_{endDate:yyyyMMdd}.xlsx";
                         if (sfd.ShowDialog() == DialogResult.OK)
                         {
                             using (var workbook = new XLWorkbook())
@@ -114,8 +126,11 @@ namespace JTI_Payroll_System
                                 // Payroll Sheet
                                 using (MySqlCommand cmd = new MySqlCommand(payrollQuery, conn))
                                 {
-                                    cmd.Parameters.AddWithValue("@startDate", startDate);
-                                    cmd.Parameters.AddWithValue("@endDate", endDate);
+                                    if (!overallpayroll.Checked)
+                                    {
+                                        cmd.Parameters.AddWithValue("@startDate", startDate);
+                                        cmd.Parameters.AddWithValue("@endDate", endDate);
+                                    }
                                     using (MySqlDataReader reader = cmd.ExecuteReader())
                                     {
                                         var worksheet = workbook.Worksheets.Add("Payroll");
@@ -135,8 +150,11 @@ namespace JTI_Payroll_System
                                 // Reliever Sheet
                                 using (MySqlCommand relieverCmd = new MySqlCommand(relieverQuery, conn))
                                 {
-                                    relieverCmd.Parameters.AddWithValue("@startDate", startDate);
-                                    relieverCmd.Parameters.AddWithValue("@endDate", endDate);
+                                    if (!overallpayroll.Checked)
+                                    {
+                                        relieverCmd.Parameters.AddWithValue("@startDate", startDate);
+                                        relieverCmd.Parameters.AddWithValue("@endDate", endDate);
+                                    }
                                     using (MySqlDataReader relieverReader = relieverCmd.ExecuteReader())
                                     {
                                         var relieverSheet = workbook.Worksheets.Add("Reliever");
