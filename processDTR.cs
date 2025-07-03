@@ -296,6 +296,10 @@ namespace JTI_Payroll_System
         {
             try
             {
+                // Setup columns once
+                SetupRateDropdown();
+                SetupShiftCodeDropdown();
+
                 DataTable dt = LoadAttendanceData(employeeID, startDate, endDate);
 
                 if (dt.Rows.Count > 0)
@@ -341,10 +345,6 @@ namespace JTI_Payroll_System
                 dt.DefaultView.Sort = "Date ASC";
                 dgvDTR.DataSource = dt;
                 dgvDTR.AllowUserToAddRows = false;
-
-                // Setup columns once
-                SetupRateDropdown();
-                SetupShiftCodeDropdown();
 
                 // Update column headers
                 dgvDTR.Columns["WorkingHours"].HeaderText = "WorkHrs";
