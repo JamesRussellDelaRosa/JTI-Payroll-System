@@ -563,5 +563,10 @@ namespace JTI_Payroll_System
         private void AutoFormatDate(object sender, KeyPressEventArgs e) { }
         private void TextBox_Paint(object sender, PaintEventArgs e) { }
         private void SetPlaceholderText(TextBox textBox, string placeholderText) { }
+        private void btnBack_Click(object sender, EventArgs e) { }
+        private void btnNext_Click(object sender, EventArgs e) { }
+        private void btnSaveProcessedDTR_Click(object sender, EventArgs e) { }
+        private void btnOpenDeleteDTR_Click(object sender, EventArgs e) { }
+        private void btnAutoAssignShift_Click(object sender, EventArgs e) { }
     }
 }
