@@ -61,7 +61,6 @@
             label4.Size = new Size(43, 20);
             label4.TabIndex = 11;
             label4.Text = "From";
-            label4.Click += label4_Click;
             // 
             // fromdate
             // 

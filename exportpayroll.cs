@@ -79,11 +79,6 @@ namespace JTI_Payroll_System
             }
         }
 
-        private void label4_Click(object sender, EventArgs e)
-        {
-
-        }
-
         private void export_Click(object sender, EventArgs e)
         {
             // Validate date input
@@ -105,52 +100,62 @@ namespace JTI_Payroll_System
                 using (MySqlConnection conn = DatabaseHelper.GetConnection())
                 {
                     conn.Open();
-                    string query = @"SELECT employee_id, lname, fname, mname, total_days, basicpay, td_ut, trdypay, legal_holiday_count, lhpay, overtime_hours, regotpay, restday_hours, rdpay, restday_overtime_hours, rdotpay, legal_holiday_hours, lhhrspay, legal_holiday_overtime_hours, lhothrspay, lhrd_hours, lhrdpay, lhrd_overtime_hours, lhrdotpay, special_holiday_hours, shpay, special_holiday_overtime_hours, shotpay, special_holiday_restday_hours, shrdpay, special_holiday_restday_overtime_hours, shrdotpay, nd_hrs, ndpay, ndot_hrs, ndotpay, ndrd_hrs, ndrdpay, ndsh_hrs, ndshpay, ndshrd_hrs, ndshrdpay, ndlh_hrs, ndlhpay, ndlhrd_hrs, ndlhrdpay, ndrdot_hrs, ndshot_hrs, ndshrdot_hrs, ndlhot_hrs, ndlhrdot_hrs, non_working_day_count, total_earnings, total_basic_pay, total_ot_pay, gross_pay FROM payroll WHERE pay_period_start = @startDate AND pay_period_end = @endDate";
+                    string payrollQuery = @"SELECT employee_id, lname, fname, mname, ccode, rate, working_hours, total_days, basicpay, td_ut, trdypay, legal_holiday_count, lhpay, overtime_hours, regotpay, restday_hours, rdpay, restday_overtime_hours, rdotpay, legal_holiday_hours, lhhrspay, legal_holiday_overtime_hours, lhothrspay, lhrd_hours, lhrdpay, lhrd_overtime_hours, lhrdotpay, special_holiday_hours, shpay, special_holiday_overtime_hours, shotpay, special_holiday_restday_hours, shrdpay, special_holiday_restday_overtime_hours, shrdotpay, nd_hrs, ndpay, ndot_hrs, ndotpay, ndrd_hrs, ndrdpay, ndsh_hrs, ndshpay, ndshrd_hrs, ndshrdpay, ndlh_hrs, ndlhpay, ndlhrd_hrs, ndlhrdpay, ndrdot_hrs, ndshot_hrs, ndshrdot_hrs, ndlhot_hrs, ndlhrdot_hrs, non_working_day_count, total_earnings, total_basic_pay, total_ot_pay, gross_pay FROM payroll WHERE pay_period_start = @startDate AND pay_period_end = @endDate";
+                    string relieverQuery = @"SELECT employee_id, lname, fname, mname, ccode, rate, reliever, non_working_day_count, working_hours, total_days, basicpay, td_ut, trdypay, legal_holiday_count, lhpay, overtime_hours, regotpay, restday_hours, rdpay, restday_overtime_hours, rdotpay, legal_holiday_hours, lhhrspay, legal_holiday_overtime_hours, lhothrspay, lhrd_hours, lhrdpay, lhrd_overtime_hours, lhrdotpay, special_holiday_hours, shpay, special_holiday_overtime_hours, shotpay, special_holiday_restday_hours, shrdpay, special_holiday_restday_overtime_hours, shrdotpay, nd_hrs, ndpay, ndot_hrs, ndotpay, ndrd_hrs, ndrdpay, ndsh_hrs, ndshpay, ndshrd_hrs, ndshrdpay, ndlh_hrs, ndlhpay, ndlhrd_hrs, ndlhrdpay, ndrdot_hrs, ndshot_hrs, ndshrdot_hrs, ndlhot_hrs, ndlhrdot_hrs, total_earnings, total_basic_pay, total_ot_pay, gross_pay FROM payroll_reliever WHERE pay_period_start = @startDate AND pay_period_end = @endDate";
 
-                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    using (SaveFileDialog sfd = new SaveFileDialog())
                     {
-                        cmd.Parameters.AddWithValue("@startDate", startDate);
-                        cmd.Parameters.AddWithValue("@endDate", endDate);
-                        using (MySqlDataReader reader = cmd.ExecuteReader())
+                        sfd.Filter = "Excel files (*.xlsx)|*.xlsx";
+                        sfd.FileName = $"payroll_export_{startDate:yyyyMMdd}_{endDate:yyyyMMdd}.xlsx";
+                        if (sfd.ShowDialog() == DialogResult.OK)
                         {
-                            if (!reader.HasRows)
+                            using (var workbook = new XLWorkbook())
                             {
-                                MessageBox.Show("No posted payroll data found for the selected date range.", "Export", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                                return;
-                            }
-
-                            // SaveFileDialog for XLSX
-                            using (SaveFileDialog sfd = new SaveFileDialog())
-                            {
-                                sfd.Filter = "Excel files (*.xlsx)|*.xlsx";
-                                sfd.FileName = $"payroll_export_{startDate:yyyyMMdd}_{endDate:yyyyMMdd}.xlsx";
-                                if (sfd.ShowDialog() == DialogResult.OK)
+                                // Payroll Sheet
+                                using (MySqlCommand cmd = new MySqlCommand(payrollQuery, conn))
                                 {
-                                    using (var workbook = new XLWorkbook())
+                                    cmd.Parameters.AddWithValue("@startDate", startDate);
+                                    cmd.Parameters.AddWithValue("@endDate", endDate);
+                                    using (MySqlDataReader reader = cmd.ExecuteReader())
                                     {
                                         var worksheet = workbook.Worksheets.Add("Payroll");
                                         int colCount = reader.FieldCount;
-                                        // Write header
                                         for (int i = 0; i < colCount; i++)
-                                        {
                                             worksheet.Cell(1, i + 1).Value = reader.GetName(i);
-                                        }
                                         int row = 2;
-                                        // Write data
                                         while (reader.Read())
                                         {
                                             for (int i = 0; i < colCount; i++)
-                                            {
                                                 worksheet.Cell(row, i + 1).Value = reader.IsDBNull(i) ? string.Empty : reader.GetValue(i).ToString();
-                                            }
                                             row++;
                                         }
                                         worksheet.Columns().AdjustToContents();
-                                        workbook.SaveAs(sfd.FileName);
                                     }
-                                    MessageBox.Show("Payroll data exported successfully!", "Export", MessageBoxButtons.OK, MessageBoxIcon.Information);
                                 }
+                                // Reliever Sheet
+                                using (MySqlCommand relieverCmd = new MySqlCommand(relieverQuery, conn))
+                                {
+                                    relieverCmd.Parameters.AddWithValue("@startDate", startDate);
+                                    relieverCmd.Parameters.AddWithValue("@endDate", endDate);
+                                    using (MySqlDataReader relieverReader = relieverCmd.ExecuteReader())
+                                    {
+                                        var relieverSheet = workbook.Worksheets.Add("Reliever");
+                                        int relieverColCount = relieverReader.FieldCount;
+                                        for (int i = 0; i < relieverColCount; i++)
+                                            relieverSheet.Cell(1, i + 1).Value = relieverReader.GetName(i);
+                                        int relieverRow = 2;
+                                        while (relieverReader.Read())
+                                        {
+                                            for (int i = 0; i < relieverColCount; i++)
+                                                relieverSheet.Cell(relieverRow, i + 1).Value = relieverReader.IsDBNull(i) ? string.Empty : relieverReader.GetValue(i).ToString();
+                                            relieverRow++;
+                                        }
+                                        relieverSheet.Columns().AdjustToContents();
+                                    }
+                                }
+                                workbook.SaveAs(sfd.FileName);
                             }
+                            MessageBox.Show("Payroll data exported successfully!", "Export", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
                     }
                 }
