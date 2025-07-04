@@ -41,6 +41,7 @@
             btnSaveProcessedDTR = new Button();
             btnOpenDeleteDTR = new Button();
             btnAutoAssignShift = new Button();
+            search = new Button();
             ((System.ComponentModel.ISupportInitialize)dgvDTR).BeginInit();
             SuspendLayout();
             // 
@@ -163,11 +164,22 @@
             btnAutoAssignShift.UseVisualStyleBackColor = true;
             btnAutoAssignShift.Click += btnAutoAssignShift_Click;
             // 
+            // search
+            // 
+            search.Location = new Point(660, 6);
+            search.Name = "search";
+            search.Size = new Size(94, 29);
+            search.TabIndex = 13;
+            search.Text = "SEARCH";
+            search.UseVisualStyleBackColor = true;
+            search.Click += search_Click;
+            // 
             // processDTR
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1762, 582);
+            Controls.Add(search);
             Controls.Add(btnAutoAssignShift);
             Controls.Add(btnOpenDeleteDTR);
             Controls.Add(btnSaveProcessedDTR);
@@ -203,5 +215,6 @@
         private Button btnSaveProcessedDTR;
         private Button btnOpenDeleteDTR;
         private Button btnAutoAssignShift;
+        private Button search;
     }
 }

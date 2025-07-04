@@ -11,6 +11,9 @@ namespace JTI_Payroll_System
         private Panel selectedPanel = null;
         private List<Panel> panelList = new List<Panel>();
 
+        // Add this property to allow processDTR to get the selected employee ID
+        public string SelectedEmployeeId { get; private set; }
+
         public employeesearch()
         {
             InitializeComponent();
@@ -156,24 +159,10 @@ namespace JTI_Payroll_System
 
         private void OpenEmployeeForm(string idNo)
         {
-            // Check if an employee form is already open
-            foreach (Form openForm in Application.OpenForms)
-            {
-                if (openForm is employee empForm)
-                {
-                    empForm.LoadEmployeeData(idNo);
-                    empForm.WindowState = FormWindowState.Normal;
-                    empForm.BringToFront();
-                    this.Close(); // Optionally close the search form
-                    return;
-                }
-            }
-
-            // If not open, create a new one
-            employee newEmpForm = new employee();
-            newEmpForm.Show();
-            newEmpForm.LoadEmployeeData(idNo);
-            this.Close(); // Optionally close the search form
+            // Instead of opening the employee form, set the selected ID and close with OK
+            this.SelectedEmployeeId = idNo;
+            this.DialogResult = DialogResult.OK;
+            this.Close();
         }
     }
 }

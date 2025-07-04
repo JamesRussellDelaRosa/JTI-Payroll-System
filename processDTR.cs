@@ -62,10 +62,10 @@ namespace JTI_Payroll_System
             if (e.KeyCode == Keys.Enter && dgvDTR.CurrentCell != null)
             {
                 string columnName = dgvDTR.CurrentCell.OwningColumn.Name;
-                
+
                 // Check if current cell is a checkbox column
                 string[] checkBoxColumns = { "RestDay", "LegalHoliday", "SpecialHoliday", "NonWorkingDay", "Reliever" };
-                
+
                 if (checkBoxColumns.Contains(columnName))
                 {
                     // End any current edit operation
@@ -73,37 +73,37 @@ namespace JTI_Payroll_System
                     {
                         dgvDTR.EndEdit();
                     }
-                    
+
                     DataGridViewCell currentCell = dgvDTR.CurrentCell;
-                    
+
                     // Toggle checkbox value
                     bool currentValue = currentCell.Value != DBNull.Value && Convert.ToBoolean(currentCell.Value);
                     currentCell.Value = !currentValue;
-                    
+
                     // Mark the cell as dirty and commit the edit to trigger events
                     dgvDTR.NotifyCurrentCellDirty(true);
                     dgvDTR.CommitEdit(DataGridViewDataErrorContexts.Commit);
-                    
+
                     // Invalidate the cell to force a redraw
                     dgvDTR.InvalidateCell(currentCell);
-                    
+
                     // Update the underlying data
                     dgvDTR.UpdateCellValue(currentCell.ColumnIndex, currentCell.RowIndex);
-                    
+
                     // Prevent default Enter key behavior (moving to next row)
                     e.Handled = true;
                     e.SuppressKeyPress = true;
-                    
+
                     return; // Exit early to prevent other key processing
                 }
             }
-            
+
             // Handle Space key for checkbox columns as well
             if (e.KeyCode == Keys.Space && dgvDTR.CurrentCell != null)
             {
                 string columnName = dgvDTR.CurrentCell.OwningColumn.Name;
                 string[] checkBoxColumns = { "RestDay", "LegalHoliday", "SpecialHoliday", "NonWorkingDay", "Reliever" };
-                
+
                 if (checkBoxColumns.Contains(columnName))
                 {
                     // End any current edit operation
@@ -111,27 +111,27 @@ namespace JTI_Payroll_System
                     {
                         dgvDTR.EndEdit();
                     }
-                    
+
                     DataGridViewCell currentCell = dgvDTR.CurrentCell;
-                    
+
                     // Toggle checkbox value
                     bool currentValue = currentCell.Value != DBNull.Value && Convert.ToBoolean(currentCell.Value);
                     currentCell.Value = !currentValue;
-                    
+
                     // Mark the cell as dirty and commit the edit to trigger events
                     dgvDTR.NotifyCurrentCellDirty(true);
                     dgvDTR.CommitEdit(DataGridViewDataErrorContexts.Commit);
-                    
+
                     // Invalidate the cell to force a redraw
                     dgvDTR.InvalidateCell(currentCell);
-                    
+
                     // Update the underlying data
                     dgvDTR.UpdateCellValue(currentCell.ColumnIndex, currentCell.RowIndex);
-                    
+
                     // Prevent default Space key behavior
                     e.Handled = true;
                     e.SuppressKeyPress = true;
-                    
+
                     return;
                 }
             }
@@ -445,7 +445,7 @@ namespace JTI_Payroll_System
                 // Setup columns once
                 SetupRateDropdown();
                 SetupShiftCodeDropdown();
-                
+
                 // Ensure checkbox columns are properly configured
                 SetupCheckBoxColumns();
 
@@ -488,18 +488,18 @@ namespace JTI_Payroll_System
                 MessageBox.Show("Error: " + ex.Message, "DTR Load Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-        
+
         // Setup checkbox columns to ensure they're properly configured
         private void SetupCheckBoxColumns()
         {
             string[] checkBoxColumns = { "RestDay", "LegalHoliday", "SpecialHoliday", "NonWorkingDay", "Reliever" };
-            
+
             foreach (string colName in checkBoxColumns)
             {
                 if (dgvDTR.Columns.Contains(colName))
                 {
                     var column = dgvDTR.Columns[colName];
-                    
+
                     // If it's not already a checkbox column, convert it
                     if (!(column is DataGridViewCheckBoxColumn))
                     {
@@ -507,10 +507,10 @@ namespace JTI_Payroll_System
                         string headerText = column.HeaderText;
                         bool visible = column.Visible;
                         int displayIndex = column.DisplayIndex;
-                        
+
                         // Remove the existing column
                         dgvDTR.Columns.Remove(column);
-                        
+
                         // Create a new checkbox column
                         DataGridViewCheckBoxColumn checkBoxColumn = new DataGridViewCheckBoxColumn
                         {
@@ -523,7 +523,7 @@ namespace JTI_Payroll_System
                             IndeterminateValue = false,
                             ThreeState = false
                         };
-                        
+
                         // Insert at the same position
                         dgvDTR.Columns.Insert(columnIndex, checkBoxColumn);
                         checkBoxColumn.DisplayIndex = displayIndex;
@@ -1684,6 +1684,34 @@ namespace JTI_Payroll_System
             for (int i = dgvDTR.CurrentCell.RowIndex + 1; i < dgvDTR.Rows.Count; i++)
             {
                 dgvDTR.Rows[i].Cells[col].Value = val;
+            }
+        }
+        private void search_Click(object sender, EventArgs e)
+        {
+            // Open the employeesearch form as a dialog and handle the result
+            using (var searchForm = new employeesearch())
+            {
+                if (searchForm.ShowDialog() == DialogResult.OK)
+                {
+                    // The employeesearch form should expose a SelectedEmployeeId property
+                    string selectedId = searchForm.SelectedEmployeeId;
+                    if (!string.IsNullOrEmpty(selectedId))
+                    {
+                        // Parse the date range from the text boxes
+                        if (!DateTime.TryParseExact(textStartDate.Text, "MM/dd/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime startDate) ||
+                            !DateTime.TryParseExact(textEndDate.Text, "MM/dd/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime endDate))
+                        {
+                            MessageBox.Show("Invalid date format. Please enter a valid date (MM/DD/YYYY).",
+                                "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            return;
+                        }
+                        // Load the selected employee's DTR
+                        LoadEmployeeDTR(selectedId, startDate, endDate);
+                        // Update navigation state
+                        employeeIDs = new List<string> { selectedId };
+                        currentEmployeeIndex = 0;
+                    }
+                }
             }
         }
     }
