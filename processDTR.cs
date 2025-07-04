@@ -5,6 +5,7 @@ using System.Drawing; // Add this line to resolve ambiguity
 using System.Windows.Forms;
 using DocumentFormat.OpenXml.Wordprocessing;
 using MySql.Data.MySqlClient;
+using System.Linq;
 
 namespace JTI_Payroll_System
 {
@@ -22,6 +23,7 @@ namespace JTI_Payroll_System
             dgvDTR.CellValueChanged += dgvDTR_CellValueChanged; // Add this line
             dgvDTR.CurrentCellDirtyStateChanged += dgvDTR_CurrentCellDirtyStateChanged; // Add this line
             dgvDTR.CellEnter += dgvDTR_CellEnter;
+            dgvDTR.KeyDown += dgvDTR_KeyDown; // Add KeyDown event for Enter key checkbox toggling
 
             // Add row highlighting for current row
             dgvDTR.RowPrePaint += dgvDTR_RowPrePaint;
@@ -54,7 +56,87 @@ namespace JTI_Payroll_System
             SetPlaceholderText(textEndDate, "MM/DD/YYYY");
         }
 
-        // Optimization: Set CheckBox column style only once
+        // Handle Enter key for checkbox columns
+        private void dgvDTR_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter && dgvDTR.CurrentCell != null)
+            {
+                string columnName = dgvDTR.CurrentCell.OwningColumn.Name;
+                
+                // Check if current cell is a checkbox column
+                string[] checkBoxColumns = { "RestDay", "LegalHoliday", "SpecialHoliday", "NonWorkingDay", "Reliever" };
+                
+                if (checkBoxColumns.Contains(columnName))
+                {
+                    // End any current edit operation
+                    if (dgvDTR.IsCurrentCellInEditMode)
+                    {
+                        dgvDTR.EndEdit();
+                    }
+                    
+                    DataGridViewCell currentCell = dgvDTR.CurrentCell;
+                    
+                    // Toggle checkbox value
+                    bool currentValue = currentCell.Value != DBNull.Value && Convert.ToBoolean(currentCell.Value);
+                    currentCell.Value = !currentValue;
+                    
+                    // Mark the cell as dirty and commit the edit to trigger events
+                    dgvDTR.NotifyCurrentCellDirty(true);
+                    dgvDTR.CommitEdit(DataGridViewDataErrorContexts.Commit);
+                    
+                    // Invalidate the cell to force a redraw
+                    dgvDTR.InvalidateCell(currentCell);
+                    
+                    // Update the underlying data
+                    dgvDTR.UpdateCellValue(currentCell.ColumnIndex, currentCell.RowIndex);
+                    
+                    // Prevent default Enter key behavior (moving to next row)
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
+                    
+                    return; // Exit early to prevent other key processing
+                }
+            }
+            
+            // Handle Space key for checkbox columns as well
+            if (e.KeyCode == Keys.Space && dgvDTR.CurrentCell != null)
+            {
+                string columnName = dgvDTR.CurrentCell.OwningColumn.Name;
+                string[] checkBoxColumns = { "RestDay", "LegalHoliday", "SpecialHoliday", "NonWorkingDay", "Reliever" };
+                
+                if (checkBoxColumns.Contains(columnName))
+                {
+                    // End any current edit operation
+                    if (dgvDTR.IsCurrentCellInEditMode)
+                    {
+                        dgvDTR.EndEdit();
+                    }
+                    
+                    DataGridViewCell currentCell = dgvDTR.CurrentCell;
+                    
+                    // Toggle checkbox value
+                    bool currentValue = currentCell.Value != DBNull.Value && Convert.ToBoolean(currentCell.Value);
+                    currentCell.Value = !currentValue;
+                    
+                    // Mark the cell as dirty and commit the edit to trigger events
+                    dgvDTR.NotifyCurrentCellDirty(true);
+                    dgvDTR.CommitEdit(DataGridViewDataErrorContexts.Commit);
+                    
+                    // Invalidate the cell to force a redraw
+                    dgvDTR.InvalidateCell(currentCell);
+                    
+                    // Update the underlying data
+                    dgvDTR.UpdateCellValue(currentCell.ColumnIndex, currentCell.RowIndex);
+                    
+                    // Prevent default Space key behavior
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
+                    
+                    return;
+                }
+            }
+        }
+
         private void SetCheckBoxColumnStyles()
         {
             string[] checkBoxColumns = { "RestDay", "LegalHoliday", "SpecialHoliday", "NonWorkingDay", "Reliever" };
@@ -363,6 +445,9 @@ namespace JTI_Payroll_System
                 // Setup columns once
                 SetupRateDropdown();
                 SetupShiftCodeDropdown();
+                
+                // Ensure checkbox columns are properly configured
+                SetupCheckBoxColumns();
 
                 // Update column headers
                 dgvDTR.Columns["WorkingHours"].HeaderText = "WorkHrs";
@@ -403,6 +488,50 @@ namespace JTI_Payroll_System
                 MessageBox.Show("Error: " + ex.Message, "DTR Load Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+        
+        // Setup checkbox columns to ensure they're properly configured
+        private void SetupCheckBoxColumns()
+        {
+            string[] checkBoxColumns = { "RestDay", "LegalHoliday", "SpecialHoliday", "NonWorkingDay", "Reliever" };
+            
+            foreach (string colName in checkBoxColumns)
+            {
+                if (dgvDTR.Columns.Contains(colName))
+                {
+                    var column = dgvDTR.Columns[colName];
+                    
+                    // If it's not already a checkbox column, convert it
+                    if (!(column is DataGridViewCheckBoxColumn))
+                    {
+                        int columnIndex = column.Index;
+                        string headerText = column.HeaderText;
+                        bool visible = column.Visible;
+                        int displayIndex = column.DisplayIndex;
+                        
+                        // Remove the existing column
+                        dgvDTR.Columns.Remove(column);
+                        
+                        // Create a new checkbox column
+                        DataGridViewCheckBoxColumn checkBoxColumn = new DataGridViewCheckBoxColumn
+                        {
+                            Name = colName,
+                            HeaderText = headerText,
+                            DataPropertyName = colName,
+                            Visible = visible,
+                            TrueValue = true,
+                            FalseValue = false,
+                            IndeterminateValue = false,
+                            ThreeState = false
+                        };
+                        
+                        // Insert at the same position
+                        dgvDTR.Columns.Insert(columnIndex, checkBoxColumn);
+                        checkBoxColumn.DisplayIndex = displayIndex;
+                    }
+                }
+            }
+        }
+
         private class ShiftCodeData
         {
             public string ShiftCode { get; set; }
