@@ -354,12 +354,9 @@ namespace JTI_Payroll_System
                 {
                     conn.Open();
                     string query = @"
-                SELECT DISTINCT e.id_no
-                FROM employee e
-                LEFT JOIN processedDTR p ON e.id_no = p.employee_id AND p.date BETWEEN @startDate AND @endDate
-                LEFT JOIN attendance a ON e.id_no = a.id AND a.date BETWEEN @startDate AND @endDate
-                WHERE p.employee_id IS NOT NULL OR a.id IS NOT NULL
-                ORDER BY e.id_no ASC;";  // ✅ Fetch from processedDTR first, fallback to attendance
+                    SELECT e.id_no
+                    FROM employee e
+                    ORDER BY e.id_no ASC;";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
