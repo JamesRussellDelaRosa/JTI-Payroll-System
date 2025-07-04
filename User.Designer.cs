@@ -116,6 +116,7 @@
             Panel autodeducthdmfsssloanPanel = CreateClickablePanel("Auto Deduct SSS/HDMF Loan", autodeducthdmfsssloan_Click);
             Panel payrollAdjPanel = CreateClickablePanel("Payroll Adjustments", payrollAdj_Click);
             Panel modifyPayrollPanel = CreateClickablePanel("Modify Payroll", modifyPayroll_Click);
+            Panel exportPayrollPanel = CreateClickablePanel("Export Payroll", exportpayroll_Click);
             Panel computewtaxPanel = CreateClickablePanel("Compute WTax", computewtax_Click);
             Panel genpayslipPanel = CreateClickablePanel("Generate Payslip", genpayslip_Click);
 
@@ -133,6 +134,7 @@
             menuFlowLayoutPanel.Controls.Add(semimonthlywtaxtablePanel);
             menuFlowLayoutPanel.Controls.Add(payrollAdjPanel);
             menuFlowLayoutPanel.Controls.Add(modifyPayrollPanel);
+            menuFlowLayoutPanel.Controls.Add(exportPayrollPanel);
             menuFlowLayoutPanel.Controls.Add(computewtaxPanel);
             menuFlowLayoutPanel.Controls.Add(genpayslipPanel);
         }
