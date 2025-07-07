@@ -48,6 +48,8 @@ namespace JTI_Payroll_System
             search.Click += search_Click;
             // Attach EditingControlShowing for time auto-format
             dgvDTR.EditingControlShowing += dgvDTR_EditingControlShowing;
+            // Attach CellValueChanged for TimeIn/TimeOut auto-calc
+            dgvDTR.CellValueChanged += dgvDTR_CellValueChanged;
         }
 
         private void ShowDateRangeFilterAndLoad()
@@ -1064,6 +1066,136 @@ namespace JTI_Payroll_System
                 tb.Text = text + ":";
                 tb.SelectionStart = tb.Text.Length;
             }
+        }
+
+        // Calculate remarks and tardiness/undertime when TimeIn or TimeOut changes
+        private void dgvDTR_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
+            var colName = dgvDTR.Columns[e.ColumnIndex].Name;
+            if (colName == "TimeIn" || colName == "TimeOut")
+            {
+                var row = dgvDTR.Rows[e.RowIndex];
+                // Calculate and update Remarks
+                string remarks = CalculateRemarks(row);
+                row.Cells["Remarks"].Value = remarks;
+
+                // Also update TardinessUndertime using DataRow logic if bound
+                if (row.DataBoundItem is DataRowView drv)
+                {
+                    CalculateTardinessUndertime(drv.Row);
+                    // Sync DataRow value back to DataGridView cell (in case logic differs)
+                    row.Cells["TardinessUndertime"].Value = drv.Row["TardinessUndertime"];
+                }
+            }
+        }
+
+        private string CalculateRemarks(DataGridViewRow row)
+        {
+            // Defensive: Check for null or DBNull for all required cells
+            if (row.Cells["TimeIn"].Value == null || row.Cells["TimeOut"].Value == null ||
+                row.Cells["TimeIn"].Value == DBNull.Value || row.Cells["TimeOut"].Value == DBNull.Value)
+            {
+                row.Cells["TardinessUndertime"].Value = 0.00m;
+                return "Absent";
+            }
+
+            if (row.Cells["StartTime"].Value == null || row.Cells["EndTime"].Value == null ||
+                row.Cells["StartTime"].Value == DBNull.Value || row.Cells["EndTime"].Value == DBNull.Value)
+            {
+                row.Cells["TardinessUndertime"].Value = 0.00m;
+                return "No Shift Data";
+            }
+
+            // Defensive: TryParse for TimeSpan
+            if (!TimeSpan.TryParse(row.Cells["TimeIn"].Value.ToString(), out TimeSpan timeIn) ||
+                !TimeSpan.TryParse(row.Cells["TimeOut"].Value.ToString(), out TimeSpan timeOut) ||
+                !TimeSpan.TryParse(row.Cells["StartTime"].Value.ToString(), out TimeSpan startTime) ||
+                !TimeSpan.TryParse(row.Cells["EndTime"].Value.ToString(), out TimeSpan endTime))
+            {
+                row.Cells["TardinessUndertime"].Value = 0.00m;
+                return "Invalid Time Data";
+            }
+
+            double tardiness = 0;
+            double undertime = 0;
+
+            if (timeIn > startTime)
+            {
+                TimeSpan tardinessDifference = timeIn - startTime;
+                tardiness = tardinessDifference.TotalHours;
+            }
+
+            if (timeOut < endTime)
+            {
+                TimeSpan undertimeDifference = endTime - timeOut;
+                undertime = undertimeDifference.TotalHours;
+            }
+
+            double total = tardiness + undertime;
+            row.Cells["TardinessUndertime"].Value = Math.Round((decimal)total, 2);
+
+            if (total > 0)
+            {
+                return "Late or Undertime";
+            }
+            else
+            {
+                return "Present";
+            }
+        }
+
+        private void CalculateTardinessUndertime(DataRow row)
+        {
+            if (row["ShiftCode"] == null || row["ShiftCode"] == DBNull.Value ||
+                string.IsNullOrEmpty(row["ShiftCode"].ToString()) || row["ShiftCode"].ToString() == "00000")
+            {
+                row["TardinessUndertime"] = 0.00m;
+                return;
+            }
+
+            if (row["TimeIn"] == null || row["TimeOut"] == null ||
+                row["TimeIn"] == DBNull.Value || row["TimeOut"] == DBNull.Value)
+            {
+                row["TardinessUndertime"] = 0.00m;
+                return;
+            }
+
+            if (row["StartTime"] == null || row["EndTime"] == null ||
+                row["StartTime"] == DBNull.Value || row["EndTime"] == DBNull.Value)
+            {
+                row["TardinessUndertime"] = 0.00m;
+                return;
+            }
+
+            if (!TimeSpan.TryParse(row["TimeIn"].ToString(), out TimeSpan timeIn) ||
+                !TimeSpan.TryParse(row["TimeOut"].ToString(), out TimeSpan timeOut) ||
+                !TimeSpan.TryParse(row["StartTime"].ToString(), out TimeSpan startTime) ||
+                !TimeSpan.TryParse(row["EndTime"].ToString(), out TimeSpan endTime))
+            {
+                row["TardinessUndertime"] = 0.00m;
+                return;
+            }
+
+            double tardiness = 0;
+            double undertime = 0;
+
+            if (timeIn > startTime)
+            {
+                TimeSpan tardinessDifference = timeIn - startTime;
+                double tardyHours = tardinessDifference.TotalHours;
+                tardiness = tardyHours;
+            }
+
+            if (timeOut < endTime)
+            {
+                TimeSpan undertimeDifference = endTime - timeOut;
+                double undertimeHours = undertimeDifference.TotalHours;
+                undertime = undertimeHours;
+            }
+
+            double total = tardiness + undertime;
+            row["TardinessUndertime"] = Math.Round((decimal)total, 2);
         }
     }
 }
