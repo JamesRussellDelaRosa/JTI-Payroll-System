@@ -90,8 +90,11 @@ namespace JTI_Payroll_System
             // 
             this.flowCcodePanels.Location = new System.Drawing.Point(30, 140);
             this.flowCcodePanels.Name = "flowCcodePanels";
-            this.flowCcodePanels.Size = new System.Drawing.Size(200, 50);
+            this.flowCcodePanels.Size = new System.Drawing.Size(180, 200);
             this.flowCcodePanels.TabIndex = 5;
+            this.flowCcodePanels.AutoScroll = true;
+            this.flowCcodePanels.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
+            this.flowCcodePanels.WrapContents = false;
             this.flowCcodePanels.AutoSize = true;
             this.flowCcodePanels.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             // 
@@ -99,7 +102,7 @@ namespace JTI_Payroll_System
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(250, 210);
+            this.ClientSize = new System.Drawing.Size(250, 360);
             this.Controls.Add(this.flowCcodePanels);
             this.Controls.Add(this.btnOK);
             this.Controls.Add(this.lblTo);

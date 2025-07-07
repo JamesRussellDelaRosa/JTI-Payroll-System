@@ -20,57 +20,13 @@ namespace JTI_Payroll_System
         public processDTR()
         {
             InitializeComponent();
-            dgvDTR.DataError += dgvDTR_DataError;
-            dgvDTR.CellEndEdit += dgvDTR_CellEndEdit;
-            dgvDTR.EditingControlShowing += dgvDTR_EditingControlShowing;
-            dgvDTR.CellValueChanged += dgvDTR_CellValueChanged; // Add this line
-            dgvDTR.CurrentCellDirtyStateChanged += dgvDTR_CurrentCellDirtyStateChanged; // Add this line
-            dgvDTR.CellEnter += dgvDTR_CellEnter;
-            dgvDTR.KeyDown += dgvDTR_KeyDown; // Add KeyDown event for Enter key checkbox toggling
-
-            // Add row highlighting for current row
-            dgvDTR.RowPrePaint += dgvDTR_RowPrePaint;
-
-            // --- Optimization: Set CheckBox column style only once ---
-            SetCheckBoxColumnStyles();
-            // --------------------------------------------------------
-
-            // Add context menu for Fill Down
-            ContextMenuStrip menu = new ContextMenuStrip();
-            menu.Items.Add("Fill Down", null, (s, e) => FillDownCurrentCell());
-            dgvDTR.ContextMenuStrip = menu;
-
-            // Add event handlers for placeholder text
-            textStartDate.Enter += TextBox_Enter;
-            textStartDate.Leave += TextBox_Leave;
-            textStartDate.TextChanged += TextBox_TextChanged; // Add this line
-            textStartDate.KeyPress += AutoFormatDate; // Attach AutoFormatDate
-
-            textEndDate.Enter += TextBox_Enter;
-            textEndDate.Leave += TextBox_Leave;
-            textEndDate.KeyPress += AutoFormatDate; // Attach AutoFormatDate
-
-            // Add Paint event handlers for custom drawing
-            textStartDate.Paint += TextBox_Paint;
-            textEndDate.Paint += TextBox_Paint;
-
-            // Set initial placeholder text
-            SetPlaceholderText(textStartDate, "MM/DD/YYYY");
-            SetPlaceholderText(textEndDate, "MM/DD/YYYY");
         }
 
         public processDTR(DateTime fromDate, DateTime toDate) : this()
         {
             _fromDate = fromDate;
             _toDate = toDate;
-            // Optionally, you can auto-load/filter here if needed
-            if (textStartDate != null && textEndDate != null)
-            {
-                textStartDate.Text = fromDate.ToString("MM/dd/yyyy");
-                textEndDate.Text = toDate.ToString("MM/dd/yyyy");
-                // Optionally trigger filter logic
-                filter_Click(this, EventArgs.Empty);
-            }
+            UpdateDateRangeLabel();
         }
 
         public processDTR(DateTime fromDate, DateTime toDate, string ccode) : this()
@@ -78,19 +34,43 @@ namespace JTI_Payroll_System
             _fromDate = fromDate;
             _toDate = toDate;
             selectedCcode = ccode;
-            if (textStartDate != null && textEndDate != null)
-            {
-                textStartDate.Text = fromDate.ToString("MM/dd/yyyy");
-                textEndDate.Text = toDate.ToString("MM/dd/yyyy");
-                // Optionally trigger filter logic
-                FilterByCcode();
-            }
+            UpdateDateRangeLabel();
         }
 
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
             LoadCcodePanels();
+            UpdateDateRangeLabel();
+            // Attach event handler for search button
+            search.Click += search_Click;
+        }
+
+        private void search_Click(object sender, EventArgs e)
+        {
+            using (var filterForm = new DateRangeFilterForm())
+            {
+                if (filterForm.ShowDialog() == DialogResult.OK)
+                {
+                    _fromDate = filterForm.FromDate;
+                    _toDate = filterForm.ToDate;
+                    selectedCcode = filterForm.SelectedCcode;
+                    UpdateDateRangeLabel();
+                    FilterByCcode();
+                }
+            }
+        }
+
+        private void UpdateDateRangeLabel()
+        {
+            if (_fromDate.HasValue && _toDate.HasValue)
+            {
+                labelDateRange.Text = $"Date Range: {_fromDate:MM/dd/yyyy} - {_toDate:MM/dd/yyyy}";
+            }
+            else
+            {
+                labelDateRange.Text = "Date Range: MM/DD/YYYY - MM/DD/YYYY";
+            }
         }
 
         private void LoadCcodePanels()
@@ -151,12 +131,14 @@ namespace JTI_Payroll_System
         private void FilterByCcode()
         {
             if (string.IsNullOrEmpty(selectedCcode)) return;
-            if (!DateTime.TryParseExact(textStartDate.Text, "MM/dd/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime startDate) ||
-                !DateTime.TryParseExact(textEndDate.Text, "MM/dd/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime endDate))
+            if (!_fromDate.HasValue || !_toDate.HasValue)
             {
-                MessageBox.Show("Invalid date format. Please enter a valid date (MM/DD/YYYY).", "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Invalid date range. Please select a valid date range.", "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
+            DateTime startDate = _fromDate.Value;
+            DateTime endDate = _toDate.Value;
+
             // Get employee IDs for selected ccode
             employeeIDs.Clear();
             using (var conn = DatabaseHelper.GetConnection())
@@ -185,101 +167,6 @@ namespace JTI_Payroll_System
                 textID.Text = "";
                 textName.Text = "";
                 MessageBox.Show($"No employees found for ccode: {selectedCcode}", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-        }
-
-        // Handle Enter key for checkbox columns
-        private void dgvDTR_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.KeyCode == Keys.Enter && dgvDTR.CurrentCell != null)
-            {
-                string columnName = dgvDTR.CurrentCell.OwningColumn.Name;
-
-                // Check if current cell is a checkbox column
-                string[] checkBoxColumns = { "RestDay", "LegalHoliday", "SpecialHoliday", "NonWorkingDay", "Reliever" };
-
-                if (checkBoxColumns.Contains(columnName))
-                {
-                    // End any current edit operation
-                    if (dgvDTR.IsCurrentCellInEditMode)
-                    {
-                        dgvDTR.EndEdit();
-                    }
-
-                    DataGridViewCell currentCell = dgvDTR.CurrentCell;
-
-                    // Toggle checkbox value
-                    bool currentValue = currentCell.Value != DBNull.Value && Convert.ToBoolean(currentCell.Value);
-                    currentCell.Value = !currentValue;
-
-                    // Mark the cell as dirty and commit the edit to trigger events
-                    dgvDTR.NotifyCurrentCellDirty(true);
-                    dgvDTR.CommitEdit(DataGridViewDataErrorContexts.Commit);
-
-                    // Invalidate the cell to force a redraw
-                    dgvDTR.InvalidateCell(currentCell);
-
-                    // Update the underlying data
-                    dgvDTR.UpdateCellValue(currentCell.ColumnIndex, currentCell.RowIndex);
-
-                    // Prevent default Enter key behavior (moving to next row)
-                    e.Handled = true;
-                    e.SuppressKeyPress = true;
-
-                    return; // Exit early to prevent other key processing
-                }
-            }
-
-            // Handle Space key for checkbox columns as well
-            if (e.KeyCode == Keys.Space && dgvDTR.CurrentCell != null)
-            {
-                string columnName = dgvDTR.CurrentCell.OwningColumn.Name;
-                string[] checkBoxColumns = { "RestDay", "LegalHoliday", "SpecialHoliday", "NonWorkingDay", "Reliever" };
-
-                if (checkBoxColumns.Contains(columnName))
-                {
-                    // End any current edit operation
-                    if (dgvDTR.IsCurrentCellInEditMode)
-                    {
-                        dgvDTR.EndEdit();
-                    }
-
-                    DataGridViewCell currentCell = dgvDTR.CurrentCell;
-
-                    // Toggle checkbox value
-                    bool currentValue = currentCell.Value != DBNull.Value && Convert.ToBoolean(currentCell.Value);
-                    currentCell.Value = !currentValue;
-
-                    // Mark the cell as dirty and commit the edit to trigger events
-                    dgvDTR.NotifyCurrentCellDirty(true);
-                    dgvDTR.CommitEdit(DataGridViewDataErrorContexts.Commit);
-
-                    // Invalidate the cell to force a redraw
-                    dgvDTR.InvalidateCell(currentCell);
-
-                    // Update the underlying data
-                    dgvDTR.UpdateCellValue(currentCell.ColumnIndex, currentCell.RowIndex);
-
-                    // Prevent default Space key behavior
-                    e.Handled = true;
-                    e.SuppressKeyPress = true;
-
-                    return;
-                }
-            }
-        }
-
-        private void SetCheckBoxColumnStyles()
-        {
-            string[] checkBoxColumns = { "RestDay", "LegalHoliday", "SpecialHoliday", "NonWorkingDay", "Reliever" };
-            foreach (var colName in checkBoxColumns)
-            {
-                if (dgvDTR.Columns.Contains(colName) && dgvDTR.Columns[colName] is DataGridViewCheckBoxColumn col)
-                {
-                    col.FlatStyle = FlatStyle.Standard;
-                    col.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(255, 255, 224); // Light yellow
-                    col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
-                }
             }
         }
 
@@ -464,20 +351,6 @@ namespace JTI_Payroll_System
 
             return shiftCodes;
         }
-        private void filter_Click(object sender, EventArgs e)
-        {
-            // ✅ Convert TextBox values to DateTime in MM/DD/YYYY format
-            if (!DateTime.TryParseExact(textStartDate.Text, "MM/dd/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime startDate) ||
-                !DateTime.TryParseExact(textEndDate.Text, "MM/dd/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime endDate))
-            {
-                MessageBox.Show("Invalid date format. Please enter a valid date (MM/DD/YYYY).",
-                    "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            // ✅ Load Employees for Navigation
-            LoadEmployeesForNavigation(startDate, endDate);
-        }
         private void LoadEmployeesForNavigation(DateTime startDate, DateTime endDate)
         {
             try
@@ -608,9 +481,6 @@ namespace JTI_Payroll_System
 
                 dgvDTR.Columns["Rate"].DisplayIndex = 3;
                 dgvDTR.Columns["ShiftCode"].DisplayIndex = 3;
-
-                HighlightRestDaysAndUpdateRemarks(dgvDTR);
-                SetCheckBoxColumnStyles(); // <-- Ensure styles are set after columns are created
             }
             catch (Exception ex)
             {
@@ -850,15 +720,6 @@ namespace JTI_Payroll_System
                         }
                     }
                 }
-
-                // Calculate Tardiness/Undertime for each row
-                foreach (DataRow row in dt.Rows)
-                {
-                    CalculateTardinessUndertime(row);
-                }
-
-                // Highlight rest days and update remarks
-                HighlightRestDaysAndUpdateRemarks(dt);
             }
             catch (Exception ex)
             {
@@ -900,16 +761,13 @@ namespace JTI_Payroll_System
             {
                 currentEmployeeIndex++;
 
-                // ✅ Parse StartDate and EndDate before passing
-                if (!DateTime.TryParseExact(textStartDate.Text, "MM/dd/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime startDate) ||
-                    !DateTime.TryParseExact(textEndDate.Text, "MM/dd/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime endDate))
+                if (!_fromDate.HasValue || !_toDate.HasValue)
                 {
-                    MessageBox.Show("Invalid date format. Please enter a valid date (MM/DD/YYYY).",
-                        "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("Invalid date range. Please select a valid date range.", "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
-                LoadEmployeeDTR(employeeIDs[currentEmployeeIndex], startDate, endDate); // ✅ Refresh DataGridView
+                LoadEmployeeDTR(employeeIDs[currentEmployeeIndex], _fromDate.Value, _toDate.Value);
             }
             else
             {
@@ -924,16 +782,13 @@ namespace JTI_Payroll_System
             {
                 currentEmployeeIndex--;
 
-                // ✅ Parse StartDate and EndDate before passing
-                if (!DateTime.TryParseExact(textStartDate.Text, "MM/dd/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime startDate) ||
-                    !DateTime.TryParseExact(textEndDate.Text, "MM/dd/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime endDate))
+                if (!_fromDate.HasValue || !_toDate.HasValue)
                 {
-                    MessageBox.Show("Invalid date format. Please enter a valid date (MM/DD/YYYY).",
-                        "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("Invalid date range. Please select a valid date range.", "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
-                LoadEmployeeDTR(employeeIDs[currentEmployeeIndex], startDate, endDate); // ✅ Refresh DataGridView
+                LoadEmployeeDTR(employeeIDs[currentEmployeeIndex], _fromDate.Value, _toDate.Value);
             }
             else
             {
@@ -1064,7 +919,7 @@ namespace JTI_Payroll_System
                     VALUES (
                         @employeeID, @date, @timeIn, @timeOut, @rate,
                         @workingHours, @otHours, @shiftCode, @ndHours, @ndOtHours,
-                        @remarks, @tardinessUndertime, @restDay, @legalHoliday,
+                        @remarks, @tardinessUndertime, @restDay, @legalHoliday, 
                         @specialHoliday, @nonWorkingDay, @reliever
                     )";
 
@@ -1093,754 +948,13 @@ namespace JTI_Payroll_System
                             }
                         }
                     }
-
-                    MessageBox.Show("DTR saved successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
+
+                MessageBox.Show("Processed DTR saved successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error saving DTR: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-        private void dgvDTR_DataError(object sender, DataGridViewDataErrorEventArgs e)
-        {
-            if (e.ColumnIndex == dgvDTR.Columns["Rate"].Index && e.Exception != null)
-            {
-                MessageBox.Show($"Invalid value in Rate column: {dgvDTR.Rows[e.RowIndex].Cells[e.ColumnIndex].Value}",
-                                "Data Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-
-                // ✅ Set a default value to prevent crashes
-                dgvDTR.Rows[e.RowIndex].Cells[e.ColumnIndex].Value = 0.00m;
-                e.ThrowException = false;
-            }
-            else if (e.ColumnIndex == dgvDTR.Columns["ShiftCode"].Index && e.Exception != null)
-            {
-                // Suppress the error for the ShiftCode column
-                e.ThrowException = false;
-            }
-        }
-        private void btnOpenDeleteDTR_Click(object sender, EventArgs e)
-        {
-            DeleteDTRForm deleteForm = new DeleteDTRForm();
-            deleteForm.ShowDialog(); // Open as a modal dialog
-        }
-        private void dgvDTR_CellEndEdit(object sender, DataGridViewCellEventArgs e)
-        {
-            DataGridViewRow row = dgvDTR.Rows[e.RowIndex];
-
-            if (e.ColumnIndex == dgvDTR.Columns["ShiftCode"].Index)
-            {
-                // Handle ShiftCode logic
-                if (row.Cells["ShiftCode"].Value != null)
-                {
-                    string shiftCode = row.Cells["ShiftCode"].Value.ToString();
-                    ShiftCodeData shiftData = GetShiftCodeData(shiftCode);
-
-                    if (shiftData != null)
-                    {
-                        row.Cells["StartTime"].Value = shiftData.StartTime;
-                        row.Cells["EndTime"].Value = shiftData.EndTime;
-                        row.Cells["WorkingHours"].Value = shiftData.RegularHours;
-                        row.Cells["OTHours"].Value = shiftData.OtHours;
-                        row.Cells["NightDifferentialHours"].Value = shiftData.NightDifferentialHours;
-                        row.Cells["NightDifferentialOtHours"].Value = shiftData.NightDifferentialOtHours;
-                        row.Cells["Remarks"].Value = CalculateRemarks(row);
-                    }
-                    else
-                    {
-                        // Silently clear shift data if invalid, no MessageBox
-                        ClearShiftData(row);
-                    }
-                }
-            }
-            else if (e.ColumnIndex == dgvDTR.Columns["Rate"].Index)
-            {
-                // Handle Rate logic
-                if (row.Cells["Rate"].Value != null && row.Cells["Rate"].Value != DBNull.Value)
-                {
-                    decimal rate = Convert.ToDecimal(row.Cells["Rate"].Value);
-                    UpdateProcessedDTR(row.Cells["EmployeeID"].Value.ToString(),
-                                       Convert.ToDateTime(row.Cells["Date"].Value),
-                                       row.Cells["ShiftCode"].Value?.ToString(),
-                                       row.Cells["WorkingHours"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["WorkingHours"].Value) : 0.00m,
-                                       row.Cells["OTHours"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["OTHours"].Value) : 0.00m,
-                                       rate,
-                                       row.Cells["TimeIn"].Value != DBNull.Value ? (TimeSpan?)TimeSpan.Parse(row.Cells["TimeIn"].Value.ToString()) : null,
-                                       row.Cells["TimeOut"].Value != DBNull.Value ? (TimeSpan?)TimeSpan.Parse(row.Cells["TimeOut"].Value.ToString()) : null,
-                                       row.Cells["NightDifferentialHours"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["NightDifferentialHours"].Value) : 0.00m,
-                                       row.Cells["NightDifferentialOtHours"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["NightDifferentialOtHours"].Value) : 0.00m,
-                                       row.Cells["Remarks"].Value?.ToString(),
-                                       row.Cells["TardinessUndertime"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["TardinessUndertime"].Value) : 0.00m);
-                }
-            }
-            else if (e.ColumnIndex == dgvDTR.Columns["TimeIn"].Index || e.ColumnIndex == dgvDTR.Columns["TimeOut"].Index)
-            {
-                // Handle TimeIn and TimeOut columns using the new conversion method
-                string cellValue = row.Cells[e.ColumnIndex].Value?.ToString();
-                if (!string.IsNullOrEmpty(cellValue))
-                {
-                    // Convert the entered time value using our special method for HHMM format
-                    TimeSpan timeValue = ConvertHHMMToTimeSpan(cellValue);
-                    row.Cells[e.ColumnIndex].Value = timeValue;
-                }
-
-                if (row.Cells["ShiftCode"].Value != null)
-                {
-                    ShiftCodeData shiftData = GetShiftCodeData(row.Cells["ShiftCode"].Value.ToString());
-
-                    if (shiftData != null)
-                    {
-                        // Use fixed values from ShiftCodeData for all hours
-                        row.Cells["OTHours"].Value = shiftData.OtHours;
-                        row.Cells["NightDifferentialHours"].Value = shiftData.NightDifferentialHours;
-                        row.Cells["NightDifferentialOtHours"].Value = shiftData.NightDifferentialOtHours;
-                    }
-                }
-
-                row.Cells["Remarks"].Value = CalculateRemarks(row);
-
-                // Get time values after conversion for database update
-                TimeSpan? timeIn = row.Cells["TimeIn"].Value != DBNull.Value
-                    ? (TimeSpan?)row.Cells["TimeIn"].Value
-                    : null;
-
-                TimeSpan? timeOut = row.Cells["TimeOut"].Value != DBNull.Value
-                    ? (TimeSpan?)row.Cells["TimeOut"].Value
-                    : null;
-
-                UpdateProcessedDTR(row.Cells["EmployeeID"].Value.ToString(),
-                                   Convert.ToDateTime(row.Cells["Date"].Value),
-                                   row.Cells["ShiftCode"].Value?.ToString(),
-                                   row.Cells["WorkingHours"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["WorkingHours"].Value) : 0.00m,
-                                   row.Cells["OTHours"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["OTHours"].Value) : 0.00m,
-                                   row.Cells["Rate"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["Rate"].Value) : 0.00m,
-                                   timeIn,
-                                   timeOut,
-                                   row.Cells["NightDifferentialHours"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["NightDifferentialHours"].Value) : 0.00m,
-                                   row.Cells["NightDifferentialOtHours"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["NightDifferentialOtHours"].Value) : 0.00m,
-                                   row.Cells["Remarks"].Value?.ToString(),
-                                   row.Cells["TardinessUndertime"].Value != DBNull.Value ? Convert.ToDecimal(row.Cells["TardinessUndertime"].Value) : 0.00m);
-            }
-
-            // Refresh the DataGridView to reflect changes
-            dgvDTR.Refresh();
-        }
-        private void UpdateProcessedDTR(string employeeID, DateTime date, string shiftCode, decimal workingHours, decimal otHours, decimal rate, TimeSpan? timeIn = null, TimeSpan? timeOut = null, decimal ndHours = 0, decimal ndOtHours = 0, string remarks = null, decimal tardinessUndertime = 0.00m)
-        {
-            try
-            {
-                using (MySqlConnection conn = DatabaseHelper.GetConnection())
-                {
-                    conn.Open();
-
-                    string query = @"
-            UPDATE processedDTR 
-            SET time_in = @timeIn, 
-                time_out = @timeOut, 
-                working_hours = @workingHours, 
-                ot_hrs = @otHours,
-                rate = @rate,
-                shift_code = @shiftCode,
-                nd_hrs = @ndHours,
-                ndot_hrs = @ndOtHours,
-                remarks = @remarks,
-                tardiness_undertime = @tardinessUndertime
-            WHERE employee_id = @employeeID AND date = @date";
-
-                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@timeIn", (object)timeIn ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@timeOut", (object)timeOut ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@workingHours", workingHours);
-                        cmd.Parameters.AddWithValue("@otHours", otHours);
-                        cmd.Parameters.AddWithValue("@rate", rate);
-                        cmd.Parameters.AddWithValue("@shiftCode", shiftCode);
-                        cmd.Parameters.AddWithValue("@ndHours", ndHours);
-                        cmd.Parameters.AddWithValue("@ndOtHours", ndOtHours);
-                        cmd.Parameters.AddWithValue("@remarks", remarks);
-                        cmd.Parameters.AddWithValue("@tardinessUndertime", tardinessUndertime);
-                        cmd.Parameters.AddWithValue("@employeeID", employeeID);
-                        cmd.Parameters.AddWithValue("@date", date);
-                        cmd.ExecuteNonQuery();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error updating DTR: " + ex.Message, "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-        private void dgvDTR_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
-        {
-            if (dgvDTR.CurrentCell != null)
-            {
-                // Handle TimeIn and TimeOut columns
-                if (dgvDTR.CurrentCell.OwningColumn.Name == "TimeIn" || dgvDTR.CurrentCell.OwningColumn.Name == "TimeOut")
-                {
-                    if (e.Control is TextBox textBox)
-                    {
-                        // Detach any existing KeyPress event to avoid duplication
-                        textBox.KeyPress -= TimeTextBox_KeyPress;
-
-                        // Attach the KeyPress event
-                        textBox.KeyPress += TimeTextBox_KeyPress;
-                    }
-                }
-                // Handle Rate and ShiftCode columns
-                else if (dgvDTR.CurrentCell.OwningColumn.Name == "Rate" || dgvDTR.CurrentCell.OwningColumn.Name == "ShiftCode")
-                {
-                    if (e.Control is ComboBox comboBox)
-                    {
-                        // Detach any existing handlers to avoid duplication
-                        comboBox.Validating -= ComboBox_Validating;
-                        comboBox.Validating -= ShiftCodeComboBox_Validating;
-
-                        // Attach the appropriate handler
-                        if (dgvDTR.CurrentCell.OwningColumn.Name == "Rate")
-                        {
-                            comboBox.Validating += ComboBox_Validating;
-                        }
-                        else if (dgvDTR.CurrentCell.OwningColumn.Name == "ShiftCode")
-                        {
-                            comboBox.Validating += ShiftCodeComboBox_Validating;
-                        }
-
-                        // Customize ComboBox appearance
-                        comboBox.FlatStyle = FlatStyle.Flat; // Remove border
-                        comboBox.DropDownStyle = ComboBoxStyle.DropDown; // Allow typing
-                        comboBox.IntegralHeight = false; // Enable scrolling for long lists
-                        comboBox.MaxDropDownItems = 10; // Limit visible items in the dropdown
-
-                        // Ensure arrow key navigation highlights items
-                        comboBox.KeyDown += (s, args) =>
-                        {
-                            if (args.KeyCode == Keys.Up || args.KeyCode == Keys.Down)
-                            {
-                                comboBox.DroppedDown = true; // Keep the dropdown open
-                            }
-                        };
-                        // Auto-open dropdown when editing starts
-                        comboBox.DroppedDown = true;
-                    }
-                }
-                else
-                {
-                    // Detach all handlers if the column is neither TimeIn, TimeOut, Rate, nor ShiftCode
-                    if (e.Control is TextBox textBox)
-                    {
-                        textBox.KeyPress -= TimeTextBox_KeyPress;
-                    }
-                    else if (e.Control is ComboBox comboBox)
-                    {
-                        comboBox.Validating -= ComboBox_Validating;
-                        comboBox.Validating -= ShiftCodeComboBox_Validating;
-                    }
-                }
-            }
-        }
-        private void TimeTextBox_KeyPress(object sender, KeyPressEventArgs e)
-        {
-            // Allow only digits, backspace, and Enter key
-            if (!char.IsDigit(e.KeyChar) && e.KeyChar != '\b' && e.KeyChar != '\r')
-            {
-                e.Handled = true; // Suppress the character
-                return;
-            }
-
-            if (sender is TextBox textBox && char.IsDigit(e.KeyChar))
-            {
-                // If the text length is 2, add a colon automatically
-                if (textBox.Text.Length == 2)
-                {
-                    textBox.Text += ":";
-                    textBox.SelectionStart = textBox.Text.Length; // Move the cursor to the end
-                }
-            }
-            // Move to next cell on Enter
-            if (e.KeyChar == '\r')
-            {
-                dgvDTR.EndEdit();
-                SendKeys.Send("{TAB}");
-                e.Handled = true;
-            }
-        }
-        private void ComboBox_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            if (dgvDTR.CurrentCell != null && dgvDTR.CurrentCell.ColumnIndex == dgvDTR.Columns["ShiftCode"].Index)
-            {
-                DataGridViewRow row = dgvDTR.Rows[dgvDTR.CurrentCell.RowIndex];
-                ComboBox comboBox = sender as ComboBox;
-
-                if (comboBox != null && comboBox.SelectedItem != null)
-                {
-                    string shiftCode = comboBox.SelectedItem.ToString();
-                    ShiftCodeData shiftData = GetShiftCodeData(shiftCode);
-
-                    if (shiftData != null)
-                    {
-                        row.Cells["StartTime"].Value = shiftData.StartTime;
-                        row.Cells["EndTime"].Value = shiftData.EndTime;
-                        row.Cells["WorkingHours"].Value = shiftData.RegularHours;
-
-                        // Use fixed values from ShiftCodeData instead of calculations
-                        row.Cells["OTHours"].Value = shiftData.OtHours;
-                        row.Cells["NightDifferentialHours"].Value = shiftData.NightDifferentialHours;
-                        row.Cells["NightDifferentialOtHours"].Value = shiftData.NightDifferentialOtHours;
-
-                        // Set default values for TimeIn and TimeOut to 0:00 if they are blank
-                        if (row.Cells["TimeIn"].Value == DBNull.Value)
-                        {
-                            row.Cells["TimeIn"].Value = TimeSpan.Zero;
-                        }
-                        if (row.Cells["TimeOut"].Value == DBNull.Value)
-                        {
-                            row.Cells["TimeOut"].Value = TimeSpan.Zero;
-                        }
-
-                        // Update Remarks based on TimeIn and TimeOut values
-                        row.Cells["Remarks"].Value = CalculateRemarks(row);
-
-                        // Update the DataGridView to reflect changes
-                        dgvDTR.Refresh();
-                    }
-                    else
-                    {
-                        // Handle invalid shift code gracefully
-                        row.Cells["StartTime"].Value = DBNull.Value;
-                        row.Cells["EndTime"].Value = DBNull.Value;
-                        row.Cells["WorkingHours"].Value = DBNull.Value;
-                        row.Cells["OTHours"].Value = DBNull.Value;
-                        row.Cells["NightDifferentialHours"].Value = DBNull.Value;
-                        row.Cells["NightDifferentialOtHours"].Value = DBNull.Value;
-                        row.Cells["Remarks"].Value = "Invalid Shift Code";
-                    }
-                }
-            }
-        }
-        private string CalculateRemarks(DataGridViewRow row)
-        {
-            if (row.Cells["TimeIn"].Value == DBNull.Value || row.Cells["TimeOut"].Value == DBNull.Value)
-            {
-                row.Cells["TardinessUndertime"].Value = 0.00m;
-                return "Absent";
-            }
-
-            if (row.Cells["StartTime"].Value == DBNull.Value || row.Cells["EndTime"].Value == DBNull.Value)
-            {
-                row.Cells["TardinessUndertime"].Value = 0.00m;
-                return "No Shift Data";
-            }
-
-            TimeSpan timeIn = (TimeSpan)row.Cells["TimeIn"].Value;
-            TimeSpan timeOut = (TimeSpan)row.Cells["TimeOut"].Value;
-            TimeSpan startTime = (TimeSpan)row.Cells["StartTime"].Value;
-            TimeSpan endTime = (TimeSpan)row.Cells["EndTime"].Value;
-
-            double tardiness = 0;
-            double undertime = 0;
-
-            if (timeIn > startTime)
-            {
-                // Calculate tardiness
-                TimeSpan tardinessDifference = timeIn - startTime;
-                double tardyHours = tardinessDifference.Hours;
-                double tardyMinutesFraction = (double)tardinessDifference.Minutes / 60.0;
-                tardiness = tardyHours + tardyMinutesFraction;
-            }
-
-            if (timeOut < endTime)
-            {
-                // Calculate undertime
-                TimeSpan undertimeDifference = endTime - timeOut;
-                double undertimeHours = undertimeDifference.Hours;
-                double undertimeMinutesFraction = (double)undertimeDifference.Minutes / 60.0;
-                undertime = undertimeHours + undertimeMinutesFraction;
-            }
-
-            double total = tardiness + undertime;
-            row.Cells["TardinessUndertime"].Value = Math.Round((decimal)total, 2);
-
-            if (total > 0)
-            {
-                return "Late or Undertime";
-            }
-            else
-            {
-                return "Present";
-            }
-        }
-        private void CalculateTardinessUndertime(DataRow row)
-        {
-            if (row["ShiftCode"] == DBNull.Value || string.IsNullOrEmpty(row["ShiftCode"].ToString()) || row["ShiftCode"].ToString() == "00000")
-            {
-                row["TardinessUndertime"] = 0.00m;
-                return;
-            }
-
-            if (row["TimeIn"] == DBNull.Value || row["TimeOut"] == DBNull.Value)
-            {
-                row["TardinessUndertime"] = 0.00m;
-                return;
-            }
-
-            if (row["StartTime"] == DBNull.Value || row["EndTime"] == DBNull.Value)
-            {
-                row["TardinessUndertime"] = 0.00m;
-                return;
-            }
-
-            TimeSpan timeIn = (TimeSpan)row["TimeIn"];
-            TimeSpan timeOut = (TimeSpan)row["TimeOut"];
-            TimeSpan startTime = (TimeSpan)row["StartTime"];
-            TimeSpan endTime = (TimeSpan)row["EndTime"];
-
-            double tardiness = 0;
-            double undertime = 0;
-
-            if (timeIn > startTime)
-            {
-                // Calculate tardiness
-                TimeSpan tardinessDifference = timeIn - startTime;
-                double tardyHours = tardinessDifference.Hours;
-                double tardyMinutesFraction = (double)tardinessDifference.Minutes / 60.0;
-                tardiness = tardyHours + tardyMinutesFraction;
-            }
-
-            if (timeOut < endTime)
-            {
-                // Calculate undertime
-                TimeSpan undertimeDifference = endTime - timeOut;
-                double undertimeHours = undertimeDifference.Hours;
-                double undertimeMinutesFraction = (double)undertimeDifference.Minutes / 60.0;
-                undertime = undertimeHours + undertimeMinutesFraction;
-            }
-
-            double total = tardiness + undertime;
-            row["TardinessUndertime"] = Math.Round((decimal)total, 2);
-        }
-        private void dgvDTR_CurrentCellDirtyStateChanged(object sender, EventArgs e)
-        {
-            if (dgvDTR.IsCurrentCellDirty)
-            {
-                dgvDTR.CommitEdit(DataGridViewDataErrorContexts.Commit);
-            }
-        }
-        private void dgvDTR_CellValueChanged(object sender, DataGridViewCellEventArgs e)
-        {
-            if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
-            {
-                DataGridViewRow row = dgvDTR.Rows[e.RowIndex];
-                string colName = dgvDTR.Columns[e.ColumnIndex].Name;
-                // Handle all checkbox columns for consistent style
-                if (colName == "RestDay" || colName == "LegalHoliday" || colName == "SpecialHoliday" || colName == "NonWorkingDay" || colName == "Reliever")
-                {
-                    bool isRestDay = Convert.ToBoolean(row.Cells["RestDay"].Value);
-                    // Only RestDay changes text color, others do not
-                    if (isRestDay)
-                    {
-                        row.DefaultCellStyle.ForeColor = System.Drawing.Color.Red;
-                    }
-                    else
-                    {
-                        row.DefaultCellStyle.ForeColor = System.Drawing.Color.Black;
-                    }
-                }
-            }
-        }
-        private void btnAutoAssignShift_Click(object sender, EventArgs e)
-        {
-            AutoAssignShiftCodes();
-        }
-        private void AutoAssignShiftCodes()
-        {
-            // Show progress dialog
-            ProgressForm progressForm = new ProgressForm();
-            progressForm.Show();
-
-            try
-            {
-                // Fetch all shift codes from the database once
-                List<ShiftCodeData> allShiftCodes = GetAllShiftCodes();
-                int totalRows = dgvDTR.Rows.Count; // Correctly count total rows
-                int processedRows = 0;
-
-                foreach (DataGridViewRow row in dgvDTR.Rows)
-                {
-                    if (row.IsNewRow) continue;
-
-                    if (row.Cells["TimeOut"].Value != DBNull.Value)
-                    {
-                        TimeSpan timeOut = (TimeSpan)row.Cells["TimeOut"].Value;
-
-                        // Find the closest match based on TimeOut only
-                        ShiftCodeData bestMatch = allShiftCodes
-                            .OrderBy(sc => Math.Abs((timeOut - sc.EndTime).TotalMinutes))
-                            .FirstOrDefault();
-
-                        if (bestMatch != null)
-                        {
-                            ApplyShiftCode(row, bestMatch);
-                        }
-                        else
-                        {
-                            ClearShiftData(row);
-                        }
-                    }
-
-                    // Update progress
-                    processedRows++;
-                    progressForm.UpdateProgress(processedRows, totalRows,
-                        $"Processing employee records... ({processedRows}/{totalRows})");
-                }
-
-                dgvDTR.Refresh();
-                MessageBox.Show("Auto-assignment of shift codes completed successfully.",
-                    "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error during auto-assignment: {ex.Message}",
-                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                progressForm.Close();
-            }
-        }
-        private void ApplyShiftCode(DataGridViewRow row, ShiftCodeData shiftData)
-        {
-            row.Cells["ShiftCode"].Value = shiftData.ShiftCode;
-            row.Cells["StartTime"].Value = shiftData.StartTime;
-            row.Cells["EndTime"].Value = shiftData.EndTime;
-            row.Cells["WorkingHours"].Value = shiftData.RegularHours;
-            row.Cells["OTHours"].Value = shiftData.OtHours;
-            row.Cells["NightDifferentialHours"].Value = shiftData.NightDifferentialHours;
-            row.Cells["NightDifferentialOtHours"].Value = shiftData.NightDifferentialOtHours;
-            row.Cells["Remarks"].Value = CalculateRemarks(row);
-        }
-        private void ClearShiftData(DataGridViewRow row)
-        {
-            row.Cells["ShiftCode"].Value = DBNull.Value;
-            row.Cells["StartTime"].Value = DBNull.Value;
-            row.Cells["EndTime"].Value = DBNull.Value;
-            row.Cells["WorkingHours"].Value = DBNull.Value;
-            row.Cells["OTHours"].Value = DBNull.Value;
-            row.Cells["NightDifferentialHours"].Value = DBNull.Value;
-            row.Cells["NightDifferentialOtHours"].Value = DBNull.Value;
-            row.Cells["Remarks"].Value = "No matching shift code";
-        }
-        private List<ShiftCodeData> GetAllShiftCodes()
-        {
-            List<ShiftCodeData> shiftCodes = new List<ShiftCodeData>();
-
-            try
-            {
-                using (MySqlConnection conn = DatabaseHelper.GetConnection())
-                {
-                    conn.Open();
-                    string query = @"
-            SELECT shift_code, start_time, end_time, regular_hours, ot_hours, 
-                night_differential_hours, night_differential_ot_hours
-            FROM ShiftCodes";
-
-                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
-                    {
-                        using (MySqlDataReader reader = cmd.ExecuteReader())
-                        {
-                            while (reader.Read())
-                            {
-                                shiftCodes.Add(new ShiftCodeData
-                                {
-                                    ShiftCode = reader["shift_code"].ToString(),
-                                    StartTime = reader.GetTimeSpan("start_time"),
-                                    EndTime = reader.GetTimeSpan("end_time"),
-                                    RegularHours = reader.GetDecimal("regular_hours"),
-                                    OtHours = reader.GetDecimal("ot_hours"),
-                                    NightDifferentialHours = reader.GetDecimal("night_differential_hours"),
-                                    NightDifferentialOtHours = reader.GetDecimal("night_differential_ot_hours")
-                                });
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error fetching Shift Codes: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-
-            return shiftCodes;
-        }
-        private void HighlightRestDaysAndUpdateRemarks(DataGridView dgv)
-        {
-            foreach (DataGridViewRow row in dgv.Rows)
-            {
-                if (row.IsNewRow) continue;
-
-                bool isRestDay = Convert.ToBoolean(row.Cells["RestDay"].Value);
-
-                // Set text color to red for rest days
-                if (isRestDay)
-                {
-                    row.DefaultCellStyle.ForeColor = System.Drawing.Color.Red; // Set text color to red
-                }
-                else
-                {
-                    row.DefaultCellStyle.ForeColor = System.Drawing.Color.Black; // Set text color to black for non-rest days
-                }
-            }
-        }
-        private void HighlightRestDaysAndUpdateRemarks(DataTable dt)
-        {
-            foreach (DataRow row in dt.Rows)
-            {
-                DateTime date = Convert.ToDateTime(row["Date"]);
-                DayOfWeek dayOfWeek = date.DayOfWeek;
-
-                // Mark Sundays as rest days
-                if (dayOfWeek == DayOfWeek.Sunday)
-                {
-                    row["RestDay"] = true; // Mark as rest day
-                    row["Remarks"] = "Rest Day"; // Indicate rest day in remarks
-                }
-            }
-        }
-        private void TextBox_Enter(object sender, EventArgs e)
-        {
-            TextBox textBox = sender as TextBox;
-            if (textBox != null && textBox.Text == "MM/DD/YYYY")
-            {
-                textBox.Text = "";
-                textBox.ForeColor = SystemColors.WindowText;
-            }
-            textBox.Invalidate(); // Force repaint to remove placeholder text
-        }
-        private void TextBox_Leave(object sender, EventArgs e)
-        {
-            TextBox textBox = sender as TextBox;
-            if (textBox != null && string.IsNullOrWhiteSpace(textBox.Text))
-            {
-                SetPlaceholderText(textBox, "MM/DD/YYYY");
-            }
-            textBox.Invalidate(); // Force repaint to show placeholder text
-        }
-        private void TextBox_TextChanged(object sender, EventArgs e)
-        {
-            TextBox textBox = sender as TextBox;
-            textBox.Invalidate(); // Force repaint to show or hide placeholder text
-        }
-        private void SetPlaceholderText(TextBox textBox, string placeholderText)
-        {
-            textBox.Text = placeholderText;
-            textBox.ForeColor = SystemColors.GrayText;
-        }
-        private void TextBox_Paint(object sender, PaintEventArgs e)
-        {
-            TextBox textBox = sender as TextBox;
-            if (textBox != null && string.IsNullOrWhiteSpace(textBox.Text))
-            {
-                using (Brush brush = new SolidBrush(SystemColors.GrayText))
-                {
-                    e.Graphics.DrawString("MM/DD/YYYY", textBox.Font, brush, new PointF(0, 0));
-                }
-            }
-        }
-        private void dgvDTR_CellEnter(object sender, DataGridViewCellEventArgs e)
-        {
-            if (e.RowIndex < 0) return; // Skip header row
-
-            // Get the column name of the current cell
-            string columnName = dgvDTR.Columns[e.ColumnIndex].Name;
-
-            // Auto-enter edit mode only for Rate and ShiftCode columns
-            if (columnName == "Rate" || columnName == "ShiftCode")
-            {
-                // Check if the cell is not in edit mode already
-                if (!dgvDTR.IsCurrentCellInEditMode)
-                {
-                    // Begin edit mode for this cell
-                    dgvDTR.BeginEdit(true);
-                }
-            }
-        }
-        private void AutoFormatDate(object sender, KeyPressEventArgs e)
-        {
-            TextBox textBox = sender as TextBox;
-
-            // Allow only digits and control keys (e.g., backspace)
-            if (!char.IsDigit(e.KeyChar) && !char.IsControl(e.KeyChar))
-            {
-                e.Handled = true;
-                return;
-            }
-
-            // Auto-insert slashes based on the MM/DD/YYYY format
-            if (!char.IsControl(e.KeyChar))
-            {
-                int length = textBox.Text.Length;
-
-                if (length == 2 || length == 5)
-                {
-                    textBox.Text += "/";
-                    textBox.SelectionStart = textBox.Text.Length; // Move the caret to the end
-                }
-            }
-        }
-        private void dgvDTR_RowPrePaint(object sender, DataGridViewRowPrePaintEventArgs e)
-        {
-            if (e.RowIndex < 0 || e.RowIndex >= dgvDTR.Rows.Count) return;
-
-            // Optimization: Only update if value changes
-            var row = dgvDTR.Rows[e.RowIndex];
-            System.Drawing.Color highlight = System.Drawing.Color.LightYellow;
-            System.Drawing.Color normal = System.Drawing.Color.White;
-            if (dgvDTR.CurrentRow != null && e.RowIndex == dgvDTR.CurrentRow.Index)
-            {
-                if (row.DefaultCellStyle.BackColor != highlight)
-                    row.DefaultCellStyle.BackColor = highlight;
-            }
-            else
-            {
-                if (row.DefaultCellStyle.BackColor != normal)
-                    row.DefaultCellStyle.BackColor = normal;
-            }
-        }
-        private void FillDownCurrentCell()
-        {
-            if (dgvDTR.CurrentCell == null) return;
-            var col = dgvDTR.CurrentCell.ColumnIndex;
-            var val = dgvDTR.CurrentCell.Value;
-            for (int i = dgvDTR.CurrentCell.RowIndex + 1; i < dgvDTR.Rows.Count; i++)
-            {
-                dgvDTR.Rows[i].Cells[col].Value = val;
-            }
-        }
-        private void search_Click(object sender, EventArgs e)
-        {
-            // Open the employeesearch form as a dialog and handle the result
-            using (var searchForm = new employeesearch())
-            {
-                if (searchForm.ShowDialog() == DialogResult.OK)
-                {
-                    // The employeesearch form should expose a SelectedEmployeeId property
-                    string selectedId = searchForm.SelectedEmployeeId;
-                    if (!string.IsNullOrEmpty(selectedId))
-                    {
-                        // Parse the date range from the text boxes
-                        if (!DateTime.TryParseExact(textStartDate.Text, "MM/dd/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime startDate) ||
-                            !DateTime.TryParseExact(textEndDate.Text, "MM/dd/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime endDate))
-                        {
-                            MessageBox.Show("Invalid date format. Please enter a valid date (MM/DD/YYYY).",
-                                "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                            return;
-                        }
-                        // Load the selected employee's DTR
-                        LoadEmployeeDTR(selectedId, startDate, endDate);
-                        // Update navigation state
-                        employeeIDs = new List<string> { selectedId };
-                        currentEmployeeIndex = 0;
-                    }
-                }
+                MessageBox.Show("Error saving processed DTR: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }

@@ -27,11 +27,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            textStartDate = new TextBox();
-            textEndDate = new TextBox();
-            label1 = new Label();
-            label2 = new Label();
-            filter = new Button();
+            labelDateRange = new Label();
             dgvDTR = new DataGridView();
             textID = new Label();
             textName = new Label();
@@ -45,47 +41,14 @@
             ((System.ComponentModel.ISupportInitialize)dgvDTR).BeginInit();
             SuspendLayout();
             // 
-            // textStartDate
+            // labelDateRange
             // 
-            textStartDate.Location = new Point(67, 6);
-            textStartDate.Name = "textStartDate";
-            textStartDate.Size = new Size(125, 27);
-            textStartDate.TabIndex = 0;
-            // 
-            // textEndDate
-            // 
-            textEndDate.Location = new Point(231, 6);
-            textEndDate.Name = "textEndDate";
-            textEndDate.Size = new Size(125, 27);
-            textEndDate.TabIndex = 1;
-            // 
-            // label1
-            // 
-            label1.AutoSize = true;
-            label1.Location = new Point(12, 9);
-            label1.Name = "label1";
-            label1.Size = new Size(49, 20);
-            label1.TabIndex = 2;
-            label1.Text = "FROM";
-            // 
-            // label2
-            // 
-            label2.AutoSize = true;
-            label2.Location = new Point(198, 9);
-            label2.Name = "label2";
-            label2.Size = new Size(27, 20);
-            label2.TabIndex = 3;
-            label2.Text = "TO";
-            // 
-            // filter
-            // 
-            filter.Location = new Point(362, 6);
-            filter.Name = "filter";
-            filter.Size = new Size(94, 29);
-            filter.TabIndex = 4;
-            filter.Text = "FILTER";
-            filter.UseVisualStyleBackColor = true;
-            filter.Click += filter_Click;
+            labelDateRange.Location = new Point(12, 9);
+            labelDateRange.Name = "labelDateRange";
+            labelDateRange.Size = new Size(350, 20);
+            labelDateRange.TabIndex = 2;
+            labelDateRange.Text = "Date Range: MM/DD/YYYY - MM/DD/YYYY";
+            labelDateRange.Font = new Font("Segoe UI", 10, FontStyle.Bold);
             // 
             // dgvDTR
             // 
@@ -152,7 +115,6 @@
             btnOpenDeleteDTR.TabIndex = 11;
             btnOpenDeleteDTR.Text = "DELETE SAVED DTR";
             btnOpenDeleteDTR.UseVisualStyleBackColor = true;
-            btnOpenDeleteDTR.Click += btnOpenDeleteDTR_Click;
             // 
             // btnAutoAssignShift
             // 
@@ -162,7 +124,6 @@
             btnAutoAssignShift.TabIndex = 12;
             btnAutoAssignShift.Text = "AUTO ASSIGN SHIFTCODE";
             btnAutoAssignShift.UseVisualStyleBackColor = true;
-            btnAutoAssignShift.Click += btnAutoAssignShift_Click;
             // 
             // search
             // 
@@ -172,7 +133,6 @@
             search.TabIndex = 13;
             search.Text = "SEARCH";
             search.UseVisualStyleBackColor = true;
-            search.Click += search_Click;
             // 
             // flowCcodePanels
             // 
@@ -187,6 +147,7 @@
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1762, 650);
+            Controls.Add(labelDateRange);
             Controls.Add(flowCcodePanels);
             Controls.Add(search);
             Controls.Add(btnAutoAssignShift);
@@ -197,11 +158,6 @@
             Controls.Add(textName);
             Controls.Add(textID);
             Controls.Add(dgvDTR);
-            Controls.Add(filter);
-            Controls.Add(label2);
-            Controls.Add(label1);
-            Controls.Add(textEndDate);
-            Controls.Add(textStartDate);
             Name = "processDTR";
             Text = "processDTR";
             ((System.ComponentModel.ISupportInitialize)dgvDTR).EndInit();
@@ -211,11 +167,7 @@
 
         #endregion
 
-        private TextBox textStartDate;
-        private TextBox textEndDate;
-        private Label label1;
-        private Label label2;
-        private Button filter;
+        private Label labelDateRange;
         private DataGridView dgvDTR;
         private Label textID;
         private Label textName;
