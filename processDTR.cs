@@ -1043,7 +1043,6 @@ namespace JTI_Payroll_System
                 }
             }
         }
-
         private void TimeCell_KeyPress(object sender, KeyPressEventArgs e)
         {
             TextBox tb = sender as TextBox;
