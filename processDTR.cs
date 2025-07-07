@@ -42,9 +42,7 @@ namespace JTI_Payroll_System
             base.OnLoad(e);
             LoadCcodePanels();
             UpdateDateRangeLabel();
-            // Show the filter dialog immediately on load
-            ShowDateRangeFilterAndLoad();
-            // Attach event handler for search button
+            // Do NOT show the filter dialog here, since it's already handled in User.cs
             search.Click += search_Click;
         }
 
@@ -156,12 +154,12 @@ namespace JTI_Payroll_System
             DateTime startDate = _fromDate.Value;
             DateTime endDate = _toDate.Value;
 
-            // Get employee IDs for selected ccode
+            // Get employee IDs for selected ccode (regardless of attendance)
             employeeIDs.Clear();
             using (var conn = DatabaseHelper.GetConnection())
             {
                 conn.Open();
-                using (var cmd = new MySqlCommand("SELECT id_no FROM employee WHERE ccode = @ccode ORDER BY id_no", conn))
+                using (var cmd = new MySqlCommand("SELECT id_no, CONCAT(fname, ' ', lname) AS EmployeeName FROM employee WHERE ccode = @ccode ORDER BY id_no", conn))
                 {
                     cmd.Parameters.AddWithValue("@ccode", selectedCcode);
                     using (var reader = cmd.ExecuteReader())
@@ -623,7 +621,21 @@ namespace JTI_Payroll_System
             dt.Columns.Add("LegalHoliday", typeof(bool));
             dt.Columns.Add("SpecialHoliday", typeof(bool));
             dt.Columns.Add("NonWorkingDay", typeof(bool));
-            dt.Columns.Add("Reliever", typeof(bool)); // Add Reliever column
+            dt.Columns.Add("Reliever", typeof(bool));
+
+            // Get employee name for manual row creation
+            string employeeName = "Unknown Employee";
+            using (var conn = DatabaseHelper.GetConnection())
+            {
+                conn.Open();
+                using (var cmd = new MySqlCommand("SELECT CONCAT(fname, ' ', lname) FROM employee WHERE id_no = @id", conn))
+                {
+                    cmd.Parameters.AddWithValue("@id", employeeID);
+                    var result = cmd.ExecuteScalar();
+                    if (result != null)
+                        employeeName = result.ToString();
+                }
+            }
 
             try
             {
@@ -692,7 +704,6 @@ namespace JTI_Payroll_System
                                 row["EmployeeID"] = reader["EmployeeID"];
                                 row["EmployeeName"] = reader["EmployeeName"];
                                 row["Date"] = reader["Date"];
-
                                 // Convert varchar HHMM time to proper TimeSpan
                                 if (reader["TimeIn"] != DBNull.Value)
                                 {
@@ -741,6 +752,36 @@ namespace JTI_Payroll_System
             catch (Exception ex)
             {
                 MessageBox.Show("Error loading attendance data: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
+            // Ensure all dates in range are present, even if no attendance data exists
+            for (DateTime date = startDate; date <= endDate; date = date.AddDays(1))
+            {
+                if (!dt.AsEnumerable().Any(row => Convert.ToDateTime(row["Date"]) == date))
+                {
+                    DataRow newRow = dt.NewRow();
+                    newRow["EmployeeID"] = employeeID;
+                    newRow["EmployeeName"] = employeeName;
+                    newRow["Date"] = date;
+                    newRow["TimeIn"] = DBNull.Value;
+                    newRow["TimeOut"] = DBNull.Value;
+                    newRow["Rate"] = 0.00m;
+                    newRow["WorkingHours"] = 0.00m;
+                    newRow["OTHours"] = 0.00m;
+                    newRow["ShiftCode"] = DBNull.Value;
+                    newRow["StartTime"] = DBNull.Value;
+                    newRow["EndTime"] = DBNull.Value;
+                    newRow["NightDifferentialHours"] = 0.00m;
+                    newRow["NightDifferentialOtHours"] = 0.00m;
+                    newRow["Remarks"] = DBNull.Value;
+                    newRow["TardinessUndertime"] = 0.00m;
+                    newRow["RestDay"] = false;
+                    newRow["LegalHoliday"] = false;
+                    newRow["SpecialHoliday"] = false;
+                    newRow["NonWorkingDay"] = false;
+                    newRow["Reliever"] = false;
+                    dt.Rows.Add(newRow);
+                }
             }
 
             return dt;
