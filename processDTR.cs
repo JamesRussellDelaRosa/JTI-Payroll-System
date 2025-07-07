@@ -421,6 +421,9 @@ namespace JTI_Payroll_System
             {
                 DataTable dt = LoadAttendanceData(employeeID, startDate, endDate);
 
+                // Mark Sundays as rest days in the DataTable
+                HighlightRestDaysAndUpdateRemarks(dt);
+
                 if (dt.Rows.Count > 0)
                 {
                     textID.Text = dt.Rows[0]["EmployeeID"].ToString();
@@ -502,6 +505,9 @@ namespace JTI_Payroll_System
 
                 dgvDTR.Columns["Rate"].DisplayIndex = 3;
                 dgvDTR.Columns["ShiftCode"].DisplayIndex = 3;
+
+                // Highlight rest days in the DataGridView
+                HighlightRestDaysAndUpdateRemarks(dgvDTR);
             }
             catch (Exception ex)
             {
