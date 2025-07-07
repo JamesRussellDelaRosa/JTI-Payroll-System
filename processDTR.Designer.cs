@@ -115,6 +115,7 @@
             btnOpenDeleteDTR.TabIndex = 11;
             btnOpenDeleteDTR.Text = "DELETE SAVED DTR";
             btnOpenDeleteDTR.UseVisualStyleBackColor = true;
+            btnOpenDeleteDTR.Click += btnOpenDeleteDTR_Click;
             // 
             // btnAutoAssignShift
             // 

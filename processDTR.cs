@@ -1394,5 +1394,11 @@ namespace JTI_Payroll_System
 
             return shiftCodes;
         }
+
+        private void btnOpenDeleteDTR_Click(object sender, EventArgs e)
+        {
+            DeleteDTRForm deleteForm = new DeleteDTRForm();
+            deleteForm.ShowDialog(); // Open as a modal dialog
+        }
     }
 }
