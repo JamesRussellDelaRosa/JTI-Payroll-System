@@ -198,9 +198,15 @@ namespace JTI_Payroll_System
 
         private void processDtr_Click(object sender, EventArgs e)
         {
-            // Redirect to ProcessDTR form
-            processDTR processDTRForm = new processDTR();
-            processDTRForm.Show();
+            // Show date range filter form first
+            using (var filterForm = new DateRangeFilterForm())
+            {
+                if (filterForm.ShowDialog() == DialogResult.OK)
+                {
+                    var processDTRForm = new processDTR(filterForm.FromDate, filterForm.ToDate, filterForm.SelectedCcode);
+                    processDTRForm.Show();
+                }
+            }
         }
 
         private void btnpayrollpost_Click(object sender, EventArgs e)

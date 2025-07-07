@@ -35,6 +35,8 @@ namespace JTI_Payroll_System
             _toDate = toDate;
             selectedCcode = ccode;
             UpdateDateRangeLabel();
+            // Auto-load attendance data for the selected ccode and date range
+            FilterByCcode();
         }
 
         protected override void OnLoad(EventArgs e)
