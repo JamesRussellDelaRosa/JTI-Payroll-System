@@ -43,12 +43,12 @@
             // 
             // labelDateRange
             // 
+            labelDateRange.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
             labelDateRange.Location = new Point(12, 9);
             labelDateRange.Name = "labelDateRange";
             labelDateRange.Size = new Size(350, 20);
             labelDateRange.TabIndex = 2;
             labelDateRange.Text = "Date Range: MM/DD/YYYY - MM/DD/YYYY";
-            labelDateRange.Font = new Font("Segoe UI", 10, FontStyle.Bold);
             // 
             // dgvDTR
             // 
@@ -124,6 +124,7 @@
             btnAutoAssignShift.TabIndex = 12;
             btnAutoAssignShift.Text = "AUTO ASSIGN SHIFTCODE";
             btnAutoAssignShift.UseVisualStyleBackColor = true;
+            btnAutoAssignShift.Click += btnAutoAssignShift_Click;
             // 
             // search
             // 
@@ -136,11 +137,11 @@
             // 
             // flowCcodePanels
             // 
+            flowCcodePanels.AutoScroll = true;
             flowCcodePanels.Location = new Point(12, 580);
             flowCcodePanels.Name = "flowCcodePanels";
             flowCcodePanels.Size = new Size(600, 60);
             flowCcodePanels.TabIndex = 14;
-            flowCcodePanels.AutoScroll = true;
             // 
             // processDTR
             // 

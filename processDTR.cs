@@ -1239,15 +1239,18 @@ namespace JTI_Payroll_System
                 if (row.IsNewRow) continue;
 
                 bool isRestDay = Convert.ToBoolean(row.Cells["RestDay"].Value);
+                bool isLH = Convert.ToBoolean(row.Cells["LegalHoliday"].Value);
+                bool isSH = Convert.ToBoolean(row.Cells["SpecialHoliday"].Value);
+                bool isNWS = Convert.ToBoolean(row.Cells["NonWorkingDay"].Value);
 
-                // Set text color to red for rest days
-                if (isRestDay)
+                // Set text color to red for rest days, legal holidays, special holidays, or non-working days
+                if (isRestDay || isLH || isSH || isNWS)
                 {
-                    row.DefaultCellStyle.ForeColor = System.Drawing.Color.Red; // Set text color to red
+                    row.DefaultCellStyle.ForeColor = System.Drawing.Color.Red;
                 }
                 else
                 {
-                    row.DefaultCellStyle.ForeColor = System.Drawing.Color.Black; // Set text color to black for non-rest days
+                    row.DefaultCellStyle.ForeColor = System.Drawing.Color.Black;
                 }
             }
         }
@@ -1265,6 +1268,131 @@ namespace JTI_Payroll_System
                     row["Remarks"] = "Rest Day"; // Indicate rest day in remarks
                 }
             }
+        }
+
+        private void btnAutoAssignShift_Click(object sender, EventArgs e)
+        {
+            AutoAssignShiftCodes();
+        }
+        private void AutoAssignShiftCodes()
+        {
+            // Show progress dialog
+            ProgressForm progressForm = new ProgressForm();
+            progressForm.Show();
+
+            try
+            {
+                // Fetch all shift codes from the database once
+                List<ShiftCodeData> allShiftCodes = GetAllShiftCodes();
+                int totalRows = dgvDTR.Rows.Count; // Correctly count total rows
+                int processedRows = 0;
+
+                foreach (DataGridViewRow row in dgvDTR.Rows)
+                {
+                    if (row.IsNewRow) continue;
+
+                    if (row.Cells["TimeOut"].Value != DBNull.Value)
+                    {
+                        TimeSpan timeOut = (TimeSpan)row.Cells["TimeOut"].Value;
+
+                        // Find the closest match based on TimeOut only
+                        ShiftCodeData bestMatch = allShiftCodes
+                            .OrderBy(sc => Math.Abs((timeOut - sc.EndTime).TotalMinutes))
+                            .FirstOrDefault();
+
+                        if (bestMatch != null)
+                        {
+                            ApplyShiftCode(row, bestMatch);
+                        }
+                        else
+                        {
+                            ClearShiftData(row);
+                        }
+                    }
+
+                    // Update progress
+                    processedRows++;
+                    progressForm.UpdateProgress(processedRows, totalRows,
+                        $"Processing employee records... ({processedRows}/{totalRows})");
+                }
+
+                dgvDTR.Refresh();
+                MessageBox.Show("Auto-assignment of shift codes completed successfully.",
+                    "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error during auto-assignment: {ex.Message}",
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                progressForm.Close();
+            }
+        }
+        private void ApplyShiftCode(DataGridViewRow row, ShiftCodeData shiftData)
+        {
+            row.Cells["ShiftCode"].Value = shiftData.ShiftCode;
+            row.Cells["StartTime"].Value = shiftData.StartTime;
+            row.Cells["EndTime"].Value = shiftData.EndTime;
+            row.Cells["WorkingHours"].Value = shiftData.RegularHours;
+            row.Cells["OTHours"].Value = shiftData.OtHours;
+            row.Cells["NightDifferentialHours"].Value = shiftData.NightDifferentialHours;
+            row.Cells["NightDifferentialOtHours"].Value = shiftData.NightDifferentialOtHours;
+            row.Cells["Remarks"].Value = CalculateRemarks(row);
+        }
+        private void ClearShiftData(DataGridViewRow row)
+        {
+            row.Cells["ShiftCode"].Value = DBNull.Value;
+            row.Cells["StartTime"].Value = DBNull.Value;
+            row.Cells["EndTime"].Value = DBNull.Value;
+            row.Cells["WorkingHours"].Value = DBNull.Value;
+            row.Cells["OTHours"].Value = DBNull.Value;
+            row.Cells["NightDifferentialHours"].Value = DBNull.Value;
+            row.Cells["NightDifferentialOtHours"].Value = DBNull.Value;
+            row.Cells["Remarks"].Value = "No matching shift code";
+        }
+        private List<ShiftCodeData> GetAllShiftCodes()
+        {
+            List<ShiftCodeData> shiftCodes = new List<ShiftCodeData>();
+
+            try
+            {
+                using (MySqlConnection conn = DatabaseHelper.GetConnection())
+                {
+                    conn.Open();
+                    string query = @"
+            SELECT shift_code, start_time, end_time, regular_hours, ot_hours, 
+                night_differential_hours, night_differential_ot_hours
+            FROM ShiftCodes";
+
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    {
+                        using (MySqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                shiftCodes.Add(new ShiftCodeData
+                                {
+                                    ShiftCode = reader["shift_code"].ToString(),
+                                    StartTime = reader.GetTimeSpan("start_time"),
+                                    EndTime = reader.GetTimeSpan("end_time"),
+                                    RegularHours = reader.GetDecimal("regular_hours"),
+                                    OtHours = reader.GetDecimal("ot_hours"),
+                                    NightDifferentialHours = reader.GetDecimal("night_differential_hours"),
+                                    NightDifferentialOtHours = reader.GetDecimal("night_differential_ot_hours")
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error fetching Shift Codes: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
+            return shiftCodes;
         }
     }
 }
