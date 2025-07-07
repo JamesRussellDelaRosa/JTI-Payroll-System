@@ -1068,14 +1068,44 @@ namespace JTI_Payroll_System
             }
         }
 
-        // Calculate remarks and tardiness/undertime when TimeIn or TimeOut changes
+        // Calculate remarks and tardiness/undertime when TimeIn, TimeOut, or ShiftCode changes
         private void dgvDTR_CellValueChanged(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
             var colName = dgvDTR.Columns[e.ColumnIndex].Name;
-            if (colName == "TimeIn" || colName == "TimeOut")
+            var row = dgvDTR.Rows[e.RowIndex];
+
+            if (colName == "ShiftCode")
             {
-                var row = dgvDTR.Rows[e.RowIndex];
+                // Update row values based on selected ShiftCode
+                var shiftCode = row.Cells["ShiftCode"].Value?.ToString();
+                if (!string.IsNullOrEmpty(shiftCode) && shiftCode != "00000")
+                {
+                    var shiftData = GetShiftCodeData(shiftCode);
+                    if (shiftData != null)
+                    {
+                        row.Cells["StartTime"].Value = shiftData.StartTime;
+                        row.Cells["EndTime"].Value = shiftData.EndTime;
+                        row.Cells["WorkingHours"].Value = shiftData.RegularHours;
+                        row.Cells["OTHours"].Value = shiftData.OtHours;
+                        row.Cells["NightDifferentialHours"].Value = shiftData.NightDifferentialHours;
+                        row.Cells["NightDifferentialOtHours"].Value = shiftData.NightDifferentialOtHours;
+                    }
+                }
+                else
+                {
+                    // Clear shift-related fields if shift code is empty or 00000
+                    row.Cells["StartTime"].Value = DBNull.Value;
+                    row.Cells["EndTime"].Value = DBNull.Value;
+                    row.Cells["WorkingHours"].Value = 0.00m;
+                    row.Cells["OTHours"].Value = 0.00m;
+                    row.Cells["NightDifferentialHours"].Value = 0.00m;
+                    row.Cells["NightDifferentialOtHours"].Value = 0.00m;
+                }
+            }
+
+            if (colName == "TimeIn" || colName == "TimeOut" || colName == "ShiftCode")
+            {
                 // Calculate and update Remarks
                 string remarks = CalculateRemarks(row);
                 row.Cells["Remarks"].Value = remarks;
@@ -1089,7 +1119,6 @@ namespace JTI_Payroll_System
                 }
             }
         }
-
         private string CalculateRemarks(DataGridViewRow row)
         {
             // Defensive: Check for null or DBNull for all required cells
@@ -1144,7 +1173,6 @@ namespace JTI_Payroll_System
                 return "Present";
             }
         }
-
         private void CalculateTardinessUndertime(DataRow row)
         {
             if (row["ShiftCode"] == null || row["ShiftCode"] == DBNull.Value ||
@@ -1196,6 +1224,41 @@ namespace JTI_Payroll_System
 
             double total = tardiness + undertime;
             row["TardinessUndertime"] = Math.Round((decimal)total, 2);
+        }
+
+        private void HighlightRestDaysAndUpdateRemarks(DataGridView dgv)
+        {
+            foreach (DataGridViewRow row in dgv.Rows)
+            {
+                if (row.IsNewRow) continue;
+
+                bool isRestDay = Convert.ToBoolean(row.Cells["RestDay"].Value);
+
+                // Set text color to red for rest days
+                if (isRestDay)
+                {
+                    row.DefaultCellStyle.ForeColor = System.Drawing.Color.Red; // Set text color to red
+                }
+                else
+                {
+                    row.DefaultCellStyle.ForeColor = System.Drawing.Color.Black; // Set text color to black for non-rest days
+                }
+            }
+        }
+        private void HighlightRestDaysAndUpdateRemarks(DataTable dt)
+        {
+            foreach (DataRow row in dt.Rows)
+            {
+                DateTime date = Convert.ToDateTime(row["Date"]);
+                DayOfWeek dayOfWeek = date.DayOfWeek;
+
+                // Mark Sundays as rest days
+                if (dayOfWeek == DayOfWeek.Sunday)
+                {
+                    row["RestDay"] = true; // Mark as rest day
+                    row["Remarks"] = "Rest Day"; // Indicate rest day in remarks
+                }
+            }
         }
     }
 }
