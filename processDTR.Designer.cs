@@ -23,8 +23,7 @@
         #region Windows Form Designer generated code
 
         /// <summary>
-        /// Required method for Designer support - do not modify
-        /// the contents of this method with the code editor.
+        /// Required method for Designer support - do not modify the contents of this method with the code editor.
         /// </summary>
         private void InitializeComponent()
         {
@@ -42,6 +41,7 @@
             btnOpenDeleteDTR = new Button();
             btnAutoAssignShift = new Button();
             search = new Button();
+            flowCcodePanels = new FlowLayoutPanel();
             ((System.ComponentModel.ISupportInitialize)dgvDTR).BeginInit();
             SuspendLayout();
             // 
@@ -174,11 +174,20 @@
             search.UseVisualStyleBackColor = true;
             search.Click += search_Click;
             // 
+            // flowCcodePanels
+            // 
+            flowCcodePanels.Location = new Point(12, 580);
+            flowCcodePanels.Name = "flowCcodePanels";
+            flowCcodePanels.Size = new Size(600, 60);
+            flowCcodePanels.TabIndex = 14;
+            flowCcodePanels.AutoScroll = true;
+            // 
             // processDTR
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1762, 582);
+            ClientSize = new Size(1762, 650);
+            Controls.Add(flowCcodePanels);
             Controls.Add(search);
             Controls.Add(btnAutoAssignShift);
             Controls.Add(btnOpenDeleteDTR);
@@ -216,5 +225,6 @@
         private Button btnOpenDeleteDTR;
         private Button btnAutoAssignShift;
         private Button search;
+        private FlowLayoutPanel flowCcodePanels;
     }
 }

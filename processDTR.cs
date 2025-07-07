@@ -13,6 +13,9 @@ namespace JTI_Payroll_System
     {
         private List<string> employeeIDs = new List<string>(); // Store employee IDs with attendance
         private int currentEmployeeIndex = 0; // Track current employee position
+        private DateTime? _fromDate;
+        private DateTime? _toDate;
+        private string selectedCcode = null; // Add selectedCcode
 
         public processDTR()
         {
@@ -54,6 +57,121 @@ namespace JTI_Payroll_System
             // Set initial placeholder text
             SetPlaceholderText(textStartDate, "MM/DD/YYYY");
             SetPlaceholderText(textEndDate, "MM/DD/YYYY");
+        }
+
+        public processDTR(DateTime fromDate, DateTime toDate) : this()
+        {
+            _fromDate = fromDate;
+            _toDate = toDate;
+            // Optionally, you can auto-load/filter here if needed
+            if (textStartDate != null && textEndDate != null)
+            {
+                textStartDate.Text = fromDate.ToString("MM/dd/yyyy");
+                textEndDate.Text = toDate.ToString("MM/dd/yyyy");
+                // Optionally trigger filter logic
+                filter_Click(this, EventArgs.Empty);
+            }
+        }
+
+        protected override void OnLoad(EventArgs e)
+        {
+            base.OnLoad(e);
+            LoadCcodePanels();
+        }
+
+        private void LoadCcodePanels()
+        {
+            flowCcodePanels.Controls.Clear();
+            List<string> ccodeList = new List<string>();
+            using (var conn = DatabaseHelper.GetConnection())
+            {
+                conn.Open();
+                using (var cmd = new MySqlCommand("SELECT DISTINCT ccode FROM employee WHERE ccode IS NOT NULL AND ccode != '' ORDER BY ccode", conn))
+                using (var reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        ccodeList.Add(reader.GetString(0));
+                    }
+                }
+            }
+            foreach (var ccode in ccodeList)
+            {
+                var panel = new System.Windows.Forms.Panel
+                {
+                    Width = 100,
+                    Height = 40,
+                    BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle,
+                    Margin = new System.Windows.Forms.Padding(3),
+                    Cursor = System.Windows.Forms.Cursors.Hand,
+                    Tag = ccode
+                };
+                var lbl = new System.Windows.Forms.Label
+                {
+                    AutoSize = false,
+                    Width = 100,
+                    Height = 40,
+                    TextAlign = System.Drawing.ContentAlignment.MiddleCenter,
+                    Font = new System.Drawing.Font("Segoe UI", 10, System.Drawing.FontStyle.Regular),
+                    Text = ccode,
+                    Cursor = System.Windows.Forms.Cursors.Hand
+                };
+                panel.Controls.Add(lbl);
+                panel.Click += (s, e) => SelectCcodePanel(panel, ccode);
+                lbl.Click += (s, e) => SelectCcodePanel(panel, ccode);
+                flowCcodePanels.Controls.Add(panel);
+            }
+        }
+
+        private void SelectCcodePanel(System.Windows.Forms.Panel panel, string ccode)
+        {
+            // Highlight selected panel
+            foreach (System.Windows.Forms.Panel p in flowCcodePanels.Controls)
+                p.BackColor = System.Drawing.SystemColors.Control;
+            panel.BackColor = System.Drawing.Color.LightBlue;
+            selectedCcode = ccode;
+            // Trigger filter
+            FilterByCcode();
+        }
+
+        private void FilterByCcode()
+        {
+            if (string.IsNullOrEmpty(selectedCcode)) return;
+            if (!DateTime.TryParseExact(textStartDate.Text, "MM/dd/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime startDate) ||
+                !DateTime.TryParseExact(textEndDate.Text, "MM/dd/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime endDate))
+            {
+                MessageBox.Show("Invalid date format. Please enter a valid date (MM/DD/YYYY).", "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            // Get employee IDs for selected ccode
+            employeeIDs.Clear();
+            using (var conn = DatabaseHelper.GetConnection())
+            {
+                conn.Open();
+                using (var cmd = new MySqlCommand("SELECT id_no FROM employee WHERE ccode = @ccode ORDER BY id_no", conn))
+                {
+                    cmd.Parameters.AddWithValue("@ccode", selectedCcode);
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            employeeIDs.Add(reader.GetString(0));
+                        }
+                    }
+                }
+            }
+            if (employeeIDs.Count > 0)
+            {
+                currentEmployeeIndex = 0;
+                LoadEmployeeDTR(employeeIDs[currentEmployeeIndex], startDate, endDate);
+            }
+            else
+            {
+                dgvDTR.DataSource = null;
+                textID.Text = "";
+                textName.Text = "";
+                MessageBox.Show($"No employees found for ccode: {selectedCcode}", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
         }
 
         // Handle Enter key for checkbox columns
