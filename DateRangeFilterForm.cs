@@ -16,6 +16,15 @@ namespace JTI_Payroll_System
         {
             InitializeComponent();
             LoadCcodePanels();
+            // Wire up hint and auto-format for date fields
+            txtFrom.Enter += new EventHandler(RemoveHint);
+            txtFrom.Leave += new EventHandler(AddHint);
+            txtFrom.KeyPress += new KeyPressEventHandler(AutoFormatDate);
+            txtTo.Enter += new EventHandler(RemoveHint);
+            txtTo.Leave += new EventHandler(AddHint);
+            txtTo.KeyPress += new KeyPressEventHandler(AutoFormatDate);
+            AddHint(txtFrom, null);
+            AddHint(txtTo, null);
         }
 
         private void LoadCcodePanels()
@@ -102,6 +111,47 @@ namespace JTI_Payroll_System
             ToDate = toDate;
             DialogResult = DialogResult.OK;
             Close();
+        }
+
+        private void RemoveHint(object sender, EventArgs e)
+        {
+            TextBox textBox = sender as TextBox;
+            if (textBox.Text == "MM/DD/YYYY")
+            {
+                textBox.Text = "";
+                textBox.ForeColor = System.Drawing.Color.Black;
+            }
+        }
+
+        private void AddHint(object sender, EventArgs e)
+        {
+            TextBox textBox = sender as TextBox;
+            if (string.IsNullOrWhiteSpace(textBox.Text))
+            {
+                textBox.Text = "MM/DD/YYYY";
+                textBox.ForeColor = System.Drawing.Color.Gray;
+            }
+        }
+
+        private void AutoFormatDate(object sender, KeyPressEventArgs e)
+        {
+            TextBox textBox = sender as TextBox;
+            // Allow only digits and control keys (e.g., backspace)
+            if (!char.IsDigit(e.KeyChar) && !char.IsControl(e.KeyChar))
+            {
+                e.Handled = true;
+                return;
+            }
+            // Auto-insert slashes based on the MM/DD/YYYY format
+            if (!char.IsControl(e.KeyChar))
+            {
+                int length = textBox.Text.Length;
+                if (length == 2 || length == 5)
+                {
+                    textBox.Text += "/";
+                    textBox.SelectionStart = textBox.Text.Length; // Move the caret to the end
+                }
+            }
         }
     }
 }
