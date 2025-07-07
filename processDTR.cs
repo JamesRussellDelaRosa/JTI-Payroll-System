@@ -46,6 +46,8 @@ namespace JTI_Payroll_System
             UpdateDateRangeLabel();
             // Do NOT show the filter dialog here, since it's already handled in User.cs
             search.Click += search_Click;
+            // Attach EditingControlShowing for time auto-format
+            dgvDTR.EditingControlShowing += dgvDTR_EditingControlShowing;
         }
 
         private void ShowDateRangeFilterAndLoad()
@@ -1015,6 +1017,53 @@ namespace JTI_Payroll_System
             catch (Exception ex)
             {
                 MessageBox.Show("Error saving processed DTR: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // Auto-format time input for TimeIn, TimeOut, StartTime, EndTime columns
+        private void dgvDTR_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
+        {
+            if (dgvDTR.CurrentCell != null)
+            {
+                string colName = dgvDTR.Columns[dgvDTR.CurrentCell.ColumnIndex].Name;
+                if (colName == "TimeIn" || colName == "TimeOut" || colName == "StartTime" || colName == "EndTime")
+                {
+                    if (e.Control is TextBox tb)
+                    {
+                        tb.KeyPress -= TimeCell_KeyPress; // Remove previous handler if any
+                        tb.KeyPress += TimeCell_KeyPress;
+                    }
+                }
+                else
+                {
+                    if (e.Control is TextBox tb)
+                    {
+                        tb.KeyPress -= TimeCell_KeyPress;
+                    }
+                }
+            }
+        }
+
+        private void TimeCell_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            TextBox tb = sender as TextBox;
+            // Allow control keys (backspace, delete, arrows)
+            if (char.IsControl(e.KeyChar))
+                return;
+            // Allow only digits
+            if (!char.IsDigit(e.KeyChar))
+            {
+                e.Handled = true;
+                return;
+            }
+            // Insert colon after two digits if not already present
+            string text = tb.Text;
+            int selStart = tb.SelectionStart;
+            // Only auto-insert if length is 2 and no colon yet
+            if (text.Length == 2 && !text.Contains(":"))
+            {
+                tb.Text = text + ":";
+                tb.SelectionStart = tb.Text.Length;
             }
         }
     }
