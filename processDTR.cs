@@ -42,8 +42,25 @@ namespace JTI_Payroll_System
             base.OnLoad(e);
             LoadCcodePanels();
             UpdateDateRangeLabel();
+            // Show the filter dialog immediately on load
+            ShowDateRangeFilterAndLoad();
             // Attach event handler for search button
             search.Click += search_Click;
+        }
+
+        private void ShowDateRangeFilterAndLoad()
+        {
+            using (var filterForm = new DateRangeFilterForm())
+            {
+                if (filterForm.ShowDialog() == DialogResult.OK)
+                {
+                    _fromDate = filterForm.FromDate;
+                    _toDate = filterForm.ToDate;
+                    selectedCcode = filterForm.SelectedCcode;
+                    UpdateDateRangeLabel();
+                    FilterByCcode();
+                }
+            }
         }
 
         private void search_Click(object sender, EventArgs e)
