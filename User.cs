@@ -202,7 +202,7 @@ namespace JTI_Payroll_System
             {
                 if (filterForm.ShowDialog() == DialogResult.OK)
                 {
-                    var processDTRForm = new processDTR(filterForm.FromDate, filterForm.ToDate);
+                    var processDTRForm = new processDTR(filterForm.FromDate, filterForm.ToDate, filterForm.SelectedCcode);
                     processDTRForm.Show();
                 }
             }

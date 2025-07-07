@@ -73,6 +73,20 @@ namespace JTI_Payroll_System
             }
         }
 
+        public processDTR(DateTime fromDate, DateTime toDate, string ccode) : this()
+        {
+            _fromDate = fromDate;
+            _toDate = toDate;
+            selectedCcode = ccode;
+            if (textStartDate != null && textEndDate != null)
+            {
+                textStartDate.Text = fromDate.ToString("MM/dd/yyyy");
+                textEndDate.Text = toDate.ToString("MM/dd/yyyy");
+                // Optionally trigger filter logic
+                FilterByCcode();
+            }
+        }
+
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);

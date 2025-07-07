@@ -11,6 +11,7 @@ namespace JTI_Payroll_System
         private System.Windows.Forms.Label lblFrom;
         private System.Windows.Forms.Label lblTo;
         private System.Windows.Forms.Button btnOK;
+        private System.Windows.Forms.FlowLayoutPanel flowCcodePanels;
 
         /// <summary>
         /// Clean up any resources being used.
@@ -38,6 +39,7 @@ namespace JTI_Payroll_System
             this.lblFrom = new System.Windows.Forms.Label();
             this.lblTo = new System.Windows.Forms.Label();
             this.btnOK = new System.Windows.Forms.Button();
+            this.flowCcodePanels = new System.Windows.Forms.FlowLayoutPanel();
             this.SuspendLayout();
             // 
             // txtFrom
@@ -84,11 +86,21 @@ namespace JTI_Payroll_System
             this.btnOK.UseVisualStyleBackColor = true;
             this.btnOK.Click += new System.EventHandler(this.btnOK_Click);
             // 
+            // flowCcodePanels
+            // 
+            this.flowCcodePanels.Location = new System.Drawing.Point(30, 140);
+            this.flowCcodePanels.Name = "flowCcodePanels";
+            this.flowCcodePanels.Size = new System.Drawing.Size(200, 50);
+            this.flowCcodePanels.TabIndex = 5;
+            this.flowCcodePanels.AutoSize = true;
+            this.flowCcodePanels.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            // 
             // DateRangeFilterForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(250, 150);
+            this.ClientSize = new System.Drawing.Size(250, 210);
+            this.Controls.Add(this.flowCcodePanels);
             this.Controls.Add(this.btnOK);
             this.Controls.Add(this.lblTo);
             this.Controls.Add(this.lblFrom);
