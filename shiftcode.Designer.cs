@@ -32,11 +32,14 @@
             load = new Button();
             buttonSave = new Button();
             buttonNew = new Button();
+            delete = new Button();
             ((System.ComponentModel.ISupportInitialize)dgvShiftCodes).BeginInit();
             SuspendLayout();
             // 
             // dgvShiftCodes
             // 
+            dgvShiftCodes.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            dgvShiftCodes.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.ColumnHeader;
             dgvShiftCodes.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgvShiftCodes.Location = new Point(12, 68);
             dgvShiftCodes.Name = "dgvShiftCodes";
@@ -74,11 +77,22 @@
             buttonNew.UseVisualStyleBackColor = true;
             buttonNew.Click += buttonNew_Click;
             // 
+            // delete
+            // 
+            delete.Location = new Point(312, 21);
+            delete.Name = "delete";
+            delete.Size = new Size(94, 29);
+            delete.TabIndex = 4;
+            delete.Text = "DELETE";
+            delete.UseVisualStyleBackColor = true;
+            delete.Click += delete_Click;
+            // 
             // shiftcode
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(delete);
             Controls.Add(buttonNew);
             Controls.Add(buttonSave);
             Controls.Add(load);
@@ -95,5 +109,6 @@
         private Button load;
         private Button buttonSave;
         private Button buttonNew;
+        private Button delete;
     }
 }

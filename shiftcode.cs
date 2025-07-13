@@ -16,6 +16,7 @@ namespace JTI_Payroll_System
         public shiftcode()
         {
             InitializeComponent();
+            dgvShiftCodes.KeyDown += dgvShiftCodes_KeyDown;
         }
 
         private void load_Click(object sender, EventArgs e)
@@ -47,7 +48,7 @@ namespace JTI_Payroll_System
                         DataTable dt = new DataTable();
                         adapter.Fill(dt);
                         dgvShiftCodes.DataSource = dt;
-                        dgvShiftCodes.AllowUserToAddRows = true;
+                        dgvShiftCodes.AllowUserToAddRows = false; // Prevent last empty row
                         dgvShiftCodes.ReadOnly = false;
                     }
                 }
@@ -132,6 +133,32 @@ namespace JTI_Payroll_System
             if (dt != null)
             {
                 dt.Rows.Add(dt.NewRow());
+            }
+        }
+
+        private void delete_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void dgvShiftCodes_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Delete)
+            {
+                DeleteSelectedRows();
+            }
+        }
+
+        private void DeleteSelectedRows()
+        {
+            var dt = dgvShiftCodes.DataSource as DataTable;
+            if (dt == null) return;
+            foreach (DataGridViewRow row in dgvShiftCodes.SelectedRows)
+            {
+                if (!row.IsNewRow)
+                {
+                    dgvShiftCodes.Rows.Remove(row);
+                }
             }
         }
     }
