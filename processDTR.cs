@@ -220,46 +220,19 @@ namespace JTI_Payroll_System
 
             dgvDTR.Columns.Add(rateColumn);
 
-            // Attach EditingControlShowing event to handle user-typed input
+            // Attach EditingControlShowing event to restrict input to dropdown only
             dgvDTR.EditingControlShowing += (sender, e) =>
             {
                 if (dgvDTR.CurrentCell != null && dgvDTR.CurrentCell.ColumnIndex == dgvDTR.Columns[rateColumnName].Index)
                 {
                     if (e.Control is ComboBox comboBox)
                     {
-                        comboBox.DropDownStyle = ComboBoxStyle.DropDown; // Allow typing
-                        comboBox.Validating -= ComboBox_Validating; // Remove any existing handler
-                        comboBox.Validating += ComboBox_Validating; // Add new handler
+                        comboBox.DropDownStyle = ComboBoxStyle.DropDownList; // Only allow selection, no typing
                     }
                 }
             };
         }
-        private void ComboBox_Validating(object sender, EventArgs e)
-        {
-            if (sender is ComboBox comboBoxrate)
-            {
-                string input = comboBoxrate.Text;
 
-                // Validate if the input is a valid decimal
-                if (decimal.TryParse(input, out decimal newRate))
-                {
-                    // Check if the value already exists in the dropdown
-                    var rateColumn = (DataGridViewComboBoxColumn)dgvDTR.Columns["Rate"];
-                    var currentDataSource = (List<decimal>)rateColumn.DataSource;
-
-                    if (!currentDataSource.Contains(newRate))
-                    {
-                        // Silently reset to default if invalid
-                        comboBoxrate.Text = "0.00";
-                    }
-                }
-                else
-                {
-                    // Silently reset to default if invalid
-                    comboBoxrate.Text = "0.00";
-                }
-            }
-        }
         private List<decimal> GetRateValuesFromDatabase()
         {
             List<decimal> rates = new List<decimal>();
