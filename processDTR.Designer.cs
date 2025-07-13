@@ -45,13 +45,14 @@
             // topPanel
             // 
             topPanel.ColumnCount = 10;
+            topPanel.ColumnStyles.Clear();
             topPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); // labelDateRange
-            topPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 10F)); // btnBack
-            topPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 10F)); // btnNext
-            topPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 10F)); // search
-            topPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20F)); // btnAutoAssignShift
-            topPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20F)); // btnOpenDeleteDTR
-            topPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 10F)); // btnSaveProcessedDTR
+            topPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); // btnBack
+            topPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); // btnNext
+            topPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); // search
+            topPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); // btnAutoAssignShift
+            topPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); // btnOpenDeleteDTR
+            topPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); // btnSaveProcessedDTR
             topPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); // textID
             topPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); // textName
             topPanel.Dock = DockStyle.Top;
@@ -80,15 +81,27 @@
             // btnBack, btnNext, search, btnAutoAssignShift, btnOpenDeleteDTR, btnSaveProcessedDTR
             // 
             btnBack.Text = "BACK";
+            btnBack.AutoSize = true;
+            btnBack.AutoSizeMode = AutoSizeMode.GrowAndShrink;
             btnBack.Click += btnBack_Click;
             btnNext.Text = "NEXT";
+            btnNext.AutoSize = true;
+            btnNext.AutoSizeMode = AutoSizeMode.GrowAndShrink;
             btnNext.Click += btnNext_Click;
             search.Text = "SEARCH";
+            search.AutoSize = true;
+            search.AutoSizeMode = AutoSizeMode.GrowAndShrink;
             btnAutoAssignShift.Text = "AUTO ASSIGN SHIFTCODE";
+            btnAutoAssignShift.AutoSize = true;
+            btnAutoAssignShift.AutoSizeMode = AutoSizeMode.GrowAndShrink;
             btnAutoAssignShift.Click += btnAutoAssignShift_Click;
             btnOpenDeleteDTR.Text = "DELETE SAVED DTR";
+            btnOpenDeleteDTR.AutoSize = true;
+            btnOpenDeleteDTR.AutoSizeMode = AutoSizeMode.GrowAndShrink;
             btnOpenDeleteDTR.Click += btnOpenDeleteDTR_Click;
             btnSaveProcessedDTR.Text = "SAVE";
+            btnSaveProcessedDTR.AutoSize = true;
+            btnSaveProcessedDTR.AutoSizeMode = AutoSizeMode.GrowAndShrink;
             btnSaveProcessedDTR.Click += btnSaveProcessedDTR_Click;
             // 
             // textID
@@ -121,6 +134,7 @@
             // 
             AutoScaleDimensions = new SizeF(120F, 120F);
             AutoScaleMode = AutoScaleMode.Dpi;
+            Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular);
             ClientSize = new Size(1762, 650);
             Controls.Add(dgvDTR);
             Controls.Add(topPanel);
@@ -128,7 +142,6 @@
             MinimumSize = new Size(800, 600);
             Name = "processDTR";
             Text = "processDTR";
-            this.Resize += processDTR_Resize;
             ((System.ComponentModel.ISupportInitialize)dgvDTR).EndInit();
             ResumeLayout(false);
             PerformLayout();

@@ -20,7 +20,6 @@ namespace JTI_Payroll_System
         public processDTR()
         {
             InitializeComponent();
-            this.Resize += processDTR_Resize; // Attach Resize event
         }
 
         public processDTR(DateTime fromDate, DateTime toDate) : this()
@@ -1400,19 +1399,6 @@ namespace JTI_Payroll_System
         {
             DeleteDTRForm deleteForm = new DeleteDTRForm();
             deleteForm.ShowDialog(); // Open as a modal dialog
-        }
-
-        private void processDTR_Resize(object sender, EventArgs e)
-        {
-            // Calculate a base font size based on form width (or height)
-            float baseFontSize = Math.Max(8, Math.Min(16, this.ClientSize.Width / 120f));
-            var buttonFont = new System.Drawing.Font("Segoe UI", baseFontSize, System.Drawing.FontStyle.Regular);
-            btnBack.Font = buttonFont;
-            btnNext.Font = buttonFont;
-            btnSaveProcessedDTR.Font = buttonFont;
-            btnOpenDeleteDTR.Font = buttonFont;
-            btnAutoAssignShift.Font = buttonFont;
-            search.Font = buttonFont;
         }
     }
 }
