@@ -283,72 +283,40 @@ namespace JTI_Payroll_System
 
             return rates;
         }
-        private void SetupShiftCodeDropdown()
+
+        private void SetupShiftCodeInputColumn()
         {
             string shiftCodeColumnName = "ShiftCode";
 
-            // Check if ShiftCode column already exists
+            // Remove existing ShiftCode column if present
             if (dgvDTR.Columns.Contains(shiftCodeColumnName))
             {
-                dgvDTR.Columns.Remove(shiftCodeColumnName); // Remove existing column to re-add ComboBox
+                dgvDTR.Columns.Remove(shiftCodeColumnName);
             }
 
-            // Fetch shift codes from the database
-            List<string> shiftCodes = GetShiftCodesFromDatabase();
-
-            // Create ComboBox Column with database shift codes
-            DataGridViewComboBoxColumn shiftCodeColumn = new DataGridViewComboBoxColumn
+            // Add a TextBox column for ShiftCode
+            DataGridViewTextBoxColumn shiftCodeColumn = new DataGridViewTextBoxColumn
             {
                 Name = shiftCodeColumnName,
                 HeaderText = "Shift Code",
-                DataPropertyName = shiftCodeColumnName, // Binds to ShiftCode column
-                DataSource = shiftCodes, // Use dynamic database values
-                AutoComplete = true,
-                DisplayStyle = DataGridViewComboBoxDisplayStyle.ComboBox // Set to ComboBox to display dropdown immediately
+                DataPropertyName = shiftCodeColumnName,
+                AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells
             };
 
             dgvDTR.Columns.Add(shiftCodeColumn);
 
-            // Attach EditingControlShowing event to handle user-typed input
-            dgvDTR.EditingControlShowing += (sender, e) =>
+            // Optionally, attach a tooltip to show available shift codes
+            List<string> shiftCodes = GetShiftCodesFromDatabase();
+            dgvDTR.CellMouseEnter += (s, e) =>
             {
-                if (dgvDTR.CurrentCell != null && dgvDTR.CurrentCell.ColumnIndex == dgvDTR.Columns[shiftCodeColumnName].Index)
+                if (e.ColumnIndex == dgvDTR.Columns[shiftCodeColumnName].Index && e.RowIndex >= 0)
                 {
-                    if (e.Control is ComboBox comboBox)
-                    {
-                        comboBox.DropDownStyle = ComboBoxStyle.DropDown; // Allow typing
-                        comboBox.Validating -= ShiftCodeComboBox_Validating; // Remove any existing handler
-                        comboBox.Validating += ShiftCodeComboBox_Validating; // Add new handler
-                    }
+                    dgvDTR.Rows[e.RowIndex].Cells[e.ColumnIndex].ToolTipText =
+                        "Available Shift Codes:\n" + string.Join(", ", shiftCodes);
                 }
             };
         }
-        private void ShiftCodeComboBox_Validating(object sender, EventArgs e)
-        {
-            if (sender is ComboBox comboBoxshiftcode)
-            {
-                string input = comboBoxshiftcode.Text;
 
-                // Validate if the input is a valid shift code
-                if (!string.IsNullOrWhiteSpace(input))
-                {
-                    // Check if the value already exists in the dropdown
-                    var shiftCodeColumn = (DataGridViewComboBoxColumn)dgvDTR.Columns["ShiftCode"];
-                    var currentDataSource = (List<string>)shiftCodeColumn.DataSource;
-
-                    if (!currentDataSource.Contains(input))
-                    {
-                        // Silently reset to default if invalid
-                        comboBoxshiftcode.Text = "";
-                    }
-                }
-                else
-                {
-                    // Silently reset to default if invalid
-                    comboBoxshiftcode.Text = "";
-                }
-            }
-        }
         private List<string> GetShiftCodesFromDatabase()
         {
             List<string> shiftCodes = new List<string>();
@@ -372,6 +340,7 @@ namespace JTI_Payroll_System
 
             return shiftCodes;
         }
+
         private void LoadEmployeesForNavigation(DateTime startDate, DateTime endDate)
         {
             try
@@ -470,7 +439,7 @@ namespace JTI_Payroll_System
 
                 // Setup columns once
                 SetupRateDropdown();
-                SetupShiftCodeDropdown();
+                SetupShiftCodeInputColumn();
 
                 // Ensure checkbox columns are properly configured
                 SetupCheckBoxColumns();
