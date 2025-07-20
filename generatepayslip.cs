@@ -293,6 +293,217 @@ namespace JTI_Payroll_System
             }
         }
 
+        // Helper method to draw a payslip page into an existing PdfDocument
+        private void DrawPayslipPage(PdfSharp.Pdf.PdfDocument document, PayslipViewModel payslip)
+        {
+            PdfSharp.Pdf.PdfPage page = document.AddPage();
+            double margin = 40;
+            double pageWidth = page.Width.Point;
+            double usableWidth = pageWidth - 2 * margin;
+            int y = 40, lineHeight = 14;
+            int earningsCol1 = (int)margin, earningsCol2 = (int)(margin + 90), earningsCol3 = (int)(margin + 170);
+            int dedCol1 = (int)(margin + usableWidth / 2 + 10), dedCol2 = (int)(margin + usableWidth / 2 + 160);
+
+            XGraphics gfx = XGraphics.FromPdfPage(page);
+            XFont font = new XFont("Arial", 8);
+            var fontStyleExType = typeof(XFont).Assembly.GetType("PdfSharp.Drawing.XFontStyleEx");
+            object boldStyle = fontStyleExType != null ? Enum.Parse(fontStyleExType, "Bold", true) : null;
+            XFont boldFont = boldStyle != null ? (XFont)Activator.CreateInstance(typeof(XFont), new object[] { "Arial", 8, boldStyle }) : new XFont("Arial", 8);
+            XFont headerFont = boldStyle != null ? (XFont)Activator.CreateInstance(typeof(XFont), new object[] { "Arial", 10, boldStyle }) : new XFont("Arial", 10);
+            XFont redFont = boldStyle != null ? (XFont)Activator.CreateInstance(typeof(XFont), new object[] { "Arial", 8, boldStyle }) : new XFont("Arial", 8);
+            XBrush redBrush = XBrushes.Red;
+            XBrush blackBrush = XBrushes.Black;
+
+            // Header
+            gfx.DrawString("JEANNIE'S TOUCH MANPOWER SOLUTIONS INC.", headerFont, blackBrush, new XRect(0, y, page.Width, 20), XStringFormats.TopCenter);
+            y += lineHeight + 2;
+            gfx.DrawString("****PAYSLIP****", redFont, redBrush, page.Width.Point - margin - 100, y);
+            y += lineHeight + 2;
+
+            // Employee Info
+            gfx.DrawString("ID NO :", font, blackBrush, earningsCol1, y);
+            gfx.DrawString(payslip.EmployeeId, boldFont, blackBrush, earningsCol1 + 48, y);
+            gfx.DrawString("BIR CODE :", font, blackBrush, dedCol1, y);
+            gfx.DrawString(payslip.BirStat, font, blackBrush, dedCol1 + 60, y);
+            y += lineHeight;
+            gfx.DrawString("NAME :", font, blackBrush, earningsCol1, y);
+            gfx.DrawString(payslip.EmployeeName.ToUpper(), boldFont, blackBrush, earningsCol1 + 48, y);
+            gfx.DrawString("RATE/DAY :", font, blackBrush, dedCol1, y);
+            gfx.DrawString($"{payslip.RatePerDay:N2}", font, blackBrush, dedCol1 + 60, y);
+            y += lineHeight;
+            gfx.DrawString($"{payslip.Department} - {payslip.Client}", font, blackBrush, new XRect(earningsCol1, y, earningsCol3 + 60 - earningsCol1, lineHeight), XStringFormats.TopLeft);
+            gfx.DrawString("TYPE-ATM :", font, blackBrush, dedCol1, y);
+            gfx.DrawString(payslip.AtmCardNo, font, blackBrush, dedCol1 + 60, y);
+            y += lineHeight + 2;
+            gfx.DrawString($"PAYROLL PERIOD {payslip.PeriodStart:MM/dd/yyyy} TO {payslip.PeriodEnd:MM/dd/yyyy}", font, blackBrush, earningsCol1, y);
+            y += lineHeight + 2;
+
+            // Table headers
+            int tableStartY = y;
+            gfx.DrawString("EARNINGS", boldFont, blackBrush, new XRect(earningsCol1, y, earningsCol2 - earningsCol1, lineHeight), XStringFormats.TopLeft);
+            gfx.DrawString("CURRENT", boldFont, blackBrush, new XRect(earningsCol2, y, earningsCol3 - earningsCol2, lineHeight), XStringFormats.TopCenter);
+            gfx.DrawString("AMOUNT", boldFont, blackBrush, new XRect(earningsCol3, y, 60, lineHeight), XStringFormats.TopRight);
+            gfx.DrawString("DEDUCTIONS", boldFont, blackBrush, new XRect(dedCol1, y, dedCol2 - dedCol1, lineHeight), XStringFormats.TopLeft);
+            gfx.DrawString("AMOUNT", boldFont, blackBrush, new XRect(dedCol2, y, 60, lineHeight), XStringFormats.TopRight);
+            y += lineHeight;
+            gfx.DrawLine(XPens.Black, earningsCol1, y, earningsCol3 + 60, y);
+            gfx.DrawLine(XPens.Black, dedCol1, y, dedCol2 + 60, y);
+            y += 2;
+
+            // EARNINGS TABLE (detailed rows)
+            var earningsRows = new (string label, string current, decimal amount, bool bold)[] {
+                ("Basic Pay (No. of regular Days)", payslip.TotalDays.ToString("N2"), payslip.BasicPay, false),
+                ("Legal Holiday w/ Pay", payslip.LegalHolidayCount.ToString(), payslip.LegalHolidayPay, false),
+                ("Less:Tardy/Undertime", payslip.TardyUndertimePay.ToString("N2"), payslip.TardyUndertimePay, false),
+                ("Total Basic Pay", "", payslip.BasicPay + payslip.LegalHolidayPay - payslip.TardyUndertimePay, true),
+                ("Overtime Pay", "", payslip.OvertimePay, true),
+                ("Regular OT Hrs.", payslip.OvertimeHours.ToString("N2"), payslip.RegOtPay, false),
+                ("Rest Day Hrs.", payslip.RestdayHours.ToString("N2"), payslip.RestdayPay, false),
+                ("Rest Day OT Hrs.", payslip.RestdayOvertimeHours.ToString("N2"), payslip.RestdayOvertimePay, false),
+                ("Legal Holiday Hrs.", payslip.LegalHolidayHours.ToString("N2"), payslip.LegalHolidayPay, false),
+                ("Legal Holiday OT Hrs.", payslip.LegalHolidayOvertimeHours.ToString("N2"), payslip.LegalHolidayOvertimePay, false),
+                ("Legal Hol. Rest Day Hrs.", payslip.LegalHolidayRestdayHours.ToString("N2"), payslip.LegalHolidayRestdayPay, false),
+                ("Legal Hol. Rest Day OT Hrs.", payslip.LegalHolidayRestdayOvertimeHours.ToString("N2"), payslip.LegalHolidayRestdayOvertimePay, false),
+                ("Special Holiday Hrs.", payslip.SpecialHolidayHours.ToString("N2"), payslip.SpecialHolidayPay, false),
+                ("Special Holiday OT Hrs.", payslip.SpecialHolidayOvertimeHours.ToString("N2"), payslip.SpecialHolidayOvertimePay, false),
+                ("Spl Holiday on a Rest Day", payslip.SpecialHolidayRestdayHours.ToString("N2"), payslip.SpecialHolidayRestdayPay, false),
+                ("Spl Hol/Rest Day OT", payslip.SpecialHolidayRestdayOvertimeHours.ToString("N2"), payslip.SpecialHolidayRestdayOvertimePay, false),
+                ("Night Differential", payslip.NightDifferentialHours.ToString("N2"), payslip.NightDifferentialPay, false),
+                ("Night Differential OT", payslip.NightDifferentialOvertimeHours.ToString("N2"), payslip.NightDifferentialOvertimePay, false),
+                ("Night Diff. Rest Day", payslip.NightDifferentialRestdayHours.ToString("N2"), payslip.NightDifferentialRestdayPay, false),
+                ("Night Diff. SH.", payslip.NightDifferentialSpecialHolidayHours.ToString("N2"), payslip.NightDifferentialSpecialHolidayPay, false),
+                ("Night Diff. SH/RD.", payslip.NightDifferentialSpecialHolidayRestdayHours.ToString("N2"), payslip.NightDifferentialSpecialHolidayRestdayPay, false),
+                ("Night Diff. Leg. Hol.", payslip.NightDifferentialLegalHolidayHours.ToString("N2"), payslip.NightDifferentialLegalHolidayPay, false),
+                ("Night Diff. LH/RD.", payslip.NightDifferentialLegalHolidayRestdayHours.ToString("N2"), payslip.NightDifferentialLegalHolidayRestdayPay, false),
+                ("Total Overtime Pay", "", payslip.OvertimePay, true),
+                ("GROSS PAY", "", payslip.GrossPay, true)
+            };
+            int earningsY = tableStartY + lineHeight + 2;
+            foreach (var row in earningsRows)
+            {
+                if (row.label == "Total Basic Pay")
+                {
+                    gfx.DrawRectangle(XPens.Black, earningsCol1, earningsY, earningsCol3 + 60 - earningsCol1, lineHeight);
+                    gfx.DrawString(row.label, boldFont, blackBrush, new XRect(earningsCol1, earningsY, earningsCol2 - earningsCol1, lineHeight), XStringFormats.TopLeft);
+                    gfx.DrawString($"{payslip.TotalBasicPay:N2}", boldFont, blackBrush, new XRect(earningsCol3, earningsY, 60, lineHeight), XStringFormats.TopRight);
+                }
+                else if (row.label == "Total Overtime Pay")
+                {
+                    gfx.DrawRectangle(XPens.Black, earningsCol1, earningsY, earningsCol3 + 60 - earningsCol1, lineHeight);
+                    gfx.DrawString(row.label, boldFont, blackBrush, new XRect(earningsCol1, earningsY, earningsCol2 - earningsCol1, lineHeight), XStringFormats.TopLeft);
+                    gfx.DrawString($"{payslip.OvertimePay:N2}", boldFont, blackBrush, new XRect(earningsCol3, earningsY, 60, lineHeight), XStringFormats.TopRight);
+                }
+                else if (row.label == "GROSS PAY")
+                {
+                    gfx.DrawRectangle(XPens.Black, earningsCol1, earningsY, earningsCol3 + 60 - earningsCol1, lineHeight);
+                    gfx.DrawString(row.label, boldFont, blackBrush, new XRect(earningsCol1, earningsY, earningsCol2 - earningsCol1, lineHeight), XStringFormats.TopLeft);
+                    gfx.DrawString($"{payslip.GrossPay:N2}", boldFont, blackBrush, new XRect(earningsCol3, earningsY, 60, lineHeight), XStringFormats.TopRight);
+                }
+                else if (row.label == "Overtime Pay")
+                {
+                    gfx.DrawRectangle(XPens.Black, earningsCol1, earningsY, earningsCol3 + 60 - earningsCol1, lineHeight);
+                    gfx.DrawString(row.label, boldFont, blackBrush, new XRect(earningsCol1, earningsY, earningsCol2 - earningsCol1, lineHeight), XStringFormats.TopLeft);
+                }
+                else
+                {
+                    gfx.DrawString(row.label, row.bold ? boldFont : font, blackBrush, new XRect(earningsCol1, earningsY, earningsCol2 - earningsCol1, lineHeight), XStringFormats.TopLeft);
+                    gfx.DrawString(row.current, font, blackBrush, new XRect(earningsCol2, earningsY, earningsCol3 - earningsCol2, lineHeight), XStringFormats.TopCenter);
+                    gfx.DrawString($"{row.amount:N2}", row.bold ? boldFont : font, blackBrush, new XRect(earningsCol3, earningsY, 60, lineHeight), XStringFormats.TopRight);
+                }
+                earningsY += lineHeight;
+            }
+
+            // Deductions Table (right side, unchanged)
+            int deductionsY = tableStartY + lineHeight + 2;
+            string[] deductionLabels = new[] {
+                "GOVERNMENT DUES DEDUCTION",
+                "SSS Contribution",
+                "Phil-Health Contribution",
+                "HDMF Contribution",
+                "Loan Deduction",
+                "SSS Loan",
+                "HDMF Loan",
+                "SSS Calamity Loan",
+                "HDMF Calamity Loan",
+                "Withholding Tax",
+                "Cash Advance",
+                "HMO",
+                "Uniform",
+                "ATM ID",
+                "Medical",
+                "Grocery",
+                "Canteen",
+                "Damayan",
+                "Rice",
+                "Total Deduction"
+            };
+            decimal[] deductionAmounts = new[] {
+                0,
+                payslip.SSS,
+                payslip.PhilHealth,
+                payslip.HDMF,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                payslip.CashAdvance,
+                payslip.HMO,
+                payslip.Uniform,
+                payslip.AtmId,
+                payslip.Medical,
+                payslip.Grocery,
+                payslip.Canteen,
+                payslip.Damayan,
+                payslip.Rice,
+                payslip.TotalDeductions
+            };
+            bool[] deductionBold = new[] { true, false, false, false, true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true };
+            for (int i = 0; i < deductionLabels.Length; i++)
+            {
+                gfx.DrawString(deductionLabels[i], deductionBold[i] ? boldFont : font, blackBrush, new XRect(dedCol1, deductionsY, dedCol2 - dedCol1, lineHeight), XStringFormats.TopLeft);
+                gfx.DrawString($"{deductionAmounts[i]:N2}", deductionBold[i] ? boldFont : font, blackBrush, new XRect(dedCol2, deductionsY, 60, lineHeight), XStringFormats.TopRight);
+                deductionsY += lineHeight;
+            }
+
+            // Other Earnings (on the right, below deductions)
+            int otherY = deductionsY;
+            gfx.DrawString("OTHER EARNINGS", boldFont, blackBrush, dedCol1, otherY);
+            otherY += lineHeight;
+            void DrawOtherEarningRow(string label, decimal amount, bool red = false)
+            {
+                XFont useFont = red ? redFont : font;
+                XBrush useBrush = red ? redBrush : blackBrush;
+                gfx.DrawString(label, useFont, useBrush, new XRect(dedCol1, otherY, dedCol2 - dedCol1, lineHeight), XStringFormats.TopLeft);
+                gfx.DrawString($"{amount:N2}", useFont, useBrush, new XRect(dedCol2, otherY, 60, lineHeight), XStringFormats.TopRight);
+                otherY += lineHeight;
+            }
+            DrawOtherEarningRow("SIL-SERVICE INCENTIVE LEAVE", payslip.SIL, true);
+            DrawOtherEarningRow("PERFECT ATTENDANCE", payslip.PerfectAttendance, true);
+            DrawOtherEarningRow("ADJUSTMENT (LH NO WORK)", payslip.Adjustment, true);
+            DrawOtherEarningRow("RELIEVER", payslip.Reliever, true);
+            otherY += lineHeight;
+            DrawOtherEarningRow("TAKE HOME PAY", payslip.NetPay, false);
+        }
+
+        // Generate a single PDF for multiple payslips
+        private void GeneratePayslipsPdf(List<PayslipViewModel> payslips)
+        {
+            using (PdfSharp.Pdf.PdfDocument document = new PdfSharp.Pdf.PdfDocument())
+            {
+                document.Info.Title = "Payslips";
+                foreach (var payslip in payslips)
+                {
+                    DrawPayslipPage(document, payslip);
+                }
+                string tempFile = Path.Combine(Path.GetTempPath(), $"Payslips_{Guid.NewGuid()}.pdf");
+                document.Save(tempFile);
+                PdfViewerForm viewerForm = new PdfViewerForm(tempFile);
+                viewerForm.ShowDialog();
+            }
+        }
+
         private void UpdateNetPay(int month, int controlPeriod, int payrollYear, DateTime fromDate, DateTime toDate)
         {
             try
@@ -519,9 +730,13 @@ namespace JTI_Payroll_System
                 MessageBox.Show("Payslip generation calculation and update complete.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 // Show payslips for the period
                 var payslips = GetPayslipsForPeriod(monthVal, controlPeriodVal, payrollYearVal, fromDateVal, toDateVal);
-                foreach (var payslip in payslips)
+                if (payslips.Count > 0)
                 {
-                    GeneratePayslipPdf(payslip);
+                    GeneratePayslipsPdf(payslips);
+                }
+                else
+                {
+                    MessageBox.Show("No payslips found for the selected period.", "No Data", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
             catch (Exception ex)
