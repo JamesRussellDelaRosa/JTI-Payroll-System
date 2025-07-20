@@ -27,6 +27,18 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Reference Include="CrystalDecisions.CrystalReports.Engine">
+      <HintPath>..\..\..\..\..\Program Files (x86)\SAP BusinessObjects\Crystal Reports for .NET Framework 4.0\Common\SAP BusinessObjects Enterprise XI 4.0\win64_x64\dotnet\CrystalDecisions.CrystalReports.Engine.dll</HintPath>
+    </Reference>
+    <Reference Include="CrystalDecisions.Shared">
+      <HintPath>..\..\..\..\..\Program Files (x86)\SAP BusinessObjects\Crystal Reports for .NET Framework 4.0\Common\SAP BusinessObjects Enterprise XI 4.0\win64_x64\dotnet\CrystalDecisions.Shared.dll</HintPath>
+    </Reference>
+    <Reference Include="CrystalDecisions.Windows.Forms">
+      <HintPath>..\..\..\..\..\Program Files (x86)\SAP BusinessObjects\Crystal Reports for .NET Framework 4.0\Common\SAP BusinessObjects Enterprise XI 4.0\win64_x64\dotnet\CrystalDecisions.Windows.Forms.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Update="Properties\Settings.Designer.cs">
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <AutoGen>True</AutoGen>
