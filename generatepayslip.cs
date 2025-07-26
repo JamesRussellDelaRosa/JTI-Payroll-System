@@ -8,12 +8,14 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using MySql.Data.MySqlClient;
-using PdfSharp.Drawing;
-using PdfSharp.Pdf;
 using System.Diagnostics;
 using System.IO;
 using Patagames.Pdf.Net;
 using Patagames.Pdf.Net.Controls.WinForms;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
+using JTI_Payroll_System;
 
 namespace JTI_Payroll_System
 {
@@ -45,7 +47,7 @@ namespace JTI_Payroll_System
             if (textBox.Text == "MM/DD/YYYY")
             {
                 textBox.Text = "";
-                textBox.ForeColor = Color.Black;
+                textBox.ForeColor = System.Drawing.Color.Black;
             }
         }
 
@@ -55,7 +57,7 @@ namespace JTI_Payroll_System
             if (string.IsNullOrWhiteSpace(textBox.Text))
             {
                 textBox.Text = "MM/DD/YYYY";
-                textBox.ForeColor = Color.Gray;
+                textBox.ForeColor = System.Drawing.Color.Gray;
             }
         }
 
@@ -84,423 +86,67 @@ namespace JTI_Payroll_System
 
         private void GeneratePayslipPdf(PayslipViewModel payslip)
         {
-            using (PdfSharp.Pdf.PdfDocument document = new PdfSharp.Pdf.PdfDocument())
+            string tempFile = Path.Combine(Path.GetTempPath(), $"Payslip_{payslip.EmployeeId}_{Guid.NewGuid()}.pdf");
+            var document = new PayslipDocument(payslip);
+            using (var fs = new FileStream(tempFile, FileMode.Create, FileAccess.Write, FileShare.None))
             {
-                document.Info.Title = "Payslip";
-                PdfSharp.Pdf.PdfPage page = document.AddPage();
-                double margin = 40;
-                double pageWidth = page.Width.Point;
-                double usableWidth = pageWidth - 2 * margin;
-                int y = 40, lineHeight = 14;
-                int earningsCol1 = (int)margin, earningsCol2 = (int)(margin + 90), earningsCol3 = (int)(margin + 170);
-                int dedCol1 = (int)(margin + usableWidth / 2 + 10), dedCol2 = (int)(margin + usableWidth / 2 + 160);
-
-                XGraphics gfx = XGraphics.FromPdfPage(page);
-                XFont font = new XFont("Arial", 8);
-                var fontStyleExType = typeof(XFont).Assembly.GetType("PdfSharp.Drawing.XFontStyleEx");
-                object boldStyle = fontStyleExType != null ? Enum.Parse(fontStyleExType, "Bold", true) : null;
-                XFont boldFont = boldStyle != null ? (XFont)Activator.CreateInstance(typeof(XFont), new object[] { "Arial", 8, boldStyle }) : new XFont("Arial", 8);
-                XFont headerFont = boldStyle != null ? (XFont)Activator.CreateInstance(typeof(XFont), new object[] { "Arial", 10, boldStyle }) : new XFont("Arial", 10);
-                XFont redFont = boldStyle != null ? (XFont)Activator.CreateInstance(typeof(XFont), new object[] { "Arial", 8, boldStyle }) : new XFont("Arial", 8);
-                XBrush redBrush = XBrushes.Red;
-                XBrush blackBrush = XBrushes.Black;
-
-                // Header
-                gfx.DrawString("JEANNIE'S TOUCH MANPOWER SOLUTIONS INC.", headerFont, blackBrush, new XRect(0, y, page.Width, 20), XStringFormats.TopCenter);
-                y += lineHeight + 2;
-                gfx.DrawString("****PAYSLIP****", redFont, redBrush, page.Width.Point - margin - 100, y);
-                y += lineHeight + 2;
-
-                // Employee Info
-                gfx.DrawString("ID NO :", font, blackBrush, earningsCol1, y);
-                gfx.DrawString(payslip.EmployeeId, boldFont, blackBrush, earningsCol1 + 48, y);
-                gfx.DrawString("BIR CODE :", font, blackBrush, dedCol1, y);
-                gfx.DrawString(payslip.BirStat, font, blackBrush, dedCol1 + 60, y);
-                y += lineHeight;
-                gfx.DrawString("NAME :", font, blackBrush, earningsCol1, y);
-                gfx.DrawString(payslip.EmployeeName.ToUpper(), boldFont, blackBrush, earningsCol1 + 48, y);
-                gfx.DrawString("RATE/DAY :", font, blackBrush, dedCol1, y);
-                gfx.DrawString($"{payslip.RatePerDay:N2}", font, blackBrush, dedCol1 + 60, y);
-                y += lineHeight;
-                gfx.DrawString($"{payslip.Department} - {payslip.Client}", font, blackBrush, new XRect(earningsCol1, y, earningsCol3 + 60 - earningsCol1, lineHeight), XStringFormats.TopLeft);
-                gfx.DrawString("TYPE-ATM :", font, blackBrush, dedCol1, y);
-                gfx.DrawString(payslip.AtmCardNo, font, blackBrush, dedCol1 + 60, y);
-                y += lineHeight + 2;
-                gfx.DrawString($"PAYROLL PERIOD {payslip.PeriodStart:MM/dd/yyyy} TO {payslip.PeriodEnd:MM/dd/yyyy}", font, blackBrush, earningsCol1, y);
-                y += lineHeight + 2;
-
-                // Table headers
-                int tableStartY = y;
-                gfx.DrawString("EARNINGS", boldFont, blackBrush, new XRect(earningsCol1, y, earningsCol2 - earningsCol1, lineHeight), XStringFormats.TopLeft);
-                gfx.DrawString("CURRENT", boldFont, blackBrush, new XRect(earningsCol2, y, earningsCol3 - earningsCol2, lineHeight), XStringFormats.TopCenter);
-                gfx.DrawString("AMOUNT", boldFont, blackBrush, new XRect(earningsCol3, y, 60, lineHeight), XStringFormats.TopRight);
-                gfx.DrawString("DEDUCTIONS", boldFont, blackBrush, new XRect(dedCol1, y, dedCol2 - dedCol1, lineHeight), XStringFormats.TopLeft);
-                gfx.DrawString("AMOUNT", boldFont, blackBrush, new XRect(dedCol2, y, 60, lineHeight), XStringFormats.TopRight);
-                y += lineHeight;
-                gfx.DrawLine(XPens.Black, earningsCol1, y, earningsCol3 + 60, y);
-                gfx.DrawLine(XPens.Black, dedCol1, y, dedCol2 + 60, y);
-                y += 2;
-
-                // EARNINGS TABLE (detailed rows)
-                var earningsRows = new (string label, string current, decimal amount, bool bold)[] {
-                    ("Basic Pay (No. of regular Days)", payslip.TotalDays.ToString("N2"), payslip.BasicPay, false),
-                    ("Legal Holiday w/ Pay", payslip.LegalHolidayCount.ToString(), payslip.LegalHolidayPay, false),
-                    ("Less:Tardy/Undertime", payslip.TardyUndertimePay.ToString("N2"), payslip.TardyUndertimePay, false),
-                    ("Total Basic Pay", "", payslip.BasicPay + payslip.LegalHolidayPay - payslip.TardyUndertimePay, true),
-                    ("Overtime Pay", "", payslip.OvertimePay, true),
-                    ("Regular OT Hrs.", payslip.OvertimeHours.ToString("N2"), payslip.RegOtPay, false),
-                    ("Rest Day Hrs.", payslip.RestdayHours.ToString("N2"), payslip.RestdayPay, false),
-                    ("Rest Day OT Hrs.", payslip.RestdayOvertimeHours.ToString("N2"), payslip.RestdayOvertimePay, false),
-                    ("Legal Holiday Hrs.", payslip.LegalHolidayHours.ToString("N2"), payslip.LegalHolidayPay, false),
-                    ("Legal Holiday OT Hrs.", payslip.LegalHolidayOvertimeHours.ToString("N2"), payslip.LegalHolidayOvertimePay, false),
-                    ("Legal Hol. Rest Day Hrs.", payslip.LegalHolidayRestdayHours.ToString("N2"), payslip.LegalHolidayRestdayPay, false),
-                    ("Legal Hol. Rest Day OT Hrs.", payslip.LegalHolidayRestdayOvertimeHours.ToString("N2"), payslip.LegalHolidayRestdayOvertimePay, false),
-                    ("Special Holiday Hrs.", payslip.SpecialHolidayHours.ToString("N2"), payslip.SpecialHolidayPay, false),
-                    ("Special Holiday OT Hrs.", payslip.SpecialHolidayOvertimeHours.ToString("N2"), payslip.SpecialHolidayOvertimePay, false),
-                    ("Spl Holiday on a Rest Day", payslip.SpecialHolidayRestdayHours.ToString("N2"), payslip.SpecialHolidayRestdayPay, false),
-                    ("Spl Hol/Rest Day OT", payslip.SpecialHolidayRestdayOvertimeHours.ToString("N2"), payslip.SpecialHolidayRestdayOvertimePay, false),
-                    ("Night Differential", payslip.NightDifferentialHours.ToString("N2"), payslip.NightDifferentialPay, false),
-                    ("Night Differential OT", payslip.NightDifferentialOvertimeHours.ToString("N2"), payslip.NightDifferentialOvertimePay, false),
-                    ("Night Diff. Rest Day", payslip.NightDifferentialRestdayHours.ToString("N2"), payslip.NightDifferentialRestdayPay, false),
-                    ("Night Diff. SH.", payslip.NightDifferentialSpecialHolidayHours.ToString("N2"), payslip.NightDifferentialSpecialHolidayPay, false),
-                    ("Night Diff. SH/RD.", payslip.NightDifferentialSpecialHolidayRestdayHours.ToString("N2"), payslip.NightDifferentialSpecialHolidayRestdayPay, false),
-                    ("Night Diff. Leg. Hol.", payslip.NightDifferentialLegalHolidayHours.ToString("N2"), payslip.NightDifferentialLegalHolidayPay, false),
-                    ("Night Diff. LH/RD.", payslip.NightDifferentialLegalHolidayRestdayHours.ToString("N2"), payslip.NightDifferentialLegalHolidayRestdayPay, false),
-                    ("Total Overtime Pay", "", payslip.OvertimePay, true),
-                    ("GROSS PAY", "", payslip.GrossPay, true)
-                };
-                int earningsY = tableStartY + lineHeight + 2;
-                foreach (var row in earningsRows)
+                document.GeneratePdf(fs);
+            }
+            WaitForFileRelease(tempFile);
+            // Prompt user to save the PDF
+            using (SaveFileDialog sfd = new SaveFileDialog { Filter = "PDF files (*.pdf)|*.pdf", FileName = Path.GetFileName(tempFile) })
+            {
+                if (sfd.ShowDialog() == DialogResult.OK)
                 {
-                    if (row.label == "Total Basic Pay")
-                    {
-                        // Draw a rectangle around the header row
-                        gfx.DrawRectangle(XPens.Black, earningsCol1, earningsY, earningsCol3 + 60 - earningsCol1, lineHeight);
-                        gfx.DrawString(row.label, boldFont, blackBrush, new XRect(earningsCol1, earningsY, earningsCol2 - earningsCol1, lineHeight), XStringFormats.TopLeft);
-                        // Show value for AMOUNT from total_basic_pay
-                        gfx.DrawString($"{payslip.TotalBasicPay:N2}", boldFont, blackBrush, new XRect(earningsCol3, earningsY, 60, lineHeight), XStringFormats.TopRight);
-                    }
-                    else if (row.label == "Total Overtime Pay")
-                    {
-                        // Draw a rectangle around the header row
-                        gfx.DrawRectangle(XPens.Black, earningsCol1, earningsY, earningsCol3 + 60 - earningsCol1, lineHeight);
-                        gfx.DrawString(row.label, boldFont, blackBrush, new XRect(earningsCol1, earningsY, earningsCol2 - earningsCol1, lineHeight), XStringFormats.TopLeft);
-                        // Show value for AMOUNT from total_ot_pay
-                        gfx.DrawString($"{payslip.OvertimePay:N2}", boldFont, blackBrush, new XRect(earningsCol3, earningsY, 60, lineHeight), XStringFormats.TopRight);
-                    }
-                    else if (row.label == "GROSS PAY")
-                    {
-                        // Draw a rectangle around the header row
-                        gfx.DrawRectangle(XPens.Black, earningsCol1, earningsY, earningsCol3 + 60 - earningsCol1, lineHeight);
-                        gfx.DrawString(row.label, boldFont, blackBrush, new XRect(earningsCol1, earningsY, earningsCol2 - earningsCol1, lineHeight), XStringFormats.TopLeft);
-                        // Show value for AMOUNT from gross_pay
-                        gfx.DrawString($"{payslip.GrossPay:N2}", boldFont, blackBrush, new XRect(earningsCol3, earningsY, 60, lineHeight), XStringFormats.TopRight);
-                    }
-                    else if (row.label == "Overtime Pay")
-                    {
-                        // Draw a rectangle around the header row
-                        gfx.DrawRectangle(XPens.Black, earningsCol1, earningsY, earningsCol3 + 60 - earningsCol1, lineHeight);
-                        gfx.DrawString(row.label, boldFont, blackBrush, new XRect(earningsCol1, earningsY, earningsCol2 - earningsCol1, lineHeight), XStringFormats.TopLeft);
-                        // No value for CURRENT or AMOUNT for section headers
-                    }
-                    else
-                    {
-                        gfx.DrawString(row.label, row.bold ? boldFont : font, blackBrush, new XRect(earningsCol1, earningsY, earningsCol2 - earningsCol1, lineHeight), XStringFormats.TopLeft);
-                        gfx.DrawString(row.current, font, blackBrush, new XRect(earningsCol2, earningsY, earningsCol3 - earningsCol2, lineHeight), XStringFormats.TopCenter);
-                        gfx.DrawString($"{row.amount:N2}", row.bold ? boldFont : font, blackBrush, new XRect(earningsCol3, earningsY, 60, lineHeight), XStringFormats.TopRight);
-                    }
-                    earningsY += lineHeight;
+                    File.Copy(tempFile, sfd.FileName, true);
+                    MessageBox.Show("PDF saved successfully.", "Save As", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    // Optionally open the PDF
+                    try { Process.Start(new ProcessStartInfo(sfd.FileName) { UseShellExecute = true }); } catch { }
                 }
-
-                // Deductions Table (right side, unchanged)
-                int deductionsY = tableStartY + lineHeight + 2;
-                string[] deductionLabels = new[] {
-                    "GOVERNMENT DUES DEDUCTION",
-                    "SSS Contribution",
-                    "Phil-Health Contribution",
-                    "HDMF Contribution",
-                    "Loan Deduction",
-                    "SSS Loan",
-                    "HDMF Loan",
-                    "SSS Calamity Loan",
-                    "HDMF Calamity Loan",
-                    "Withholding Tax",
-                    "Cash Advance",
-                    "HMO",
-                    "Uniform",
-                    "ATM ID",
-                    "Medical",
-                    "Grocery",
-                    "Canteen",
-                    "Damayan",
-                    "Rice",
-                    "Total Deduction"
-                };
-                decimal[] deductionAmounts = new[] {
-                    0,
-                    payslip.SSS,
-                    payslip.PhilHealth,
-                    payslip.HDMF,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    payslip.CashAdvance,
-                    payslip.HMO,
-                    payslip.Uniform,
-                    payslip.AtmId,
-                    payslip.Medical,
-                    payslip.Grocery,
-                    payslip.Canteen,
-                    payslip.Damayan,
-                    payslip.Rice,
-                    payslip.TotalDeductions
-                };
-                bool[] deductionBold = new[] { true, false, false, false, true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true };
-                for (int i = 0; i < deductionLabels.Length; i++)
-                {
-                    gfx.DrawString(deductionLabels[i], deductionBold[i] ? boldFont : font, blackBrush, new XRect(dedCol1, deductionsY, dedCol2 - dedCol1, lineHeight), XStringFormats.TopLeft);
-                    gfx.DrawString($"{deductionAmounts[i]:N2}", deductionBold[i] ? boldFont : font, blackBrush, new XRect(dedCol2, deductionsY, 60, lineHeight), XStringFormats.TopRight);
-                    deductionsY += lineHeight;
-                }
-
-                // Other Earnings (on the right, below deductions)
-                int otherY = deductionsY;
-                gfx.DrawString("OTHER EARNINGS", boldFont, blackBrush, dedCol1, otherY);
-                otherY += lineHeight;
-                void DrawOtherEarningRow(string label, decimal amount, bool red = false)
-                {
-                    XFont useFont = red ? redFont : font;
-                    XBrush useBrush = red ? redBrush : blackBrush;
-                    gfx.DrawString(label, useFont, useBrush, new XRect(dedCol1, otherY, dedCol2 - dedCol1, lineHeight), XStringFormats.TopLeft);
-                    gfx.DrawString($"{amount:N2}", useFont, useBrush, new XRect(dedCol2, otherY, 60, lineHeight), XStringFormats.TopRight);
-                    otherY += lineHeight;
-                }
-                DrawOtherEarningRow("SIL-SERVICE INCENTIVE LEAVE", payslip.SIL, true);
-                DrawOtherEarningRow("PERFECT ATTENDANCE", payslip.PerfectAttendance, true);
-                DrawOtherEarningRow("ADJUSTMENT (LH NO WORK)", payslip.Adjustment, true);
-                DrawOtherEarningRow("RELIEVER", payslip.Reliever, true);
-                otherY += lineHeight;
-                DrawOtherEarningRow("TAKE HOME PAY", payslip.NetPay, false);
-
-                // Save to a temporary file and view
-                string tempFile = Path.Combine(Path.GetTempPath(), $"Payslip_{payslip.EmployeeId}_{Guid.NewGuid()}.pdf");
-                document.Save(tempFile);
-                PdfViewerForm viewerForm = new PdfViewerForm(tempFile);
-                viewerForm.ShowDialog();
             }
         }
 
-        // Helper method to draw a payslip page into an existing PdfDocument
-        private void DrawPayslipPage(PdfSharp.Pdf.PdfDocument document, PayslipViewModel payslip)
-        {
-            PdfSharp.Pdf.PdfPage page = document.AddPage();
-            double margin = 40;
-            double pageWidth = page.Width.Point;
-            double usableWidth = pageWidth - 2 * margin;
-            int y = 40, lineHeight = 14;
-            int earningsCol1 = (int)margin, earningsCol2 = (int)(margin + 90), earningsCol3 = (int)(margin + 170);
-            int dedCol1 = (int)(margin + usableWidth / 2 + 10), dedCol2 = (int)(margin + usableWidth / 2 + 160);
-
-            XGraphics gfx = XGraphics.FromPdfPage(page);
-            XFont font = new XFont("Arial", 8);
-            var fontStyleExType = typeof(XFont).Assembly.GetType("PdfSharp.Drawing.XFontStyleEx");
-            object boldStyle = fontStyleExType != null ? Enum.Parse(fontStyleExType, "Bold", true) : null;
-            XFont boldFont = boldStyle != null ? (XFont)Activator.CreateInstance(typeof(XFont), new object[] { "Arial", 8, boldStyle }) : new XFont("Arial", 8);
-            XFont headerFont = boldStyle != null ? (XFont)Activator.CreateInstance(typeof(XFont), new object[] { "Arial", 10, boldStyle }) : new XFont("Arial", 10);
-            XFont redFont = boldStyle != null ? (XFont)Activator.CreateInstance(typeof(XFont), new object[] { "Arial", 8, boldStyle }) : new XFont("Arial", 8);
-            XBrush redBrush = XBrushes.Red;
-            XBrush blackBrush = XBrushes.Black;
-
-            // Header
-            gfx.DrawString("JEANNIE'S TOUCH MANPOWER SOLUTIONS INC.", headerFont, blackBrush, new XRect(0, y, page.Width, 20), XStringFormats.TopCenter);
-            y += lineHeight + 2;
-            gfx.DrawString("****PAYSLIP****", redFont, redBrush, page.Width.Point - margin - 100, y);
-            y += lineHeight + 2;
-
-            // Employee Info
-            gfx.DrawString("ID NO :", font, blackBrush, earningsCol1, y);
-            gfx.DrawString(payslip.EmployeeId, boldFont, blackBrush, earningsCol1 + 48, y);
-            gfx.DrawString("BIR CODE :", font, blackBrush, dedCol1, y);
-            gfx.DrawString(payslip.BirStat, font, blackBrush, dedCol1 + 60, y);
-            y += lineHeight;
-            gfx.DrawString("NAME :", font, blackBrush, earningsCol1, y);
-            gfx.DrawString(payslip.EmployeeName.ToUpper(), boldFont, blackBrush, earningsCol1 + 48, y);
-            gfx.DrawString("RATE/DAY :", font, blackBrush, dedCol1, y);
-            gfx.DrawString($"{payslip.RatePerDay:N2}", font, blackBrush, dedCol1 + 60, y);
-            y += lineHeight;
-            gfx.DrawString($"{payslip.Department} - {payslip.Client}", font, blackBrush, new XRect(earningsCol1, y, earningsCol3 + 60 - earningsCol1, lineHeight), XStringFormats.TopLeft);
-            gfx.DrawString("TYPE-ATM :", font, blackBrush, dedCol1, y);
-            gfx.DrawString(payslip.AtmCardNo, font, blackBrush, dedCol1 + 60, y);
-            y += lineHeight + 2;
-            gfx.DrawString($"PAYROLL PERIOD {payslip.PeriodStart:MM/dd/yyyy} TO {payslip.PeriodEnd:MM/dd/yyyy}", font, blackBrush, earningsCol1, y);
-            y += lineHeight + 2;
-
-            // Table headers
-            int tableStartY = y;
-            gfx.DrawString("EARNINGS", boldFont, blackBrush, new XRect(earningsCol1, y, earningsCol2 - earningsCol1, lineHeight), XStringFormats.TopLeft);
-            gfx.DrawString("CURRENT", boldFont, blackBrush, new XRect(earningsCol2, y, earningsCol3 - earningsCol2, lineHeight), XStringFormats.TopCenter);
-            gfx.DrawString("AMOUNT", boldFont, blackBrush, new XRect(earningsCol3, y, 60, lineHeight), XStringFormats.TopRight);
-            gfx.DrawString("DEDUCTIONS", boldFont, blackBrush, new XRect(dedCol1, y, dedCol2 - dedCol1, lineHeight), XStringFormats.TopLeft);
-            gfx.DrawString("AMOUNT", boldFont, blackBrush, new XRect(dedCol2, y, 60, lineHeight), XStringFormats.TopRight);
-            y += lineHeight;
-            gfx.DrawLine(XPens.Black, earningsCol1, y, earningsCol3 + 60, y);
-            gfx.DrawLine(XPens.Black, dedCol1, y, dedCol2 + 60, y);
-            y += 2;
-
-            // EARNINGS TABLE (detailed rows)
-            var earningsRows = new (string label, string current, decimal amount, bool bold)[] {
-                ("Basic Pay (No. of regular Days)", payslip.TotalDays.ToString("N2"), payslip.BasicPay, false),
-                ("Legal Holiday w/ Pay", payslip.LegalHolidayCount.ToString(), payslip.LegalHolidayPay, false),
-                ("Less:Tardy/Undertime", payslip.TardyUndertimePay.ToString("N2"), payslip.TardyUndertimePay, false),
-                ("Total Basic Pay", "", payslip.BasicPay + payslip.LegalHolidayPay - payslip.TardyUndertimePay, true),
-                ("Overtime Pay", "", payslip.OvertimePay, true),
-                ("Regular OT Hrs.", payslip.OvertimeHours.ToString("N2"), payslip.RegOtPay, false),
-                ("Rest Day Hrs.", payslip.RestdayHours.ToString("N2"), payslip.RestdayPay, false),
-                ("Rest Day OT Hrs.", payslip.RestdayOvertimeHours.ToString("N2"), payslip.RestdayOvertimePay, false),
-                ("Legal Holiday Hrs.", payslip.LegalHolidayHours.ToString("N2"), payslip.LegalHolidayPay, false),
-                ("Legal Holiday OT Hrs.", payslip.LegalHolidayOvertimeHours.ToString("N2"), payslip.LegalHolidayOvertimePay, false),
-                ("Legal Hol. Rest Day Hrs.", payslip.LegalHolidayRestdayHours.ToString("N2"), payslip.LegalHolidayRestdayPay, false),
-                ("Legal Hol. Rest Day OT Hrs.", payslip.LegalHolidayRestdayOvertimeHours.ToString("N2"), payslip.LegalHolidayRestdayOvertimePay, false),
-                ("Special Holiday Hrs.", payslip.SpecialHolidayHours.ToString("N2"), payslip.SpecialHolidayPay, false),
-                ("Special Holiday OT Hrs.", payslip.SpecialHolidayOvertimeHours.ToString("N2"), payslip.SpecialHolidayOvertimePay, false),
-                ("Spl Holiday on a Rest Day", payslip.SpecialHolidayRestdayHours.ToString("N2"), payslip.SpecialHolidayRestdayPay, false),
-                ("Spl Hol/Rest Day OT", payslip.SpecialHolidayRestdayOvertimeHours.ToString("N2"), payslip.SpecialHolidayRestdayOvertimePay, false),
-                ("Night Differential", payslip.NightDifferentialHours.ToString("N2"), payslip.NightDifferentialPay, false),
-                ("Night Differential OT", payslip.NightDifferentialOvertimeHours.ToString("N2"), payslip.NightDifferentialOvertimePay, false),
-                ("Night Diff. Rest Day", payslip.NightDifferentialRestdayHours.ToString("N2"), payslip.NightDifferentialRestdayPay, false),
-                ("Night Diff. SH.", payslip.NightDifferentialSpecialHolidayHours.ToString("N2"), payslip.NightDifferentialSpecialHolidayPay, false),
-                ("Night Diff. SH/RD.", payslip.NightDifferentialSpecialHolidayRestdayHours.ToString("N2"), payslip.NightDifferentialSpecialHolidayRestdayPay, false),
-                ("Night Diff. Leg. Hol.", payslip.NightDifferentialLegalHolidayHours.ToString("N2"), payslip.NightDifferentialLegalHolidayPay, false),
-                ("Night Diff. LH/RD.", payslip.NightDifferentialLegalHolidayRestdayHours.ToString("N2"), payslip.NightDifferentialLegalHolidayRestdayPay, false),
-                ("Total Overtime Pay", "", payslip.OvertimePay, true),
-                ("GROSS PAY", "", payslip.GrossPay, true)
-            };
-            int earningsY = tableStartY + lineHeight + 2;
-            foreach (var row in earningsRows)
-            {
-                if (row.label == "Total Basic Pay")
-                {
-                    gfx.DrawRectangle(XPens.Black, earningsCol1, earningsY, earningsCol3 + 60 - earningsCol1, lineHeight);
-                    gfx.DrawString(row.label, boldFont, blackBrush, new XRect(earningsCol1, earningsY, earningsCol2 - earningsCol1, lineHeight), XStringFormats.TopLeft);
-                    gfx.DrawString($"{payslip.TotalBasicPay:N2}", boldFont, blackBrush, new XRect(earningsCol3, earningsY, 60, lineHeight), XStringFormats.TopRight);
-                }
-                else if (row.label == "Total Overtime Pay")
-                {
-                    gfx.DrawRectangle(XPens.Black, earningsCol1, earningsY, earningsCol3 + 60 - earningsCol1, lineHeight);
-                    gfx.DrawString(row.label, boldFont, blackBrush, new XRect(earningsCol1, earningsY, earningsCol2 - earningsCol1, lineHeight), XStringFormats.TopLeft);
-                    gfx.DrawString($"{payslip.OvertimePay:N2}", boldFont, blackBrush, new XRect(earningsCol3, earningsY, 60, lineHeight), XStringFormats.TopRight);
-                }
-                else if (row.label == "GROSS PAY")
-                {
-                    gfx.DrawRectangle(XPens.Black, earningsCol1, earningsY, earningsCol3 + 60 - earningsCol1, lineHeight);
-                    gfx.DrawString(row.label, boldFont, blackBrush, new XRect(earningsCol1, earningsY, earningsCol2 - earningsCol1, lineHeight), XStringFormats.TopLeft);
-                    gfx.DrawString($"{payslip.GrossPay:N2}", boldFont, blackBrush, new XRect(earningsCol3, earningsY, 60, lineHeight), XStringFormats.TopRight);
-                }
-                else if (row.label == "Overtime Pay")
-                {
-                    gfx.DrawRectangle(XPens.Black, earningsCol1, earningsY, earningsCol3 + 60 - earningsCol1, lineHeight);
-                    gfx.DrawString(row.label, boldFont, blackBrush, new XRect(earningsCol1, earningsY, earningsCol2 - earningsCol1, lineHeight), XStringFormats.TopLeft);
-                }
-                else
-                {
-                    gfx.DrawString(row.label, row.bold ? boldFont : font, blackBrush, new XRect(earningsCol1, earningsY, earningsCol2 - earningsCol1, lineHeight), XStringFormats.TopLeft);
-                    gfx.DrawString(row.current, font, blackBrush, new XRect(earningsCol2, earningsY, earningsCol3 - earningsCol2, lineHeight), XStringFormats.TopCenter);
-                    gfx.DrawString($"{row.amount:N2}", row.bold ? boldFont : font, blackBrush, new XRect(earningsCol3, earningsY, 60, lineHeight), XStringFormats.TopRight);
-                }
-                earningsY += lineHeight;
-            }
-
-            // Deductions Table (right side, unchanged)
-            int deductionsY = tableStartY + lineHeight + 2;
-            string[] deductionLabels = new[] {
-                "GOVERNMENT DUES DEDUCTION",
-                "SSS Contribution",
-                "Phil-Health Contribution",
-                "HDMF Contribution",
-                "Loan Deduction",
-                "SSS Loan",
-                "HDMF Loan",
-                "SSS Calamity Loan",
-                "HDMF Calamity Loan",
-                "Withholding Tax",
-                "Cash Advance",
-                "HMO",
-                "Uniform",
-                "ATM ID",
-                "Medical",
-                "Grocery",
-                "Canteen",
-                "Damayan",
-                "Rice",
-                "Total Deduction"
-            };
-            decimal[] deductionAmounts = new[] {
-                0,
-                payslip.SSS,
-                payslip.PhilHealth,
-                payslip.HDMF,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                payslip.CashAdvance,
-                payslip.HMO,
-                payslip.Uniform,
-                payslip.AtmId,
-                payslip.Medical,
-                payslip.Grocery,
-                payslip.Canteen,
-                payslip.Damayan,
-                payslip.Rice,
-                payslip.TotalDeductions
-            };
-            bool[] deductionBold = new[] { true, false, false, false, true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true };
-            for (int i = 0; i < deductionLabels.Length; i++)
-            {
-                gfx.DrawString(deductionLabels[i], deductionBold[i] ? boldFont : font, blackBrush, new XRect(dedCol1, deductionsY, dedCol2 - dedCol1, lineHeight), XStringFormats.TopLeft);
-                gfx.DrawString($"{deductionAmounts[i]:N2}", deductionBold[i] ? boldFont : font, blackBrush, new XRect(dedCol2, deductionsY, 60, lineHeight), XStringFormats.TopRight);
-                deductionsY += lineHeight;
-            }
-
-            // Other Earnings (on the right, below deductions)
-            int otherY = deductionsY;
-            gfx.DrawString("OTHER EARNINGS", boldFont, blackBrush, dedCol1, otherY);
-            otherY += lineHeight;
-            void DrawOtherEarningRow(string label, decimal amount, bool red = false)
-            {
-                XFont useFont = red ? redFont : font;
-                XBrush useBrush = red ? redBrush : blackBrush;
-                gfx.DrawString(label, useFont, useBrush, new XRect(dedCol1, otherY, dedCol2 - dedCol1, lineHeight), XStringFormats.TopLeft);
-                gfx.DrawString($"{amount:N2}", useFont, useBrush, new XRect(dedCol2, otherY, 60, lineHeight), XStringFormats.TopRight);
-                otherY += lineHeight;
-            }
-            DrawOtherEarningRow("SIL-SERVICE INCENTIVE LEAVE", payslip.SIL, true);
-            DrawOtherEarningRow("PERFECT ATTENDANCE", payslip.PerfectAttendance, true);
-            DrawOtherEarningRow("ADJUSTMENT (LH NO WORK)", payslip.Adjustment, true);
-            DrawOtherEarningRow("RELIEVER", payslip.Reliever, true);
-            otherY += lineHeight;
-            DrawOtherEarningRow("TAKE HOME PAY", payslip.NetPay, false);
-        }
-
-        // Generate a single PDF for multiple payslips
+        // Generate a single PDF for multiple payslips using QuestPDF
         private void GeneratePayslipsPdf(List<PayslipViewModel> payslips)
         {
-            using (PdfSharp.Pdf.PdfDocument document = new PdfSharp.Pdf.PdfDocument())
+            string tempFile = Path.Combine(Path.GetTempPath(), $"Payslips_{Guid.NewGuid()}.pdf");
+            var document = new MultiPayslipDocument(payslips);
+            using (var fs = new FileStream(tempFile, FileMode.Create, FileAccess.Write, FileShare.None))
             {
-                document.Info.Title = "Payslips";
-                foreach (var payslip in payslips)
+                document.GeneratePdf(fs);
+            }
+            WaitForFileRelease(tempFile);
+            // Prompt user to save the PDF
+            using (SaveFileDialog sfd = new SaveFileDialog { Filter = "PDF files (*.pdf)|*.pdf", FileName = Path.GetFileName(tempFile) })
+            {
+                if (sfd.ShowDialog() == DialogResult.OK)
                 {
-                    DrawPayslipPage(document, payslip);
+                    File.Copy(tempFile, sfd.FileName, true);
+                    MessageBox.Show("PDF saved successfully.", "Save As", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    // Optionally open the PDF
+                    try { Process.Start(new ProcessStartInfo(sfd.FileName) { UseShellExecute = true }); } catch { }
                 }
-                string tempFile = Path.Combine(Path.GetTempPath(), $"Payslips_{Guid.NewGuid()}.pdf");
-                document.Save(tempFile);
-                PdfViewerForm viewerForm = new PdfViewerForm(tempFile);
-                viewerForm.ShowDialog();
+            }
+        }
+
+        // Helper to wait for file to be released
+        private void WaitForFileRelease(string filePath, int maxWaitMs = 1000)
+        {
+            int waited = 0;
+            while (waited < maxWaitMs)
+            {
+                try
+                {
+                    using (FileStream fs = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.None))
+                    {
+                        break;
+                    }
+                }
+                catch (IOException)
+                {
+                    System.Threading.Thread.Sleep(50);
+                    waited += 50;
+                }
             }
         }
 
@@ -694,12 +340,12 @@ namespace JTI_Payroll_System
                             while (reader.Read())
                             {
                                 int id = reader.GetInt32("id");
-                                decimal grossPay = reader.IsDBNull(reader.GetOrdinal("gross_pay")) ? 0 : reader.GetDecimal("gross_pay");
-                                decimal totalGovDues = reader.IsDBNull(reader.GetOrdinal("total_govdues")) ? 0 : reader.GetDecimal("total_govdues");
+                                decimal grossPay = reader.IsDBNull(reader.GetOrdinal("gross_pay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("gross_pay"));
+                                decimal totalGovDues = reader.IsDBNull(reader.GetOrdinal("total_govdues")) ? 0 : reader.GetDecimal(reader.GetOrdinal("total_govdues"));
                                 decimal loanDeduction = 0;
                                 decimal totalDeductions = 0;
-                                try { loanDeduction = reader.IsDBNull(reader.GetOrdinal("loan_deduction")) ? 0 : reader.GetDecimal("loan_deduction"); } catch { }
-                                try { totalDeductions = reader.IsDBNull(reader.GetOrdinal("total_deductions")) ? 0 : reader.GetDecimal("total_deductions"); } catch { }
+                                try { loanDeduction = reader.IsDBNull(reader.GetOrdinal("loan_deduction")) ? 0 : reader.GetDecimal(reader.GetOrdinal("loan_deduction")); } catch { }
+                                try { totalDeductions = reader.IsDBNull(reader.GetOrdinal("total_deductions")) ? 0 : reader.GetDecimal(reader.GetOrdinal("total_deductions")); } catch { }
                                 decimal totalGrossPay = grossPay - totalGovDues - loanDeduction - totalDeductions;
                                 // If regenerate is checked, always update; otherwise, only update if total_grosspay is NULL or 0
                                 bool isNull = reader.IsDBNull(reader.GetOrdinal("total_grosspay"));
@@ -820,130 +466,5 @@ namespace JTI_Payroll_System
         public decimal TotalBasicPay { get; set; }
         public decimal RegOtPay { get; set; }
     }
-
-    public class PdfViewerForm : Form
-    {
-        private PdfViewer pdfViewer;
-        private string loadedPdfPath;
-        private Button btnSaveAs;
-        private Button btnPrint;
-
-        public PdfViewerForm(string pdfFilePath)
-        {
-            InitializeComponent();
-            loadedPdfPath = pdfFilePath;
-            pdfViewer = new PdfViewer
-            {
-                Dock = DockStyle.Fill
-            };
-            Controls.Add(pdfViewer);
-            pdfViewer.LoadDocument(pdfFilePath);
-
-            btnSaveAs = new Button
-            {
-                Text = "Save As",
-                Dock = DockStyle.Top,
-                Height = 32
-            };
-            btnSaveAs.Click += BtnSaveAs_Click;
-            Controls.Add(btnSaveAs);
-            btnSaveAs.BringToFront();
-
-            btnPrint = new Button
-            {
-                Text = "Print",
-                Dock = DockStyle.Top,
-                Height = 32
-            };
-            btnPrint.Click += BtnPrint_Click;
-            Controls.Add(btnPrint);
-            btnPrint.BringToFront();
-        }
-
-        private void BtnSaveAs_Click(object sender, EventArgs e)
-        {
-            using (SaveFileDialog sfd = new SaveFileDialog { Filter = "PDF files (*.pdf)|*.pdf", FileName = Path.GetFileName(loadedPdfPath) })
-            {
-                if (sfd.ShowDialog() == DialogResult.OK)
-                {
-                    File.Copy(loadedPdfPath, sfd.FileName, true);
-                    MessageBox.Show("PDF saved successfully.", "Save As", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-            }
-        }
-
-        private void BtnPrint_Click(object sender, EventArgs e)
-        {
-            // Print the PDF by rendering each page to an image and sending to the printer
-            using (PrintDialog printDialog = new PrintDialog())
-            using (System.Drawing.Printing.PrintDocument printDoc = new System.Drawing.Printing.PrintDocument())
-            {
-                printDoc.DocumentName = loadedPdfPath;
-                printDialog.Document = printDoc;
-                int pageCount = 1;
-                Patagames.Pdf.Net.PdfDocument pdfDoc = null;
-                try
-                {
-                    pdfDoc = Patagames.Pdf.Net.PdfDocument.Load(loadedPdfPath);
-                    pageCount = pdfDoc.Pages.Count;
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Failed to load PDF for printing: " + ex.Message, "Print Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
-                int currentPage = 0;
-                printDoc.PrintPage += (s, ev) =>
-                {
-                    if (pdfDoc != null && currentPage < pageCount)
-                    {
-                        // Try using the RenderEx method if available
-                        var page = pdfDoc.Pages[currentPage];
-                        Bitmap bmp = null;
-                        try
-                        {
-                            // Try RenderEx(int width, int height, bool forPrinting) if available
-                            var renderExMethod = page.GetType().GetMethod("RenderEx", new[] { typeof(int), typeof(int), typeof(bool) });
-                            if (renderExMethod != null)
-                            {
-                                bmp = (Bitmap)renderExMethod.Invoke(page, new object[] { ev.MarginBounds.Width, ev.MarginBounds.Height, true });
-                            }
-                            else
-                            {
-                                MessageBox.Show("Unable to render PDF page to bitmap. No suitable method found.", "Print Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                                ev.HasMorePages = false;
-                                return;
-                            }
-                        }
-                        catch
-                        {
-                            MessageBox.Show("Unable to render PDF page to bitmap. Please check Patagames.Pdf.Net documentation for your version.", "Print Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            ev.HasMorePages = false;
-                            return;
-                        }
-                        ev.Graphics.DrawImage(bmp, ev.MarginBounds);
-                        bmp.Dispose();
-                        currentPage++;
-                        ev.HasMorePages = currentPage < pageCount;
-                    }
-                    else
-                    {
-                        ev.HasMorePages = false;
-                    }
-                };
-                if (printDialog.ShowDialog() == DialogResult.OK)
-                {
-                    currentPage = 0;
-                    printDoc.Print();
-                }
-                pdfDoc?.Dispose();
-            }
-        }
-
-        private void InitializeComponent()
-        {
-            this.Text = "PDF Viewer";
-            this.Size = new Size(800, 600);
-        }
-    }
 }
+

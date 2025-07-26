@@ -1,6 +1,7 @@
 using System; // Added for STAThread if not already present, and ApplicationConfiguration
 using PdfSharp.Fonts;
 using System.Reflection;
+using QuestPDF.Infrastructure; // Add this at the top
 
 namespace JTI_Payroll_System
 {
@@ -12,6 +13,8 @@ namespace JTI_Payroll_System
         [STAThread]
         static void Main()
         {
+            // Set QuestPDF license type
+            QuestPDF.Settings.License = LicenseType.Community;
             // Register font resolver for PdfSharp
             PdfSharp.Fonts.GlobalFontSettings.FontResolver = SimpleFontResolver.Instance;
 
