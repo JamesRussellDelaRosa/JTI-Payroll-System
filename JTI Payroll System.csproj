@@ -26,6 +26,7 @@
     <PackageReference Include="MySql.Data" Version="9.4.0" />
     <PackageReference Include="Pdfium.Net.SDK" Version="4.100.2704" />
     <PackageReference Include="PDFsharp" Version="6.2.1" />
+    <PackageReference Include="QuestPDF" Version="2025.7.0" />
   </ItemGroup>
 
   <ItemGroup>
