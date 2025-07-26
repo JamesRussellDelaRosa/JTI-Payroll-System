@@ -56,7 +56,10 @@ namespace JTI_Payroll_System
                     AddRow("Legal Holiday w/ Pay", payslip.LegalHolidayCount.ToString(), payslip.LegalHolidayPay);
                     AddRow("Less:Tardy/Undertime", payslip.TardyUndertimePay.ToString("N2"), payslip.TardyUndertimePay);
                     AddRow("Total Basic Pay", "", payslip.TotalBasicPay, true);
-                    AddRow("Overtime Pay", "", payslip.OvertimePay, true);
+                    // Change Overtime Pay to a header row with no value
+                    var textLabel = table.Cell().Element(CellStyle).Text("OVERTIME PAY").Bold();
+                    table.Cell().Element(CellStyle).Text("");
+                    table.Cell().Element(CellStyle).Text("");
                     AddRow("Regular OT Hrs.", payslip.OvertimeHours.ToString("N2"), payslip.RegOtPay);
                     AddRow("Rest Day Hrs.", payslip.RestdayHours.ToString("N2"), payslip.RestdayPay);
                     AddRow("Rest Day OT Hrs.", payslip.RestdayOvertimeHours.ToString("N2"), payslip.RestdayOvertimePay);
@@ -77,6 +80,57 @@ namespace JTI_Payroll_System
                     AddRow("Night Diff. LH/RD.", payslip.NightDifferentialLegalHolidayRestdayHours.ToString("N2"), payslip.NightDifferentialLegalHolidayRestdayPay);
                     AddRow("Total Overtime Pay", "", payslip.OvertimePay, true);
                     AddRow("GROSS PAY", "", payslip.GrossPay, true);
+                });
+                col.Item().Text("");
+                col.Item().Text("DEDUCTIONS").Bold().FontColor(Colors.Red.Medium);
+                col.Item().Table(table =>
+                {
+                    table.ColumnsDefinition(columns =>
+                    {
+                        columns.RelativeColumn();
+                        columns.RelativeColumn();
+                    });
+                    void AddDeduction(string label, decimal amount)
+                    {
+                        table.Cell().Element(CellStyle).Text(label);
+                        table.Cell().Element(CellStyle).Text($"{amount:N2}");
+                    }
+                    AddDeduction("SSS Contribution", payslip.SSS);
+                    AddDeduction("PhilHealth Contribution", payslip.PhilHealth);
+                    AddDeduction("HDMF Contribution", payslip.HDMF);
+                    AddDeduction("Withholding Tax", payslip.WTax);
+                    AddDeduction("Cash Advance", payslip.CashAdvance);
+                    AddDeduction("HMO", payslip.HMO);
+                    AddDeduction("Uniform", payslip.Uniform);
+                    AddDeduction("ID/ATM Replacement", payslip.AtmId);
+                    AddDeduction("Medical", payslip.Medical);
+                    AddDeduction("Grocery", payslip.Grocery);
+                    AddDeduction("Canteen", payslip.Canteen);
+                    AddDeduction("Damayan", payslip.Damayan);
+                    AddDeduction("Rice", payslip.Rice);
+                    AddDeduction("Coop Loan", payslip.CoopLoanDeduction);
+                    AddDeduction("Coop Share Capital", payslip.CoopShareCapital);
+                    AddDeduction("Coop Saving Deposit", payslip.CoopSavingsDeposit);
+                    AddDeduction("Coop Membership Fee", payslip.CoopMembershipFee);
+                });
+                col.Item().Text("");
+                col.Item().Text("OTHER EARNINGS").Bold().FontColor(Colors.Green.Medium);
+                col.Item().Table(table =>
+                {
+                    table.ColumnsDefinition(columns =>
+                    {
+                        columns.RelativeColumn();
+                        columns.RelativeColumn();
+                    });
+                    void AddEarning(string label, decimal amount)
+                    {
+                        table.Cell().Element(CellStyle).Text(label);
+                        table.Cell().Element(CellStyle).Text($"{amount:N2}");
+                    }
+                    AddEarning("SIL", payslip.SIL);
+                    AddEarning("Perfect Attendance", payslip.PerfectAttendance);
+                    AddEarning("Adjustment", payslip.Adjustment);
+                    AddEarning("Reliever", payslip.Reliever);
                 });
                 col.Item().Text("");
                 col.Item().Text($"TAKE HOME PAY: {payslip.NetPay:N2}").Bold().FontSize(12);

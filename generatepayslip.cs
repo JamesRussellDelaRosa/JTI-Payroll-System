@@ -157,7 +157,7 @@ namespace JTI_Payroll_System
                 using (var conn = DatabaseHelper.GetConnection())
                 {
                     conn.Open();
-                    string selectQuery = @"SELECT id, total_grosspay, sil, perfect_attendance, adjustment_total, reliever_total FROM payroll WHERE month = @month AND payrollyear = @payrollYear AND control_period = @controlPeriod AND pay_period_start = @fromDate AND pay_period_end = @toDate";
+                    string selectQuery = @"SELECT id, total_grosspay, sil, perfect_attendance, adjustment_total, reliever_total, SSS, philhealth, hdmf, wtax, cash_advance, hmo, uniform, atm_id, medical, grocery, canteen, damayan, rice, coop_loan_deduction, coop_share_capital, coop_savings_deposit, coop_membership_fee FROM payroll WHERE month = @month AND payrollyear = @payrollYear AND control_period = @controlPeriod AND pay_period_start = @fromDate AND pay_period_end = @toDate";
                     using (var cmd = new MySqlCommand(selectQuery, conn))
                     {
                         cmd.Parameters.AddWithValue("@month", month);
@@ -171,13 +171,32 @@ namespace JTI_Payroll_System
                             while (reader.Read())
                             {
                                 int id = reader.GetInt32("id");
-                                decimal totalGrossPay = reader.IsDBNull(reader.GetOrdinal("total_grosspay")) ? 0 : reader.GetDecimal("total_grosspay");
-                                decimal sil = reader.IsDBNull(reader.GetOrdinal("sil")) ? 0 : reader.GetDecimal("sil");
-                                decimal perfectAttendance = reader.IsDBNull(reader.GetOrdinal("perfect_attendance")) ? 0 : reader.GetDecimal("perfect_attendance");
-                                decimal adjustmentTotal = reader.IsDBNull(reader.GetOrdinal("adjustment_total")) ? 0 : reader.GetDecimal("adjustment_total");
+                                decimal totalGrossPay = reader.IsDBNull(reader.GetOrdinal("total_grosspay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("total_grosspay"));
+                                decimal sil = reader.IsDBNull(reader.GetOrdinal("sil")) ? 0 : reader.GetDecimal(reader.GetOrdinal("sil"));
+                                decimal perfectAttendance = reader.IsDBNull(reader.GetOrdinal("perfect_attendance")) ? 0 : reader.GetDecimal(reader.GetOrdinal("perfect_attendance"));
+                                decimal adjustmentTotal = reader.IsDBNull(reader.GetOrdinal("adjustment_total")) ? 0 : reader.GetDecimal(reader.GetOrdinal("adjustment_total"));
                                 decimal relieverTotal = reader.IsDBNull(reader.GetOrdinal("reliever_total")) ? 0 : reader.GetDecimal(reader.GetOrdinal("reliever_total"));
-                                decimal netpay = totalGrossPay + sil + perfectAttendance + adjustmentTotal + relieverTotal;
-                                netpay = Math.Round(netpay, 2, MidpointRounding.AwayFromZero); // Round to 2 decimal places
+                                decimal sss = reader.IsDBNull(reader.GetOrdinal("SSS")) ? 0 : reader.GetDecimal(reader.GetOrdinal("SSS"));
+                                decimal philhealth = reader.IsDBNull(reader.GetOrdinal("philhealth")) ? 0 : reader.GetDecimal(reader.GetOrdinal("philhealth"));
+                                decimal hdmf = reader.IsDBNull(reader.GetOrdinal("hdmf")) ? 0 : reader.GetDecimal(reader.GetOrdinal("hdmf"));
+                                decimal wtax = reader.IsDBNull(reader.GetOrdinal("wtax")) ? 0 : reader.GetDecimal(reader.GetOrdinal("wtax"));
+                                decimal cashAdvance = reader.IsDBNull(reader.GetOrdinal("cash_advance")) ? 0 : reader.GetDecimal(reader.GetOrdinal("cash_advance"));
+                                decimal hmo = reader.IsDBNull(reader.GetOrdinal("hmo")) ? 0 : reader.GetDecimal(reader.GetOrdinal("hmo"));
+                                decimal uniform = reader.IsDBNull(reader.GetOrdinal("uniform")) ? 0 : reader.GetDecimal(reader.GetOrdinal("uniform"));
+                                decimal atmId = reader.IsDBNull(reader.GetOrdinal("atm_id")) ? 0 : reader.GetDecimal(reader.GetOrdinal("atm_id"));
+                                decimal medical = reader.IsDBNull(reader.GetOrdinal("medical")) ? 0 : reader.GetDecimal(reader.GetOrdinal("medical"));
+                                decimal grocery = reader.IsDBNull(reader.GetOrdinal("grocery")) ? 0 : reader.GetDecimal(reader.GetOrdinal("grocery"));
+                                decimal canteen = reader.IsDBNull(reader.GetOrdinal("canteen")) ? 0 : reader.GetDecimal(reader.GetOrdinal("canteen"));
+                                decimal damayan = reader.IsDBNull(reader.GetOrdinal("damayan")) ? 0 : reader.GetDecimal(reader.GetOrdinal("damayan"));
+                                decimal rice = reader.IsDBNull(reader.GetOrdinal("rice")) ? 0 : reader.GetDecimal(reader.GetOrdinal("rice"));
+                                decimal coopLoan = reader.IsDBNull(reader.GetOrdinal("coop_loan_deduction")) ? 0 : reader.GetDecimal(reader.GetOrdinal("coop_loan_deduction"));
+                                decimal coopShare = reader.IsDBNull(reader.GetOrdinal("coop_share_capital")) ? 0 : reader.GetDecimal(reader.GetOrdinal("coop_share_capital"));
+                                decimal coopSavings = reader.IsDBNull(reader.GetOrdinal("coop_savings_deposit")) ? 0 : reader.GetDecimal(reader.GetOrdinal("coop_savings_deposit"));
+                                decimal coopMembership = reader.IsDBNull(reader.GetOrdinal("coop_membership_fee")) ? 0 : reader.GetDecimal(reader.GetOrdinal("coop_membership_fee"));
+                                // Take Home Pay = totalGrossPay + sil + perfectAttendance + adjustmentTotal + relieverTotal - (all deductions)
+                                decimal totalDeductions = sss + philhealth + hdmf + wtax + cashAdvance + hmo + uniform + atmId + medical + grocery + canteen + damayan + rice + coopLoan + coopShare + coopSavings + coopMembership;
+                                decimal netpay = totalGrossPay + sil + perfectAttendance + adjustmentTotal + relieverTotal - totalDeductions;
+                                netpay = Math.Round(netpay, 2, MidpointRounding.AwayFromZero);
                                 updates.Add((id, netpay));
                             }
                             reader.Close();
@@ -292,7 +311,12 @@ namespace JTI_Payroll_System
                                     NightDifferentialLegalHolidayPay = reader.IsDBNull(reader.GetOrdinal("ndlhpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndlhpay")),
                                     NightDifferentialLegalHolidayRestdayPay = reader.IsDBNull(reader.GetOrdinal("ndlhrdpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndlhrdpay")),
                                     TotalBasicPay = reader.IsDBNull(reader.GetOrdinal("total_basic_pay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("total_basic_pay")),
-                                    RegOtPay = reader.IsDBNull(reader.GetOrdinal("regotpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("regotpay"))
+                                    RegOtPay = reader.IsDBNull(reader.GetOrdinal("regotpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("regotpay")),
+                                    WTax = reader.IsDBNull(reader.GetOrdinal("wtax")) ? 0 : reader.GetDecimal(reader.GetOrdinal("wtax")),
+                                    CoopLoanDeduction = reader.IsDBNull(reader.GetOrdinal("coop_loan_deduction")) ? 0 : reader.GetDecimal(reader.GetOrdinal("coop_loan_deduction")),
+                                    CoopShareCapital = reader.IsDBNull(reader.GetOrdinal("coop_share_capital")) ? 0 : reader.GetDecimal(reader.GetOrdinal("coop_share_capital")),
+                                    CoopSavingsDeposit = reader.IsDBNull(reader.GetOrdinal("coop_savings_deposit")) ? 0 : reader.GetDecimal(reader.GetOrdinal("coop_savings_deposit")),
+                                    CoopMembershipFee = reader.IsDBNull(reader.GetOrdinal("coop_membership_fee")) ? 0 : reader.GetDecimal(reader.GetOrdinal("coop_membership_fee"))
                                 };
                                 payslips.Add(payslip);
                             }
@@ -465,6 +489,11 @@ namespace JTI_Payroll_System
         public decimal NightDifferentialLegalHolidayRestdayPay { get; set; }
         public decimal TotalBasicPay { get; set; }
         public decimal RegOtPay { get; set; }
+        public decimal WTax { get; set; }
+        public decimal CoopLoanDeduction { get; set; }
+        public decimal CoopShareCapital { get; set; }
+        public decimal CoopSavingsDeposit { get; set; }
+        public decimal CoopMembershipFee { get; set; }
     }
 }
 
