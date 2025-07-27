@@ -63,7 +63,7 @@ namespace JTI_Payroll_System
                     }
                     AddRow("Basic Pay (No. of regular Days)", payslip.TotalDays.ToString("N2"), payslip.BasicPay);
                     AddRow("Legal Holiday w/ Pay", payslip.LegalHolidayCount.ToString(), payslip.LegalHolidayPay);
-                    AddRow("Less:Tardy/Undertime", payslip.TardyUndertimePay.ToString("N2"), payslip.TardyUndertimePay);
+                    AddRow("Less:Tardy/Undertime", payslip.TardyUndertime.ToString("N2"), payslip.TardyUndertimePay);
                     AddRow("Total Basic Pay", "", payslip.TotalBasicPay, true);
                     // Overtime Pay header
                     var textLabel = table.Cell().Element(CellStyle).Text("OVERTIME PAY").Bold().FontSize(7);
@@ -174,7 +174,13 @@ namespace JTI_Payroll_System
             {
                 page.Size(PageSizes.A4);
                 page.Margin(1, Unit.Centimetre);
+                // Removed header pagination, moved to footer
                 page.Content().Component(new PayslipComponent(payslip));
+                page.Footer().AlignCenter().Text(text =>
+                {
+                    text.Span("Page ");
+                    text.CurrentPageNumber();
+                });
             });
         }
     }
@@ -195,7 +201,12 @@ namespace JTI_Payroll_System
                 {
                     page.Size(PageSizes.A4);
                     page.Margin(1, Unit.Centimetre);
+                    // Removed header pagination, moved to footer
                     page.Content().Component(new PayslipComponent(payslip));
+                    page.Header().AlignRight().Text(text =>
+                    {
+                        text.CurrentPageNumber();
+                    });
                 });
             }
         }

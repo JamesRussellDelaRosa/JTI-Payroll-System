@@ -21,10 +21,13 @@ namespace JTI_Payroll_System
 {
     public partial class generatepayslip : Form
     {
+        private string selectedCcode = null;
+
         public generatepayslip()
         {
             InitializeComponent();
             InitializeCustomComponents();
+            LoadCcodeList();
         }
 
         private void InitializeCustomComponents()
@@ -220,6 +223,64 @@ namespace JTI_Payroll_System
             }
         }
 
+        private void LoadCcodeList()
+        {
+            flowCcodePanel.Controls.Clear();
+            selectedCcode = null;
+            try
+            {
+                using (MySqlConnection conn = DatabaseHelper.GetConnection())
+                {
+                    conn.Open();
+                    string query = "SELECT DISTINCT ccode FROM employee WHERE ccode IS NOT NULL AND ccode != '' ORDER BY ccode";
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    using (MySqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            string ccode = reader.GetString(0);
+                            var panel = new Panel
+                            {
+                                Width = flowCcodePanel.Width - 10,
+                                Height = 32,
+                                BorderStyle = BorderStyle.FixedSingle,
+                                Margin = new Padding(2),
+                                Cursor = Cursors.Hand,
+                                Tag = ccode
+                            };
+                            var lbl = new Label
+                            {
+                                AutoSize = false,
+                                Width = panel.Width,
+                                Height = panel.Height,
+                                TextAlign = ContentAlignment.MiddleCenter,
+                                Font = new Font("Segoe UI", 10, FontStyle.Regular),
+                                Text = ccode,
+                                Cursor = Cursors.Hand
+                            };
+                            panel.Controls.Add(lbl);
+                            panel.Click += (s, e) => SelectCcodePanel(panel, ccode);
+                            lbl.Click += (s, e) => SelectCcodePanel(panel, ccode);
+                            flowCcodePanel.Controls.Add(panel);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading ccode list: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void SelectCcodePanel(Panel panel, string ccode)
+        {
+            // Highlight selected panel
+            foreach (Panel p in flowCcodePanel.Controls)
+                p.BackColor = System.Drawing.SystemColors.Control;
+            panel.BackColor = System.Drawing.Color.LightBlue;
+            selectedCcode = ccode;
+        }
+
         private List<PayslipViewModel> GetPayslipsForPeriod(int month, int controlPeriod, int payrollYear, DateTime fromDate, DateTime toDate)
         {
             var payslips = new List<PayslipViewModel>();
@@ -229,6 +290,10 @@ namespace JTI_Payroll_System
                 {
                     conn.Open();
                     string selectQuery = @"SELECT p.*, e.ccode AS emp_ccode, e.client AS emp_client, e.bir_stat AS emp_bir_stat, e.atm_card_no AS emp_atm_card_no FROM payroll p LEFT JOIN employee e ON p.employee_id = e.id_no WHERE p.month = @month AND p.payrollyear = @payrollYear AND p.control_period = @controlPeriod AND p.pay_period_start = @fromDate AND p.pay_period_end = @toDate";
+                    if (!string.IsNullOrEmpty(selectedCcode))
+                    {
+                        selectQuery += " AND e.ccode = @ccode";
+                    }
                     using (var cmd = new MySqlCommand(selectQuery, conn))
                     {
                         cmd.Parameters.AddWithValue("@month", month);
@@ -236,6 +301,10 @@ namespace JTI_Payroll_System
                         cmd.Parameters.AddWithValue("@controlPeriod", controlPeriod);
                         cmd.Parameters.AddWithValue("@fromDate", fromDate);
                         cmd.Parameters.AddWithValue("@toDate", toDate);
+                        if (!string.IsNullOrEmpty(selectedCcode))
+                        {
+                            cmd.Parameters.AddWithValue("@ccode", selectedCcode);
+                        }
                         using (var reader = cmd.ExecuteReader())
                         {
                             while (reader.Read())
@@ -253,6 +322,7 @@ namespace JTI_Payroll_System
                                     RatePerDay = reader.IsDBNull(reader.GetOrdinal("rate")) ? 0 : reader.GetDecimal(reader.GetOrdinal("rate")),
                                     BasicPay = reader.IsDBNull(reader.GetOrdinal("basicpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("basicpay")),
                                     LegalHolidayPay = reader.IsDBNull(reader.GetOrdinal("lhpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("lhpay")),
+                                    TardyUndertime = reader.IsDBNull(reader.GetOrdinal("td_ut")) ? 0 : reader.GetDecimal(reader.GetOrdinal("td_ut")),
                                     TardyUndertimePay = reader.IsDBNull(reader.GetOrdinal("trdypay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("trdypay")),
                                     OvertimePay = reader.IsDBNull(reader.GetOrdinal("total_ot_pay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("total_ot_pay")),
                                     NightDifferentialPay = reader.IsDBNull(reader.GetOrdinal("ndpay")) ? 0 : reader.GetDecimal(reader.GetOrdinal("ndpay")),
@@ -430,6 +500,7 @@ namespace JTI_Payroll_System
         public decimal RatePerDay { get; set; }
         public decimal BasicPay { get; set; }
         public decimal LegalHolidayPay { get; set; }
+        public decimal TardyUndertime { get; set; }
         public decimal TardyUndertimePay { get; set; }
         public decimal OvertimePay { get; set; }
         public decimal NightDifferentialPay { get; set; }

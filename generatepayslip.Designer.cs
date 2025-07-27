@@ -40,6 +40,8 @@
             label1 = new Label();
             month = new TextBox();
             regenerate = new CheckBox();
+            flowCcodePanel = new System.Windows.Forms.FlowLayoutPanel();
+            labelCcode = new System.Windows.Forms.Label();
             SuspendLayout();
             // 
             // generate
@@ -142,11 +144,31 @@
             regenerate.Text = "REGENERATE";
             regenerate.UseVisualStyleBackColor = true;
             // 
+            // labelCcode
+            // 
+            labelCcode.AutoSize = true;
+            labelCcode.Location = new System.Drawing.Point(650, 30);
+            labelCcode.Name = "labelCcode";
+            labelCcode.Size = new System.Drawing.Size(120, 20);
+            labelCcode.TabIndex = 36;
+            labelCcode.Text = "Filter by CCode:";
+            // 
+            // flowCcodePanel
+            // 
+            flowCcodePanel.Location = new System.Drawing.Point(650, 60);
+            flowCcodePanel.Name = "flowCcodePanel";
+            flowCcodePanel.Size = new System.Drawing.Size(130, 350);
+            flowCcodePanel.TabIndex = 37;
+            flowCcodePanel.AutoScroll = true;
+            flowCcodePanel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            // 
             // generatepayslip
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(labelCcode);
+            Controls.Add(flowCcodePanel);
             Controls.Add(regenerate);
             Controls.Add(generate);
             Controls.Add(label5);
@@ -178,5 +200,7 @@
         private Label label1;
         private TextBox month;
         private CheckBox regenerate;
+        private System.Windows.Forms.FlowLayoutPanel flowCcodePanel;
+        private System.Windows.Forms.Label labelCcode;
     }
 }
