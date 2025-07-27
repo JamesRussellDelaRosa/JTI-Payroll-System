@@ -317,5 +317,17 @@ namespace JTI_Payroll_System
         {
             Application.Exit();
         }
+
+        private void processHmoPanel_Click(object sender, EventArgs e)
+        {
+            hmo hmoForm = new hmo();
+            hmoForm.Show();
+        }
+
+        private void shiftcodePanel_Click(object sender, EventArgs e)
+        {
+            shiftcode shiftcodeForm = new shiftcode();
+            shiftcodeForm.Show();
+        }
     }
 }

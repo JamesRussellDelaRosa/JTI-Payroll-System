@@ -127,6 +127,7 @@
             Panel computewtaxPanel = CreateClickablePanel("Compute WTax", computewtax_Click);
             Panel genpayslipPanel = CreateClickablePanel("Generate Payslip", genpayslip_Click);
             Panel shiftcodePanel = CreateClickablePanel("SHIFT CODE", shiftcodePanel_Click);
+            Panel processHmoPanel = CreateClickablePanel("Process HMO", processHmoPanel_Click);
 
             // Add Panels to FlowLayoutPanel
             menuFlowLayoutPanel.Controls.Add(employeePanel);
@@ -150,6 +151,7 @@
             menuFlowLayoutPanel.Controls.Add(computewtaxPanel);
             menuFlowLayoutPanel.Controls.Add(genpayslipPanel);
             menuFlowLayoutPanel.Controls.Add(shiftcodePanel);
+            menuFlowLayoutPanel.Controls.Add(processHmoPanel);
         }
 
         private Panel CreateClickablePanel(string text, EventHandler functionHandler)
@@ -252,12 +254,6 @@
                     nextPanel.Focus();
                 }
             }
-        }
-
-        private void shiftcodePanel_Click(object sender, EventArgs e)
-        {
-            shiftcode shiftcodeForm = new shiftcode();
-            shiftcodeForm.Show();
         }
 
         #endregion

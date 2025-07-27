@@ -243,12 +243,6 @@
             }
         }
 
-        private void shiftcodePanel_Click(object sender, EventArgs e)
-        {
-            shiftcode shiftcodeForm = new shiftcode();
-            shiftcodeForm.Show();
-        }
-
         #endregion
 
         private FlowLayoutPanel menuFlowLayoutPanel;
