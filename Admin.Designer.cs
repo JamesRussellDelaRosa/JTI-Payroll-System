@@ -124,6 +124,7 @@
             Panel payrollAdjPanel = CreateClickablePanel("Payroll Adjustments", payrollAdj_Click);
             Panel modifyPayrollPanel = CreateClickablePanel("Modify Payroll", modifyPayroll_Click);
             Panel exportPayrollPanel = CreateClickablePanel("Export Payroll", exportpayroll_Click);
+            Panel exportPayrollListPanel = CreateClickablePanel("Export Payroll List", exportpayrolllist_Click);
             Panel computewtaxPanel = CreateClickablePanel("Compute WTax", computewtax_Click);
             Panel genpayslipPanel = CreateClickablePanel("Generate Payslip", genpayslip_Click);
             Panel shiftcodePanel = CreateClickablePanel("SHIFT CODE", shiftcodePanel_Click);
@@ -148,6 +149,7 @@
             menuFlowLayoutPanel.Controls.Add(payrollAdjPanel);
             menuFlowLayoutPanel.Controls.Add(modifyPayrollPanel);
             menuFlowLayoutPanel.Controls.Add(exportPayrollPanel);
+            menuFlowLayoutPanel.Controls.Add(exportPayrollListPanel);
             menuFlowLayoutPanel.Controls.Add(computewtaxPanel);
             menuFlowLayoutPanel.Controls.Add(genpayslipPanel);
             menuFlowLayoutPanel.Controls.Add(shiftcodePanel);

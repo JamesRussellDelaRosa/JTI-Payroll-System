@@ -305,6 +305,12 @@ namespace JTI_Payroll_System
             exportPayrollForm.Show();
         }
 
+        private void exportpayrolllist_Click(object sender, EventArgs e)
+        {
+            payroll_list payrollListForm = new payroll_list();
+            payrollListForm.Show();
+        }
+
         private void btnLogout_Click(object sender, EventArgs e)
         {
             UserSession.Clear(); // Clear the session

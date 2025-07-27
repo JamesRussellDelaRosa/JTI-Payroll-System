@@ -344,5 +344,11 @@ namespace JTI_Payroll_System
             hmo hmoForm = new hmo();
             hmoForm.Show();
         }
+
+        private void exportpayrolllist_Click(object sender, EventArgs e)
+        {
+            payroll_list payrollListForm = new payroll_list();
+            payrollListForm.Show();
+        }
     }
 }
