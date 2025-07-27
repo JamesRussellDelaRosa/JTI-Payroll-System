@@ -176,9 +176,8 @@ namespace JTI_Payroll_System
                 page.Margin(1, Unit.Centimetre);
                 // Removed header pagination, moved to footer
                 page.Content().Component(new PayslipComponent(payslip));
-                page.Footer().AlignCenter().Text(text =>
+                page.Header().AlignRight().Text(text =>
                 {
-                    text.Span("Page ");
                     text.CurrentPageNumber();
                 });
             });
